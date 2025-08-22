@@ -27,9 +27,14 @@
 #include "Display.hpp"
 #include <algorithm>
 
+uint16_t View::defaultBackgroundColor;
+uint16_t View::defaultForegroundColor;
+
 View::View(Rect rect) {
     // printf("Creating view %p\n", this);
     this->frame = rect;
+    this->foregroundColor = View::defaultForegroundColor;
+    this->backgroundColor = View::defaultBackgroundColor;
     this->window.reset();
     this->superview.reset();
 }
@@ -322,3 +327,10 @@ void View::setNeedsDisplayInRect(Rect rect) {
     }
 }
 
+void View::SetDefaultBackgroundColor(uint16_t color) {
+    View::defaultBackgroundColor = color;
+}
+
+void View::SetDefaultForegroundColor(uint16_t color) {
+    View::defaultForegroundColor = color;
+}

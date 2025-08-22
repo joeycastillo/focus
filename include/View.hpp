@@ -63,6 +63,9 @@ public:
     uint16_t getDirectionalAffinity();
     void setDirectionalAffinity(DirectionalAffinity value);
     void setNeedsDisplayInRect(Rect rect);
+
+    static void SetDefaultBackgroundColor(uint16_t color);
+    static void SetDefaultForegroundColor(uint16_t color);
 protected:
     bool focused = false;
     bool opaque = true;
@@ -75,6 +78,9 @@ protected:
     std::vector<std::shared_ptr<View>> subviews;
     std::map<int32_t, Action> actions;
     std::weak_ptr<View> superview;
+
+    static uint16_t defaultBackgroundColor;
+    static uint16_t defaultForegroundColor;
 private:
     std::weak_ptr<Window> window;
 
