@@ -26,8 +26,6 @@
 
 #include "Focus.hpp"
 
-class Typesetter;
-
 class Display {
 public:
     virtual void drawPixel(int x, int y, int color) = 0;
@@ -50,10 +48,6 @@ public:
     virtual int getBlackColor() = 0;
     virtual int getWhiteColor() = 0;
 
-    void setTypesetter(std::shared_ptr<Typesetter> typesetter);
-
     virtual ~Display() {}
 protected:
-    std::shared_ptr<Typesetter> typesetter;
-
 };

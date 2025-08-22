@@ -23,12 +23,7 @@
  */
 
 #include "Display.hpp"
-#include "Typesetter.hpp"
-
-void Display::setTypesetter(std::shared_ptr<Typesetter> typesetter) {
-    this->typesetter = typesetter;
-}
 
 int Display::drawText(int x, int y, int width, int height, int color, const char * utf8String) {
-    return this->typesetter->print(x, y, width, height, color, utf8String);
+    return 0;
 }
