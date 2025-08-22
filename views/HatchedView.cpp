@@ -1,0 +1,45 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2022-2025 Joey Castillo
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include "HatchedView.hpp"
+#include "Window.hpp"
+#include "Display.hpp"
+
+HatchedView::HatchedView(Rect rect, int color) : View(rect) {
+    this->foregroundColor = color;
+    this->opaque = false;
+}
+
+void HatchedView::draw(int x, int y) {
+    View::draw(x, y);
+    if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
+        for(int16_t i = x; i < x + this->frame.size.width; i++) {
+            for(int16_t j = y; j < y + this->frame.size.height; j++) {
+                if ((i + j) % 2) {
+                    display->drawPixel(i, j, this->foregroundColor);
+                }
+            }
+        }
+    }
+}
