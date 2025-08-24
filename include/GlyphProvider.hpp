@@ -25,15 +25,11 @@
 #pragma once
 
 #include "Focus.hpp"
-#include "View.hpp"
+#include "utf8_decode.hpp"
 
-class LabelView : public View {
+class GlyphProvider : public std::enable_shared_from_this<GlyphProvider> {
 public:
-    LabelView(Rect rect, std::string text);
-    void draw(int x, int y) override;
-    void setText(std::string text);
-    void setTextScale(uint8_t scale);
-protected:
-    std::string text;
-    uint8_t textScale = 1;
+    GlyphProvider();
+    virtual uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) = 0;
+    virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) = 0;
 };

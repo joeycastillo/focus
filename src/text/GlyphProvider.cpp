@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2025 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +22,7 @@
  * SOFTWARE.
  */
 
-#pragma once
+#include "GlyphProvider.hpp"
 
-#include "Focus.hpp"
-#include "View.hpp"
-
-class LabelView : public View {
-public:
-    LabelView(Rect rect, std::string text);
-    void draw(int x, int y) override;
-    void setText(std::string text);
-    void setTextScale(uint8_t scale);
-protected:
-    std::string text;
-    uint8_t textScale = 1;
-};
+GlyphProvider::GlyphProvider() {
+}

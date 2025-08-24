@@ -33,7 +33,7 @@ LabelView::LabelView(Rect rect, std::string text) : View(rect) {
 void LabelView::draw(int x, int y) {
     View::draw(x, y);
     if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
-        display->drawText(this->frame.origin.x + x, this->frame.origin.y + y, this->frame.size.width, this->frame.size.height, this->foregroundColor, this->text.c_str());
+        display->drawText(this->frame.origin.x + x, this->frame.origin.y + y, this->frame.size.width, this->frame.size.height, this->foregroundColor, this->textScale, this->text.c_str());
     }
 }
 
@@ -42,4 +42,8 @@ void LabelView::setText(std::string text) {
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);
     }
+}
+
+void LabelView::setTextScale(uint8_t scale) {
+    this->textScale = scale;
 }
