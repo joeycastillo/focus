@@ -67,6 +67,9 @@ public:
     static void SetDefaultBackgroundColor(uint16_t color);
     static void SetDefaultForegroundColor(uint16_t color);
 protected:
+    bool _contains(Point point);
+    bool _touch_checked = false;
+
     bool focused = false;
     bool opaque = true;
     bool hidden = false;

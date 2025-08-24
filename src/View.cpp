@@ -169,50 +169,87 @@ bool View::handleEvent(Event event) {
     }
 
     if (this->actions.count(event.type)) {
+        // if an action has registered for this type of event, pass it along directly
         if (std::shared_ptr<Application> application = window->application.lock()) {
             this->actions[event.type](event);
         }
-    } else if (event.type < FOCUS_EVENT_BUTTON_TAP) {
-        uint32_t index = std::distance(this->subviews.begin(), std::find(this->subviews.begin(), this->subviews.end(), focusedView));
-        if (this->affinity == DirectionalAffinityVertical) {
-            switch (event.type) {
-                case FOCUS_EVENT_BUTTON_UP:
-                    while (index > 0) {
-                        if (this->subviews[index - 1]->canBecomeFocused()) this->subviews[index - 1]->becomeFocused();
-                        else index--;
-                        return true;
+    } else {
+        // otherwise, some events are handled internally
+        switch (event.type) {
+            case FOCUS_EVENT_TOUCH_DOWN:
+            {
+                if (!this->_touch_checked) {
+                    this->_touch_checked = true;
+                    // determine if we were hit; if so, become focused and return true.
+                    Point point = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
+                    if (this->_contains(point)) {
+                        for(std::shared_ptr<View> view : this->subviews) {
+                            if (view->handleEvent(event)) return true;
+                        }
+                        if (this->canBecomeFocused()) {
+                            this->becomeFocused();
+                            return true;
+                        }
                     }
-                    break;
-                case FOCUS_EVENT_BUTTON_DOWN:
-                    while ((index + 1) < this->subviews.size()) {
-                        if (this->subviews[index + 1]->canBecomeFocused()) this->subviews[index + 1]->becomeFocused();
-                        else index--;
-                        return true;
-                    }
-                    break;
-                default:
-                    break;
+                }
             }
-        } else if (this->affinity == DirectionalAffinityHorizontal) {
-            switch (event.type) {
-                case FOCUS_EVENT_BUTTON_LEFT:
-                    while (index > 0) {
-                        if (this->subviews[index - 1]->canBecomeFocused()) this->subviews[index - 1]->becomeFocused();
-                        return true;
+            break;
+            case FOCUS_EVENT_TOUCH_MOVED:
+                // return true if we are hit and false if not?
+                break;
+            case FOCUS_EVENT_TOUCH_UP:
+                this->_touch_checked = false;
+                break;
+            case FOCUS_EVENT_DIRECTION_LEFT:
+            case FOCUS_EVENT_DIRECTION_DOWN:
+            case FOCUS_EVENT_DIRECTION_UP:
+            case FOCUS_EVENT_DIRECTION_RIGHT:
+            {
+                uint32_t index = std::distance(this->subviews.begin(), std::find(this->subviews.begin(), this->subviews.end(), focusedView));
+                if (this->affinity == DirectionalAffinityVertical) {
+                    switch (event.type) {
+                        case FOCUS_EVENT_DIRECTION_UP:
+                            while (index > 0) {
+                                if (this->subviews[index - 1]->canBecomeFocused()) this->subviews[index - 1]->becomeFocused();
+                                else index--;
+                                return true;
+                            }
+                            break;
+                        case FOCUS_EVENT_DIRECTION_DOWN:
+                            while ((index + 1) < this->subviews.size()) {
+                                if (this->subviews[index + 1]->canBecomeFocused()) this->subviews[index + 1]->becomeFocused();
+                                else index--;
+                                return true;
+                            }
+                            break;
+                        default:
+                            break;
                     }
-                    break;
-                case FOCUS_EVENT_BUTTON_RIGHT:
-                    while ((index + 1) < this->subviews.size()) {
-                        if (this->subviews[index + 1]->canBecomeFocused()) this->subviews[index + 1]->becomeFocused();
-                        return true;
+                } else if (this->affinity == DirectionalAffinityHorizontal) {
+                    switch (event.type) {
+                        case FOCUS_EVENT_DIRECTION_LEFT:
+                            while (index > 0) {
+                                if (this->subviews[index - 1]->canBecomeFocused()) this->subviews[index - 1]->becomeFocused();
+                                return true;
+                            }
+                            break;
+                        case FOCUS_EVENT_DIRECTION_RIGHT:
+                            while ((index + 1) < this->subviews.size()) {
+                                if (this->subviews[index + 1]->canBecomeFocused()) this->subviews[index + 1]->becomeFocused();
+                                return true;
+                            }
+                            break;
+                        default:
+                            break;
                     }
-                    break;
-                default:
-                    break;
+                }
             }
+            break;
         }
     }
+
     if (std::shared_ptr<View> superview = this->superview.lock()) {
+        // if the event was not handled internally, bubble it up to the next view in the hierarchy.
         superview->handleEvent(event);
     }
 
@@ -333,4 +370,11 @@ void View::SetDefaultBackgroundColor(uint16_t color) {
 
 void View::SetDefaultForegroundColor(uint16_t color) {
     View::defaultForegroundColor = color;
+}
+
+bool View::_contains(Point point) {
+    return (
+        (this->frame.origin.x <= point.x) && (point.x <= (this->frame.origin.x + this->frame.size.width)) &&
+        (this->frame.origin.y <= point.y) && (point.y <= (this->frame.origin.y + this->frame.size.height))
+    );
 }
