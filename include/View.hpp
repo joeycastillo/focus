@@ -64,6 +64,9 @@ public:
     void setDirectionalAffinity(DirectionalAffinity value);
     void setNeedsDisplayInRect(Rect rect);
 
+    // this whole touchChecked thing feels hacky!
+    void clearTouchChecked();
+
     static void SetDefaultBackgroundColor(uint16_t color);
     static void SetDefaultForegroundColor(uint16_t color);
 protected:

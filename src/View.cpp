@@ -88,13 +88,12 @@ bool View::canBecomeFocused() {
 }
 
 bool View::becomeFocused() {
-    for(std::shared_ptr<View> subview : this->subviews) {
-        if (subview->becomeFocused()) {
-            return true;
-        }
-    }
-
     if (this->canBecomeFocused()) {
+        if (this->superview.lock() == NULL) {
+            printf("    Window %p became focused\n", this);
+        } else {
+            printf("    view %p became focused\n", this);
+        }
         // when there are no focusable subviews, and we can become
         // focused, become focused ourselves.
         // note that Window can always become focused, so this
@@ -183,14 +182,18 @@ bool View::handleEvent(Event event) {
                     // determine if we were hit; if so, become focused and return true.
                     Point point = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
                     if (this->_contains(point)) {
+                    printf("Touch down: view %p contains point %d, %d\n", this, point.x, point.y);
                         for(std::shared_ptr<View> view : this->subviews) {
+                            printf("  View %p is checking subview %p\n", this, view.get());
                             if (view->handleEvent(event)) return true;
                         }
                         if (this->canBecomeFocused()) {
+                            printf("  View %p wants to become focused\n", this);
                             this->becomeFocused();
                             return true;
                         }
                     }
+                    printf("Touch down: view %p did not contain point %d, %d\n", this, point.x, point.y);
                 }
             }
             break;
@@ -198,7 +201,6 @@ bool View::handleEvent(Event event) {
                 // return true if we are hit and false if not?
                 break;
             case FOCUS_EVENT_TOUCH_UP:
-                this->_touch_checked = false;
                 break;
             case FOCUS_EVENT_DIRECTION_LEFT:
             case FOCUS_EVENT_DIRECTION_DOWN:
@@ -361,6 +363,13 @@ void View::setNeedsDisplayInRect(Rect rect) {
 
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         window->setNeedsDisplayInRect(rect);
+    }
+}
+
+void View::clearTouchChecked() {
+    this->_touch_checked = false;
+    for(std::shared_ptr<View> view : this->subviews) {
+        view.get()->clearTouchChecked();
     }
 }
 
