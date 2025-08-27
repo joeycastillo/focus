@@ -36,7 +36,7 @@ void HatchedView::draw(int x, int y) {
     if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
         for(int16_t i = x; i < x + this->frame.size.width; i++) {
             for(int16_t j = y; j < y + this->frame.size.height; j++) {
-                if ((i + j) % 2) {
+                if ((i + j) % 4) {
                     display->drawPixel(i, j, this->foregroundColor);
                 }
             }
