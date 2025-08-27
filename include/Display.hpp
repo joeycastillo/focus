@@ -46,7 +46,7 @@ public:
 
     // virtual void fillScreen(int color);
 
-    int drawText(int x, int y, int width, int height, int color, int text_size, const char * utf8String, GlyphProvider *glyphProvider = NULL);
+    int drawText(Rect layoutRect, int color, int text_size, const char * utf8String, GlyphProvider *glyphProvider = NULL);
 
     virtual int getBlackColor() = 0;
     virtual int getWhiteColor() = 0;

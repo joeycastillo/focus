@@ -34,13 +34,15 @@ void Button::draw(int x, int y) {
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         View::draw(x, y);
         if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
-            Rect textRect = MakeRect(this->frame.origin.x + x + 4, this->frame.origin.y + y + this->frame.size.height / 2 - 4, this->frame.size.width, this->frame.size.height);
+            /// TODO: this was old, what was up with it? Check it out.
+            // Rect textRect = MakeRect(this->frame.origin.x + x + 4, this->frame.origin.y + y + this->frame.size.height / 2 - 4, this->frame.size.width, this->frame.size.height);
+            Rect layoutRect = MakeRect(this->frame.origin.x + x, this->frame.origin.y + y, this->frame.size.width, this->frame.size.height);
             if (this->focused) {
                 display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
-                display->drawText(textRect.origin.x, textRect.origin.y, textRect.size.width, textRect.size.height, this->backgroundColor, 1, this->text.c_str());
+                display->drawText(layoutRect, this->backgroundColor, 1, this->text.c_str());
             } else {
                 display->drawRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
-                display->drawText(textRect.origin.x, textRect.origin.y, textRect.size.width, textRect.size.height, this->foregroundColor, 1, this->text.c_str());
+                display->drawText(layoutRect, this->foregroundColor, 1, this->text.c_str());
             }
         }
     }

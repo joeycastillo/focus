@@ -27,7 +27,7 @@
 #include "utf8_parse.hpp"
 #include <string.h>
 
-int Display::drawText(int x, int y, int width, int height, int color, int text_size, const char * utf8String, GlyphProvider *glyphProvider) {
+int Display::drawText(Rect layoutRect, int color, int text_size, const char * utf8String, GlyphProvider *glyphProvider) {
     if (glyphProvider == NULL) glyphProvider = this->defaultGlyphProvider.get();
     if (glyphProvider == NULL) return 0;
 
@@ -38,7 +38,7 @@ int Display::drawText(int x, int y, int width, int height, int color, int text_s
     this->textColor = color;
     this->lineSpacing = 2;
     this->paragraphSpacing = 8;
-    this->layoutRect = MakeRect(x, y, width, height);
+    this->layoutRect = layoutRect;
 
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
 
