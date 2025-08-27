@@ -65,21 +65,6 @@ private:
     uint16_t textSize = 1;
     uint16_t lineSpacing = 0;
     uint16_t paragraphSpacing = 0;
-    /**
-     @brief This method takes a NULL-terminated UTF-8 string and returns its length in codepoints. Should be O(n) time.
-     @return the number of codepoints required to represent this string, or 0 if the string was invalid.
-     @param string a pointer to a a UTF-8 string
-     */
-    size_t utf8_codepoint_length(char * string);
-
-    /**
-     @brief This method takes a NULL-terminated UTF-8 string and parses it into codepoints, which it places in the buffer pointed to by buf. O(N) time.
-     @return the number of codepoints required to represent this string, or 0 if the string was invalid.
-     @param string a pointer to a a UTF-8 string
-     @param buf output parameter, a pointer to a buffer that will receive the parsed codepoints.
-     */
-    size_t utf8_parse(char * string, UNICODE_CODEPOINT *buf);
-
     /*!
      @brief Writes a series of glyphs in the provided rect. It will not currently wrap, but will advance the line for newlines, and automatically change the layout mode to RTL or LTR as appropriate.
      @param codepoints An array of codepoints that you wish to draw

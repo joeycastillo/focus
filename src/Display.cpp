@@ -24,6 +24,7 @@
 
 #include "Display.hpp"
 #include "GlyphProvider.hpp"
+#include "utf8_parse.hpp"
 #include <string.h>
 
 int Display::drawText(int x, int y, int width, int height, int color, int text_size, const char * utf8String, GlyphProvider *glyphProvider) {
@@ -31,7 +32,7 @@ int Display::drawText(int x, int y, int width, int height, int color, int text_s
     if (glyphProvider == NULL) return 0;
 
 
-    size_t len = this->utf8_codepoint_length((char *)utf8String);
+    size_t len = utf8_codepoint_length((char *)utf8String);
 
     this->textSize = text_size;
     this->textColor = color;
@@ -40,31 +41,11 @@ int Display::drawText(int x, int y, int width, int height, int color, int text_s
 
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
 
-    this->utf8_parse((char *)utf8String, codepoints);
+    utf8_parse((char *)utf8String, codepoints);
     size_t retVal = this->writeCodepoints(codepoints, len, MakeRect(x, y, width, height), this->defaultGlyphProvider.get());
     free(codepoints);
 
     return retVal;
-}
-
-size_t Display::utf8_codepoint_length(char string[]) {
-    return this->utf8_parse(string, NULL);
-}
-
-size_t Display::utf8_parse(char * string, UNICODE_CODEPOINT *buf) {
-    utf8_decode_init(string, strlen(string));
-    size_t len = 0;
-    
-    do {
-        int c = utf8_decode_next();
-        if (c == UTF8_END) break;
-        else if (c == UTF8_ERROR) return -1;
-        
-        if (buf != NULL) buf[len++] = (uint16_t)c;
-        else len++;
-    } while (1);
-    
-    return len;
 }
 
 size_t Display::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, Rect rect, GlyphProvider *glyphProvider) {
