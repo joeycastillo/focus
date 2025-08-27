@@ -38,25 +38,26 @@ int Display::drawText(int x, int y, int width, int height, int color, int text_s
     this->textColor = color;
     this->lineSpacing = 2;
     this->paragraphSpacing = 8;
+    this->layoutRect = MakeRect(x, y, width, height);
 
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
 
     utf8_parse((char *)utf8String, codepoints);
-    size_t retVal = this->writeCodepoints(codepoints, len, MakeRect(x, y, width, height), glyphProvider);
+    size_t retVal = this->writeCodepoints(codepoints, len, glyphProvider);
     free(codepoints);
 
     return retVal;
 }
 
-size_t Display::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, Rect layoutRect, GlyphProvider *glyphProvider) {
+size_t Display::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider) {
     size_t retVal = 0;
     size_t pos = 0;
-    this->cursor = layoutRect.origin;
+    this->cursor = this->layoutRect.origin;
 
     while (pos < len) {
         bool write_newline = false;
         bool wrapped = false;
-        int32_t num_glyphs_to_draw = this->word_wrap_position(codepoints + pos, len - pos, &wrapped, layoutRect.size.width, glyphProvider);
+        int32_t num_glyphs_to_draw = this->word_wrap_position(codepoints + pos, len - pos, &wrapped, glyphProvider);
         if (num_glyphs_to_draw < 0){
             num_glyphs_to_draw = (int32_t)(len - pos);
         }
@@ -64,32 +65,32 @@ size_t Display::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, Rect
             write_newline = true;
         }
         for(size_t i = pos; i < pos + num_glyphs_to_draw; i++) {
-            retVal += this->writeCodepoint(codepoints[i], layoutRect, glyphProvider);
+            retVal += this->writeCodepoint(codepoints[i], glyphProvider);
         }
         pos += num_glyphs_to_draw;
         if (write_newline && wrapped) {
             this->cursor.y += 16 * this->textSize; /// TODO: + this->lineSpacing;
             if (this->direction == 1) {
-                this->cursor.x = layoutRect.origin.x;
+                this->cursor.x = this->layoutRect.origin.x;
             } else {
-                this->cursor.x = layoutRect.origin.x + layoutRect.size.width;
+                this->cursor.x = this->layoutRect.origin.x + this->layoutRect.size.width;
             }
         }
 
-        if (this->cursor.y >= (layoutRect.origin.y + layoutRect.size.height)) break;
+        if (this->cursor.y >= (this->layoutRect.origin.y + this->layoutRect.size.height)) break;
     }
 
     return retVal;
 }
 
-size_t Display::writeCodepoint(UNICODE_CODEPOINT codepoint, Rect layoutRect, GlyphProvider *glyphProvider) {
+size_t Display::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider) {
     // before we start, we don't need to fetch anything for control characters.
     if (codepoint == '\n' || codepoint == '\r') {
         this->cursor.y += 16 * this->textSize + this->paragraphSpacing;
         if (this->direction == 1) {
-            this->cursor.x = layoutRect.origin.x;
+            this->cursor.x = this->layoutRect.origin.x;
         } else {
-            this->cursor.x = layoutRect.origin.x + layoutRect.size.width;
+            this->cursor.x = this->layoutRect.origin.x + this->layoutRect.size.width;
         }
         return 1;
     }
@@ -103,12 +104,12 @@ size_t Display::writeCodepoint(UNICODE_CODEPOINT codepoint, Rect layoutRect, Gly
         direction = -1;
         uint8_t width = metrics.size.width;
         this->hasLastGlyph = false;
-        this->cursor.x = layoutRect.origin.x + layoutRect.size.width - width;
+        this->cursor.x = this->layoutRect.origin.x + this->layoutRect.size.width - width;
     }
     else if (this->direction == -1 && traits.is.ltr) {
         direction = 1;
         this->hasLastGlyph = false;
-        this->cursor.x = layoutRect.origin.x;
+        this->cursor.x = this->layoutRect.origin.x;
     }
 
     uint8_t *glyph = glyphProvider->glyphForCodepoint(codepoint);
@@ -129,14 +130,14 @@ size_t Display::writeCodepoint(UNICODE_CODEPOINT codepoint, Rect layoutRect, Gly
     return 1;
 }
 
-int16_t Display::word_wrap_position(UNICODE_CODEPOINT *buf, size_t len, bool *wrapped, int16_t line_width, GlyphProvider *glyphProvider) {
+int16_t Display::word_wrap_position(UNICODE_CODEPOINT *buf, size_t len, bool *wrapped, GlyphProvider *glyphProvider) {
     size_t wrap_candidate = 0;
     size_t byte_position = 0;
     size_t position_in_string = 0;
     int16_t cursor_location = 0;
     *wrapped = true; // assume we wrapped unless set otherwise below
     
-    while(cursor_location < line_width) {
+    while(cursor_location < this->layoutRect.size.width) {
         if (buf[position_in_string] == '\n') {
             *wrapped = false;
             return position_in_string + 1; // "wrap" at the newline
