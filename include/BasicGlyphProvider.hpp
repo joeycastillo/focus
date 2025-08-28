@@ -30,6 +30,9 @@
 class BasicGlyphProvider : public GlyphProvider {
 public:
     BasicGlyphProvider();
+    uint8_t getPointSize();
+    Size getMaxSize();
+    Point getOffset() ;
     uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL);
     Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL);
 };

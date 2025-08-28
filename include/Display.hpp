@@ -64,8 +64,8 @@ private:
     Point lastGlyphPosition;
     uint16_t textColor = 0;
     uint16_t textSize = 1;
-    uint16_t lineSpacing = 0;
-    uint16_t paragraphSpacing = 0;
+    int16_t lineSpacing = 0;
+    int16_t paragraphSpacing = 0;
 
     /*!
      @brief Writes a series of glyphs in the provided rect, wrapping as appropriate, advancing the line for newlines, and automatically changing the layout mode to RTL or LTR as appropriate.

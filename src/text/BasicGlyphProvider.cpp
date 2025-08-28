@@ -676,6 +676,18 @@ uint8_t times18[7786] = {
   0x06, 0x00, 0x64, 0x00, 0xec, 0x00, 0xf8, 0x00, 0x70, 0x00
 };
 
+uint8_t BasicGlyphProvider::getPointSize() {
+    return times18[36];
+}
+
+Size BasicGlyphProvider::getMaxSize() {
+    return MakeSize(((int8_t *)times18)[37], ((int8_t *)times18)[38]);
+}
+
+Point BasicGlyphProvider::getOffset() {
+    return MakePoint(((int8_t *)times18)[39], ((int8_t *)times18)[40]);
+}
+
 uint8_t * BasicGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font) {
     uint16_t lut_location;
     uint16_t glyph_location;
@@ -696,7 +708,7 @@ Rect BasicGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, const 
     else lut_location = 42 + codepoint * 2;
 
     glyph_location = (*(times18 + lut_location)) | (*(times18 + lut_location + 1) << 8);
-    Rect rect = MakeRect(times18[glyph_location + 2], times18[glyph_location + 3], times18[glyph_location + 0], times18[glyph_location + 1]);
+    Rect rect = MakeRect(((int8_t *)times18)[glyph_location + 2], ((int8_t *)times18)[glyph_location + 3], ((int8_t *)times18)[glyph_location + 0], ((int8_t *)times18)[glyph_location + 1]);
 
     return rect;
 }

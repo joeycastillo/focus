@@ -36,8 +36,9 @@ int Display::drawText(Rect layoutRect, int color, int text_size, const char * ut
 
     this->textSize = text_size;
     this->textColor = color;
-    this->lineSpacing = 2;
-    this->paragraphSpacing = 8;
+    Point offset = glyphProvider->getOffset();
+    this->lineSpacing = 2 - offset.y;
+    this->paragraphSpacing = 6 + this->lineSpacing;
     this->layoutRect = layoutRect;
 
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
@@ -69,7 +70,7 @@ size_t Display::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, Glyp
         }
         pos += num_glyphs_to_draw;
         if (write_newline && wrapped) {
-            this->cursor.y += 16 * this->textSize; /// TODO: + this->lineSpacing;
+            this->cursor.y += glyphProvider->getPointSize() * this->textSize + this->lineSpacing;
             if (this->direction == 1) {
                 this->cursor.x = this->layoutRect.origin.x;
             } else {
