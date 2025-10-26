@@ -64,6 +64,8 @@ public:
     void setDirectionalAffinity(DirectionalAffinity value);
     void setNeedsDisplayInRect(Rect rect);
 
+    std::string description();
+
     // this whole touchChecked thing feels hacky!
     void clearTouchChecked();
 

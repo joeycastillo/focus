@@ -26,6 +26,7 @@
 #include "Window.hpp"
 #include "Display.hpp"
 #include <algorithm>
+#include <cxxabi.h>
 
 uint16_t View::defaultBackgroundColor;
 uint16_t View::defaultForegroundColor;
@@ -364,6 +365,15 @@ void View::setNeedsDisplayInRect(Rect rect) {
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         window->setNeedsDisplayInRect(rect);
     }
+}
+
+std::string View::description() {
+    char buf[100];
+    int status;
+
+    snprintf(buf, sizeof(buf), "<%s: %p; tag = %ld; frame = (%d, %d, %d, %d)>", abi::__cxa_demangle(typeid(*this).name(), 0, 0,&status), this, this->tag, this->frame.origin.x, this->frame.origin.y, this->frame.size.width, this->frame.size.height);
+
+    return std::string(buf);
 }
 
 void View::clearTouchChecked() {
