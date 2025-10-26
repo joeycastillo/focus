@@ -55,7 +55,7 @@ typedef struct {
     int32_t userInfo;
 } Event;
 
-typedef std::function<void(Event)> Action;
+typedef std::function<void(Event, std::weak_ptr<View>)> Action;
 
 typedef struct {
     int x;
