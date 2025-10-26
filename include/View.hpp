@@ -64,6 +64,8 @@ public:
     void setDirectionalAffinity(DirectionalAffinity value);
     void setNeedsDisplayInRect(Rect rect);
 
+    std::weak_ptr<View> getViewForTouch(Point touch);
+
     std::string description();
 
     // this whole touchChecked thing feels hacky!

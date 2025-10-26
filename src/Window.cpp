@@ -41,7 +41,16 @@ void Window::addSubview(std::shared_ptr<View> view) {
 }
 
 bool Window::canBecomeFocused() {
-    return false;
+    return true;
+}
+
+void Window::setTouchEnabled() {
+    this->touchEnabled = true;
+    this->becomeFocused();
+}
+
+bool Window::isTouchEnabled() {
+    return this->touchEnabled;
 }
 
 bool Window::needsDisplay() {

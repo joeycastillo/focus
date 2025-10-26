@@ -90,23 +90,21 @@ bool View::canBecomeFocused() {
 
 bool View::becomeFocused() {
     if (this->canBecomeFocused()) {
-        if (this->superview.lock() == NULL) {
-            printf("    Window %p became focused\n", this);
-        } else {
-            printf("    view %p became focused\n", this);
-        }
-        // when there are no focusable subviews, and we can become
-        // focused, become focused ourselves.
-        // note that Window can always become focused, so this
-        // block is guaranteed to execute when we reach the window.
         if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+            if (window->touchEnabled && window.get() != this) {
+                // in a touch enahled interface, the window is always the focused view.
+                return false;
+            }
+
             std::shared_ptr<View> oldResponder = window->getFocusedView().lock();
             if (oldResponder != NULL) {
+                // if the window has a focused view, let it know it's going out of focus.
                 oldResponder->willResignFocus();
                 oldResponder->focused = false;
                 window->focusedView.reset();
                 oldResponder->didResignFocus();
             }
+            // then become focused ourselves.
             this->willBecomeFocused();
             this->focused = true;
             window->focusedView = this->shared_from_this();
@@ -122,6 +120,7 @@ bool View::becomeFocused() {
 void View::resignFocus() {
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         if (std::shared_ptr<View> superview = this->superview.lock()) {
+            // when resigining focus (due to being removed from a superview), pass focus to the superview.
             superview->becomeFocused();
         }
     }
@@ -176,33 +175,6 @@ bool View::handleEvent(Event event) {
     } else {
         // otherwise, some events are handled internally
         switch (event.type) {
-            case FOCUS_EVENT_TOUCH_DOWN:
-            {
-                if (!this->_touch_checked) {
-                    this->_touch_checked = true;
-                    // determine if we were hit; if so, become focused and return true.
-                    Point point = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
-                    if (this->_contains(point)) {
-                    printf("Touch down: view %p contains point %d, %d\n", this, point.x, point.y);
-                        for(std::shared_ptr<View> view : this->subviews) {
-                            printf("  View %p is checking subview %p\n", this, view.get());
-                            if (view->handleEvent(event)) return true;
-                        }
-                        if (this->canBecomeFocused()) {
-                            printf("  View %p wants to become focused\n", this);
-                            this->becomeFocused();
-                            return true;
-                        }
-                    }
-                    printf("Touch down: view %p did not contain point %d, %d\n", this, point.x, point.y);
-                }
-            }
-            break;
-            case FOCUS_EVENT_TOUCH_MOVED:
-                // return true if we are hit and false if not?
-                break;
-            case FOCUS_EVENT_TOUCH_UP:
-                break;
             case FOCUS_EVENT_DIRECTION_LEFT:
             case FOCUS_EVENT_DIRECTION_DOWN:
             case FOCUS_EVENT_DIRECTION_UP:
@@ -352,6 +324,26 @@ uint16_t View::getDirectionalAffinity() {
 
 void View::setDirectionalAffinity(DirectionalAffinity value) {
     this->affinity = value;
+}
+
+std::weak_ptr<View> View::getViewForTouch(Point touch) {
+    if (!this->_contains(touch)) {
+        // if we don't contain the touch, move on.
+        return std::weak_ptr<View>();
+    }
+
+    for(std::shared_ptr<View> view : this->subviews) {
+        // if we contain subviews, check if any of them have the touch.
+        std::weak_ptr<View> viewForTouch = view->getViewForTouch(touch);
+        if (viewForTouch.lock()) {
+            // if so, they are the view for this touch.
+            return viewForTouch;
+        }
+    }
+
+    // if we end up here, either we have no subviews or the touch didn't touch any of them.
+    // return ourselves.
+    return this->shared_from_this();
 }
 
 void View::setNeedsDisplayInRect(Rect rect) {

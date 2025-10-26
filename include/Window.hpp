@@ -32,6 +32,8 @@ public:
     Window(std::shared_ptr<Display>, Size size);
     void addSubview(std::shared_ptr<View> view) override;
     bool canBecomeFocused() override;
+    void setTouchEnabled();
+    bool isTouchEnabled();
     bool needsDisplay();
     void setNeedsDisplay(bool needsDisplay);
     Rect getDirtyRect();
@@ -47,6 +49,7 @@ protected:
     std::weak_ptr<View> focusedView;
     bool dirty;
     Rect dirtyRect;
+    bool touchEnabled;
 
     friend class Application;
     friend class View;
