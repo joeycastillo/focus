@@ -54,8 +54,6 @@ public:
     void setOpaque(bool value);
     bool isHidden();
     void setHidden(bool value);
-    int32_t getTag();
-    void setTag(int32_t value);
     uint16_t getBackgroundColor();
     void setBackgroundColor(uint16_t value);
     uint16_t getForegroundColor();
@@ -73,6 +71,9 @@ public:
 
     static void SetDefaultBackgroundColor(uint16_t color);
     static void SetDefaultForegroundColor(uint16_t color);
+
+    int32_t tag = 0;
+
 protected:
     bool _contains(Point point);
     bool _touch_checked = false;
@@ -80,7 +81,6 @@ protected:
     bool focused = false;
     bool opaque = true;
     bool hidden = false;
-    int32_t tag = 0;
     uint16_t backgroundColor;
     uint16_t foregroundColor;
     Rect frame = {};
