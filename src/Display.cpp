@@ -30,7 +30,7 @@
 int Display::drawText(Rect layoutRect, int color, int text_size, const char * utf8String, GlyphProvider *glyphProvider) {
     if (glyphProvider == NULL) glyphProvider = this->defaultGlyphProvider.get();
     if (glyphProvider == NULL) return 0;
-
+    if (strlen(utf8String) == 0) return 0;
 
     size_t len = utf8_codepoint_length((char *)utf8String);
 
