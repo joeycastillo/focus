@@ -72,9 +72,9 @@ public:
     /// @param paragraphSpacing Total spacing after paragraph break
     static int16_t getParagraphHeight(GlyphProvider* glyphProvider, uint8_t textSize, int16_t paragraphSpacing);
 
-    /// Calculate default line spacing based on glyph provider offset
+    /// Calculate default line spacing (constant 2 pixels)
     static int16_t calculateLineSpacing(GlyphProvider* glyphProvider);
 
-    /// Calculate default paragraph spacing based on line spacing
-    static int16_t calculateParagraphSpacing(int16_t lineSpacing);
+    /// Calculate default paragraph spacing based on glyph row count
+    static int16_t calculateParagraphSpacing(GlyphProvider* glyphProvider);
 };

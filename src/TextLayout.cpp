@@ -119,18 +119,17 @@ WordWrapResult TextLayout::measureLineWrap(
 }
 
 int16_t TextLayout::getLineHeight(GlyphProvider* glyphProvider, uint8_t textSize, int16_t lineSpacing) {
-    return glyphProvider->getPointSize() * textSize + lineSpacing;
+    return glyphProvider->getGlyphRowCount() * textSize + lineSpacing;
 }
 
 int16_t TextLayout::getParagraphHeight(GlyphProvider* glyphProvider, uint8_t textSize, int16_t paragraphSpacing) {
-    return glyphProvider->getPointSize() * textSize + paragraphSpacing;
+    return glyphProvider->getGlyphRowCount() * textSize + paragraphSpacing;
 }
 
 int16_t TextLayout::calculateLineSpacing(GlyphProvider* glyphProvider) {
-    Point offset = glyphProvider->getOffset();
-    return 2 - offset.y;
+    return 2;
 }
 
-int16_t TextLayout::calculateParagraphSpacing(int16_t lineSpacing) {
-    return 6 + lineSpacing;
+int16_t TextLayout::calculateParagraphSpacing(GlyphProvider* glyphProvider) {
+    return glyphProvider->getGlyphRowCount() / 3;
 }

@@ -37,11 +37,10 @@ int Display::drawText(Rect layoutRect, int color, int text_size, const char * ut
 
     this->textSize = text_size;
     this->textColor = color;
-    Point offset = glyphProvider->getOffset();
-    this->lineSpacing = 2 - offset.y;
-    this->paragraphSpacing = 6 + this->lineSpacing;
-    this->layoutRect = layoutRect;
     this->glyphRowCount = glyphProvider->getGlyphRowCount();
+    this->lineSpacing = TextLayout::calculateLineSpacing(glyphProvider);
+    this->paragraphSpacing = TextLayout::calculateParagraphSpacing(glyphProvider);
+    this->layoutRect = layoutRect;
 
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
 
@@ -81,7 +80,7 @@ size_t Display::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, Glyp
 
         // Advance to next line if we wrapped (not for paragraph breaks - writeCodepoint handles those)
         if (result.wrapped) {
-            this->cursor.y += glyphProvider->getPointSize() * this->textSize + this->lineSpacing;
+            this->cursor.y += TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
             if (this->direction == 1) {
                 this->cursor.x = this->layoutRect.origin.x;
             } else {
@@ -98,7 +97,7 @@ size_t Display::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, Glyp
 size_t Display::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider) {
     // before we start, we don't need to fetch anything for control characters.
     if (codepoint == '\n' || codepoint == '\r') {
-        this->cursor.y += this->glyphRowCount * this->textSize + this->paragraphSpacing;
+        this->cursor.y += TextLayout::getParagraphHeight(glyphProvider, this->textSize, this->paragraphSpacing);
         if (this->direction == 1) {
             this->cursor.x = this->layoutRect.origin.x;
         } else {
