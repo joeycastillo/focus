@@ -143,58 +143,31 @@ size_t Display::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyph
 
 int Display::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph) {
     uint8_t width = glyphRect.size.width;
-    uint8_t characterWidth = (width + 7) / 8;
+    uint8_t bytesPerRow = (width + 7) / 8;
     bool mirrored = (this->direction == -1) && traits.is.mirrored;
 
-    if (mirrored) {
-        switch (characterWidth) {
-            case 1:
-                for(int8_t i=0; i<characterWidth*16; i++ ) {
-                    uint8_t line = glyph[i];
-                    for(int8_t j=7; j>= 0; j--, line >>= 1) {
-                        if(line & 1) {
-                            if(this->textSize == 1) drawPixel(x+8-j, y+i, this->textColor);
-                            else this->fillRect(x+8*this->textSize-j*this->textSize, y+i*this->textSize, this->textSize, this->textSize, this->textColor);
-                        }
+    // General loop that handles any glyph width (1, 2, 3+ bytes per row)
+    // Glyph data is stored as: [row0_byte0, row0_byte1, ..., row1_byte0, row1_byte1, ...]
+    // Bit order: MSB is leftmost pixel, LSB is rightmost pixel within each byte
+    for (int row = 0; row < 16; row++) {
+        for (int byteIdx = 0; byteIdx < bytesPerRow; byteIdx++) {
+            uint8_t line = glyph[row * bytesPerRow + byteIdx];
+            int xOffset = byteIdx * 8;
+
+            // j counts down from 7 to 0, line shifts right each iteration
+            // When j=7, we check bit 0 (LSB) -> rightmost pixel at xOffset+7
+            // When j=0, we check bit 7 (MSB) -> leftmost pixel at xOffset+0
+            for (int8_t j = 7; j >= 0; j--, line >>= 1) {
+                if (line & 1) {
+                    int pixelX = mirrored ? (width - 1 - (xOffset + j)) : (xOffset + j);
+                    if (this->textSize == 1) {
+                        drawPixel(x + pixelX, y + row, this->textColor);
+                    } else {
+                        this->fillRect(x + pixelX * this->textSize, y + row * this->textSize,
+                                      this->textSize, this->textSize, this->textColor);
                     }
                 }
-                break;
-            case 2:
-                for(int8_t i=0; i<characterWidth*16; i++ ) {
-                    uint8_t line = glyph[i];
-                    for(int8_t j=7; j>= 0; j--, line >>= 1) {
-                        if(line & 1) {
-                            if(this->textSize == 1) drawPixel(x+8-(j+(i%2?8:0)), y+i/2, this->textColor);
-                            else this->fillRect(x+8*this->textSize-(j+(i%2?8:0))*this->textSize, y+(i/2)*this->textSize, this->textSize, this->textSize, this->textColor);
-                        }
-                    }
-                }
-                break;
-        }
-    } else {
-        switch (characterWidth) {
-            case 1:
-                for(int8_t i=0; i<characterWidth*16; i++ ) {
-                    uint8_t line = glyph[i];
-                    for(int8_t j=7; j>= 0; j--, line >>= 1) {
-                        if(line & 1) {
-                            if(this->textSize == 1) drawPixel(x+j, y+i, this->textColor);
-                            else this->fillRect(x+j*this->textSize, y+i*this->textSize, this->textSize, this->textSize, this->textColor);
-                        }
-                    }
-                }
-                break;
-            case 2:
-                for(int8_t i=0; i<characterWidth*16; i++ ) {
-                    uint8_t line = glyph[i];
-                    for(int8_t j=7; j>= 0; j--, line >>= 1) {
-                        if(line & 1) {
-                            if(this->textSize == 1) drawPixel(x+j+(i%2?8:0), y+i/2, this->textColor);
-                            else this->fillRect(x+(j+(i%2?8:0))*this->textSize, y+(i/2)*this->textSize, this->textSize, this->textSize, this->textColor);
-                        }
-                    }
-                }
-                break;
+            }
         }
     }
 
