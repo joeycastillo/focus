@@ -54,6 +54,7 @@ public:
     virtual ~Display() {}
 
     void setDefaultGlyphProvider(std::shared_ptr<GlyphProvider> glyphProvider);
+    std::shared_ptr<GlyphProvider> getDefaultGlyphProvider() const { return defaultGlyphProvider; }
 protected:
 private:
     std::shared_ptr<GlyphProvider> defaultGlyphProvider = NULL;
