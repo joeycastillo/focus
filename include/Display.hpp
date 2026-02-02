@@ -85,15 +85,5 @@ private:
     */
     size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
 
-    /**
-     @brief Method for determining where to word wrap lines
-     @param buf A buffer of UNICODE_CODEPOINTS that you want to wrap.
-     @param len number of codepoints in buf
-     @param wrapped output variable, pointer to a boolean that we will set to true if we wrapped
-     @param glyphProvider The glyph provider offering glyph metrics for the string layout operation.
-     @return the position where a newline should be added in order to wrap to a given line length, or -1 if no newline is required.
-     */
-    int16_t word_wrap_position(UNICODE_CODEPOINT *buf, size_t len, bool *wrapped, GlyphProvider *glyphProvider);
-
     int drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph);
 };

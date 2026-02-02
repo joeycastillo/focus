@@ -24,6 +24,7 @@
 
 #include "Display.hpp"
 #include "GlyphProvider.hpp"
+#include "TextLayout.hpp"
 #include "utf8_parse.hpp"
 #include <string.h>
 
@@ -56,20 +57,29 @@ size_t Display::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, Glyp
     this->cursor = this->layoutRect.origin;
 
     while (pos < len) {
-        bool write_newline = false;
-        bool wrapped = false;
-        int32_t num_glyphs_to_draw = this->word_wrap_position(codepoints + pos, len - pos, &wrapped, glyphProvider);
-        if (num_glyphs_to_draw < 0){
-            num_glyphs_to_draw = (int32_t)(len - pos);
+        WordWrapResult result = TextLayout::measureLineWrap(
+            codepoints + pos,
+            len - pos,
+            this->layoutRect.size.width,
+            this->textSize,
+            glyphProvider
+        );
+
+        int32_t numGlyphsToDraw;
+        if (result.codepointsConsumed < 0) {
+            // No wrap needed - draw remaining text
+            numGlyphsToDraw = (int32_t)(len - pos);
+        } else {
+            numGlyphsToDraw = result.codepointsConsumed;
         }
-        else {
-            write_newline = true;
-        }
-        for(size_t i = pos; i < pos + num_glyphs_to_draw; i++) {
+
+        for (size_t i = pos; i < pos + numGlyphsToDraw; i++) {
             retVal += this->writeCodepoint(codepoints[i], glyphProvider);
         }
-        pos += num_glyphs_to_draw;
-        if (write_newline && wrapped) {
+        pos += numGlyphsToDraw;
+
+        // Advance to next line if we wrapped (not for paragraph breaks - writeCodepoint handles those)
+        if (result.wrapped) {
             this->cursor.y += glyphProvider->getPointSize() * this->textSize + this->lineSpacing;
             if (this->direction == 1) {
                 this->cursor.x = this->layoutRect.origin.x;
@@ -129,55 +139,6 @@ size_t Display::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyph
     }
 
     return 1;
-}
-
-int16_t Display::word_wrap_position(UNICODE_CODEPOINT *buf, size_t len, bool *wrapped, GlyphProvider *glyphProvider) {
-    size_t wrap_candidate = 0;
-    size_t byte_position = 0;
-    size_t position_in_string = 0;
-    int16_t cursor_location = 0;
-    *wrapped = true; // assume we wrapped unless set otherwise below
-    
-    while(cursor_location < this->layoutRect.size.width) {
-        if (buf[position_in_string] == '\n') {
-            *wrapped = false;
-            return position_in_string + 1; // "wrap" at the newline
-        }
-        // skip control characters
-        if (buf[position_in_string] < 0x20) {
-            byte_position++;
-            position_in_string++;
-            continue;
-        }
-
-        unicode_info_t traits = getTraitsForCodepoint(buf[position_in_string]);
-        Rect metrics = glyphProvider->metricsForCodepoint(buf[position_in_string]);
-
-        if (traits.is.linebreak) {
-            wrap_candidate = position_in_string;
-        }
-        if (!(traits.is.nsm || traits.is.controlchar)) {
-            cursor_location += metrics.size.width * this->textSize;
-        }
-#ifndef UNICODE_BMP_ONLY
-        if (buf[position_in_string] > 0x00ffff) byte_position++;
-#endif
-        if (buf[position_in_string] > 0x0007ff) byte_position++;
-        if (buf[position_in_string] > 0x00007f) byte_position++;
-        byte_position++;
-        position_in_string++;
-        if (position_in_string >= len) {
-            *wrapped = false;
-            // FIXME: byte position and wrap position?
-            return -1; // we didn't have to word wrap
-        }
-    }
-    
-    if (wrap_candidate) {
-        return wrap_candidate + 1; // if we found a wrap point, return it (plus the space after).
-    } else {
-        return len; // otherwise, they'll just need to break at the end of the line even though it's in the middle of a word.
-    }
 }
 
 int Display::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph) {
