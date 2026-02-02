@@ -688,6 +688,10 @@ Point BasicGlyphProvider::getOffset() {
     return MakePoint(((int8_t *)times18)[39], ((int8_t *)times18)[40]);
 }
 
+uint8_t BasicGlyphProvider::getGlyphRowCount() {
+    return 16;
+}
+
 uint8_t * BasicGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font) {
     uint16_t lut_location;
     uint16_t glyph_location;

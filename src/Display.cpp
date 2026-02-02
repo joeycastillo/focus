@@ -41,6 +41,7 @@ int Display::drawText(Rect layoutRect, int color, int text_size, const char * ut
     this->lineSpacing = 2 - offset.y;
     this->paragraphSpacing = 6 + this->lineSpacing;
     this->layoutRect = layoutRect;
+    this->glyphRowCount = glyphProvider->getGlyphRowCount();
 
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
 
@@ -97,7 +98,7 @@ size_t Display::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, Glyp
 size_t Display::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider) {
     // before we start, we don't need to fetch anything for control characters.
     if (codepoint == '\n' || codepoint == '\r') {
-        this->cursor.y += 16 * this->textSize + this->paragraphSpacing;
+        this->cursor.y += this->glyphRowCount * this->textSize + this->paragraphSpacing;
         if (this->direction == 1) {
             this->cursor.x = this->layoutRect.origin.x;
         } else {
@@ -149,7 +150,7 @@ int Display::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t trai
     // General loop that handles any glyph width (1, 2, 3+ bytes per row)
     // Glyph data is stored as: [row0_byte0, row0_byte1, ..., row1_byte0, row1_byte1, ...]
     // Bit order: MSB is leftmost pixel, LSB is rightmost pixel within each byte
-    for (int row = 0; row < 16; row++) {
+    for (int row = 0; row < this->glyphRowCount; row++) {
         for (int byteIdx = 0; byteIdx < bytesPerRow; byteIdx++) {
             uint8_t line = glyph[row * bytesPerRow + byteIdx];
             int xOffset = byteIdx * 8;

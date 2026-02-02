@@ -151,31 +151,32 @@ bool BDFGlyphProvider::parseBDFFile(const std::string& path) {
 }
 
 void BDFGlyphProvider::convertGlyphToDisplayFormat(BDFGlyph& glyph) {
-    // Display expects fixed 16-row glyphs
+    // Display expects fixed-height glyphs based on fontAscent + fontDescent
     // IMPORTANT: bytesPerRow must be based on ADVANCE width, not bitmap width!
     // Display::drawGlyph uses metricsForCodepoint().size.width to calculate bytesPerRow,
     // and we return advance as the width. So the bitmap must be sized for advance width.
     uint8_t destBytesPerRow = (glyph.advance + 7) / 8;
     if (destBytesPerRow == 0) destBytesPerRow = 1; // Minimum 1 byte per row
 
-    std::vector<uint8_t> converted(destBytesPerRow * 16, 0);
+    uint8_t totalRows = fontAscent + fontDescent;
+    std::vector<uint8_t> converted(destBytesPerRow * totalRows, 0);
 
-    // Calculate where this glyph sits within the 16-row space
+    // Calculate where this glyph sits within the totalRows space
     // fontAscent is the baseline position from top
     // yOffset is the glyph's offset from baseline (positive = above baseline)
     // glyph.height is the number of rows in the glyph
     //
-    // Example: fontAscent=13, yOffset=0, height=11 for lowercase 'x'
-    // The glyph's bottom is at baseline, top is at row (13 - 11) = 2
+    // Example: fontAscent=20, yOffset=0, height=11 for lowercase 'x'
+    // The glyph's bottom is at baseline, top is at row (20 - 11) = 9
     //
     // For descenders like 'g' with yOffset=-4:
-    // Bottom is 4 pixels below baseline, top is at row (13 - 4 - height)
+    // Bottom is 4 pixels below baseline, top is at row (20 - (-4) - height) = (20 + 4 - height)
     int startRow = fontAscent - glyph.yOffset - glyph.height;
     if (startRow < 0) startRow = 0;
 
     uint8_t srcBytesPerRow = (glyph.width + 7) / 8;
 
-    for (int row = 0; row < glyph.height && (startRow + row) < 16; row++) {
+    for (int row = 0; row < glyph.height && (startRow + row) < totalRows; row++) {
         int destRow = startRow + row;
 
         // Copy source bytes, padding with zeros if dest is wider
@@ -206,6 +207,10 @@ Size BDFGlyphProvider::getMaxSize() {
 Point BDFGlyphProvider::getOffset() {
     // Return baseline offset for proper text positioning
     return MakePoint(0, -static_cast<int>(fontAscent));
+}
+
+uint8_t BDFGlyphProvider::getGlyphRowCount() {
+    return fontAscent + fontDescent;
 }
 
 uint8_t* BDFGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char* font) {
