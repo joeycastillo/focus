@@ -32,7 +32,7 @@ public:
     ~View();
     virtual void draw(int x, int y);
     virtual void addSubview(std::shared_ptr<View> view);
-    void removeSubview(std::shared_ptr<View> view);
+    virtual void removeSubview(std::shared_ptr<View> view);
     bool isFocused();
     virtual bool canBecomeFocused();
     virtual bool becomeFocused();
@@ -75,6 +75,10 @@ public:
     int32_t tag = 0;
 
 protected:
+    /// Returns the display if this view is attached to a window, nullptr otherwise.
+    /// Use this in draw() methods to safely get the display for rendering.
+    std::shared_ptr<Display> getDisplayIfAttached();
+
     bool _contains(Point point);
     bool _touch_checked = false;
 

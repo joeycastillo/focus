@@ -28,7 +28,7 @@
 
 void ProgressView::draw(int x, int y) {
     View::draw(x, y);
-    if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
+    if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, (int16_t)(this->frame.size.width * this->progress), this->frame.size.height, this->foregroundColor);
     }
 }

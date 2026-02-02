@@ -32,7 +32,7 @@ LabelView::LabelView(Rect rect, std::string text) : View(rect) {
 
 void LabelView::draw(int x, int y) {
     View::draw(x, y);
-    if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
+    if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         Rect layoutRect = MakeRect(this->frame.origin.x + x, this->frame.origin.y + y, this->frame.size.width, this->frame.size.height);
         display->drawText(layoutRect, this->foregroundColor, this->textScale, this->text.c_str());
     }

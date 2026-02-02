@@ -32,7 +32,7 @@ BitmapView::BitmapView(Rect rect, const unsigned char *bitmap) : View(rect) {
 
 void BitmapView::draw(int x, int y) {
     View::draw(x, y);
-    if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
+    if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         // const uint8_t *pSprite, int cx, int cy, int iPitch, int x, int y, uint8_t iColor
         int dx = 0;
         int dy = 0;

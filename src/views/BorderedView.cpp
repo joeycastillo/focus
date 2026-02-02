@@ -32,7 +32,7 @@ BorderedView::BorderedView(Rect rect) : View(rect) {
 
 void BorderedView::draw(int x, int y) {
     View::draw(x, y);
-    if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
+    if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         display->drawRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
     }
 }

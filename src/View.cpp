@@ -46,7 +46,7 @@ View::~View() {
 
 void View::draw(int x, int y) {
     // printf("Drawing view %p\n", this);
-    if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
+    if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         if (this->opaque) {
             display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->backgroundColor);
         }
@@ -252,6 +252,13 @@ void View::setWindow(std::shared_ptr<Window>window) {
     for(std::shared_ptr<View> subview : this->subviews) {
         subview->setWindow(window);
     }
+}
+
+std::shared_ptr<Display> View::getDisplayIfAttached() {
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        return window->getDisplay().lock();
+    }
+    return nullptr;
 }
 
 Rect View::getFrame() {

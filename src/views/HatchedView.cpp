@@ -33,7 +33,7 @@ HatchedView::HatchedView(Rect rect, int color) : View(rect) {
 
 void HatchedView::draw(int x, int y) {
     View::draw(x, y);
-    if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
+    if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         for(int16_t i = x; i < x + this->frame.size.width; i++) {
             for(int16_t j = y; j < y + this->frame.size.height; j++) {
                 if ((i + j) % 4) {
