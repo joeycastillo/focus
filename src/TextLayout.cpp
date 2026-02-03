@@ -23,6 +23,10 @@
  */
 
 #include "TextLayout.hpp"
+#include "utf8_decode.hpp"
+#include "utf8_parse.hpp"
+#include <cstring>
+#include <cstdlib>
 
 size_t TextLayout::bytesForCodepoint(UNICODE_CODEPOINT cp) {
     if (cp <= 0x7F) return 1;
@@ -132,4 +136,37 @@ int16_t TextLayout::calculateLineSpacing(GlyphProvider* glyphProvider) {
 
 int16_t TextLayout::calculateParagraphSpacing(GlyphProvider* glyphProvider) {
     return glyphProvider->getGlyphRowCount() / 3;
+}
+
+int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, GlyphProvider* glyphProvider) {
+    if (utf8String == nullptr || glyphProvider == nullptr || strlen(utf8String) == 0) {
+        return 0;
+    }
+
+    size_t len = utf8_codepoint_length((char*)utf8String);
+    if (len == 0) return 0;
+
+    UNICODE_CODEPOINT* codepoints = (UNICODE_CODEPOINT*)malloc(len * sizeof(UNICODE_CODEPOINT));
+    if (codepoints == nullptr) return 0;
+
+    utf8_parse((char*)utf8String, codepoints);
+
+    int16_t width = 0;
+    for (size_t i = 0; i < len; i++) {
+        UNICODE_CODEPOINT cp = codepoints[i];
+
+        // Skip control characters
+        if (cp < 0x20) continue;
+
+        unicode_info_t traits = getTraitsForCodepoint(cp);
+
+        // Only count non-combining characters
+        if (!(traits.is.nsm || traits.is.controlchar)) {
+            Rect metrics = glyphProvider->metricsForCodepoint(cp);
+            width += metrics.size.width * textSize;
+        }
+    }
+
+    free(codepoints);
+    return width;
 }

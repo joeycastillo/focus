@@ -77,4 +77,11 @@ public:
 
     /// Calculate default paragraph spacing based on glyph row count
     static int16_t calculateParagraphSpacing(GlyphProvider* glyphProvider);
+
+    /// Measure the width of a UTF-8 text string in pixels.
+    /// @param utf8String The UTF-8 encoded string to measure
+    /// @param textSize Text scaling factor (1 = normal)
+    /// @param glyphProvider Provider for glyph metrics
+    /// @return Width of the text in pixels
+    static int16_t measureTextWidth(const char* utf8String, uint8_t textSize, GlyphProvider* glyphProvider);
 };

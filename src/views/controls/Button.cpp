@@ -25,6 +25,7 @@
 #include "Button.hpp"
 #include "Window.hpp"
 #include "Display.hpp"
+#include "TextLayout.hpp"
 
 Button::Button(Rect rect, std::string text) : Control(rect) {
     this->text = text;
@@ -35,11 +36,14 @@ void Button::draw(int x, int y) {
         View::draw(x, y);
         if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
             int textHeight = 16;  // default fallback
+            int textWidth = 0;
             if (auto glyphProvider = display->getDefaultGlyphProvider()) {
                 textHeight = glyphProvider->getGlyphRowCount();
+                textWidth = TextLayout::measureTextWidth(this->text.c_str(), 1, glyphProvider.get());
             }
             int verticalOffset = (this->frame.size.height - textHeight) / 2;
-            Rect layoutRect = MakeRect(this->frame.origin.x + x, this->frame.origin.y + y + verticalOffset, this->frame.size.width, textHeight);
+            int horizontalOffset = (this->frame.size.width - textWidth) / 2;
+            Rect layoutRect = MakeRect(this->frame.origin.x + x + horizontalOffset, this->frame.origin.y + y + verticalOffset, this->frame.size.width - horizontalOffset, textHeight);
             if (this->focused) {
                 display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
                 display->drawText(layoutRect, this->backgroundColor, 1, this->text.c_str());
