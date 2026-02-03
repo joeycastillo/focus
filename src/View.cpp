@@ -375,6 +375,20 @@ std::weak_ptr<View> View::getViewForTouch(Point touch) {
     return this->shared_from_this();
 }
 
+Point View::convertPointFromWindow(Point windowPoint) {
+    int offsetX = frame.origin.x - bounds.origin.x;
+    int offsetY = frame.origin.y - bounds.origin.y;
+
+    std::shared_ptr<View> ancestor = superview.lock();
+    while (ancestor) {
+        offsetX += ancestor->frame.origin.x - ancestor->bounds.origin.x;
+        offsetY += ancestor->frame.origin.y - ancestor->bounds.origin.y;
+        ancestor = ancestor->superview.lock();
+    }
+
+    return MakePoint(windowPoint.x - offsetX, windowPoint.y - offsetY);
+}
+
 void View::setNeedsDisplayInRect(Rect rect) {
     std::shared_ptr<View> shared_this = this->shared_from_this();
     std::shared_ptr<View> superview(shared_this);

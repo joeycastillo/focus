@@ -66,6 +66,10 @@ public:
 
     std::weak_ptr<View> getViewForTouch(Point touch);
 
+    /// Converts a point from window coordinates to this view's local coordinate system,
+    /// accounting for the full superview chain (frame origins and bounds offsets).
+    Point convertPointFromWindow(Point windowPoint);
+
     std::string description();
 
     // this whole touchChecked thing feels hacky!
