@@ -124,6 +124,46 @@ void CanvasView::fillRect(int x, int y, int w, int h, int color) {
     }
 }
 
+void CanvasView::drawCircle(int cx, int cy, int r, int color) {
+    int x = r, y = 0;
+    int d = 1 - r;
+    while (x >= y) {
+        drawPixel(cx + x, cy + y, color);
+        drawPixel(cx - x, cy + y, color);
+        drawPixel(cx + x, cy - y, color);
+        drawPixel(cx - x, cy - y, color);
+        drawPixel(cx + y, cy + x, color);
+        drawPixel(cx - y, cy + x, color);
+        drawPixel(cx + y, cy - x, color);
+        drawPixel(cx - y, cy - x, color);
+        y++;
+        if (d <= 0) {
+            d += 2 * y + 1;
+        } else {
+            x--;
+            d += 2 * (y - x) + 1;
+        }
+    }
+}
+
+void CanvasView::fillCircle(int cx, int cy, int r, int color) {
+    int x = r, y = 0;
+    int d = 1 - r;
+    while (x >= y) {
+        fillRect(cx - x, cy + y, 2 * x + 1, 1, color);
+        fillRect(cx - x, cy - y, 2 * x + 1, 1, color);
+        fillRect(cx - y, cy + x, 2 * y + 1, 1, color);
+        fillRect(cx - y, cy - x, 2 * y + 1, 1, color);
+        y++;
+        if (d <= 0) {
+            d += 2 * y + 1;
+        } else {
+            x--;
+            d += 2 * (y - x) + 1;
+        }
+    }
+}
+
 void CanvasView::clear(int color) {
     std::memset(buffer.data(), (color == 0) ? 0x00 : 0xFF, buffer.size());
 }

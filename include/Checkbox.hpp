@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2025 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,36 +24,33 @@
 
 #pragma once
 
-#include "Focus.hpp"
-#include "Window.hpp"
+#include "Control.hpp"
+#include <memory>
 
-class HatchedView;
+class Font;
+class CanvasView;
 
-class Application : public std::enable_shared_from_this<Application> {
+class Checkbox : public Control {
 public:
-    Application(const std::shared_ptr<Window>& window);
+    Checkbox(Rect rect, std::string text);
+    void draw(int x, int y) override;
+    bool handleEvent(Event event) override;
+    void didBecomeFocused() override;
+    void didResignFocus() override;
 
-    virtual void setup() = 0;
-    void run();
-
-    void addTask(std::shared_ptr<Task> task);
-    void generateEvent(int32_t eventType, int32_t userInfo);
-    std::shared_ptr<Window> getWindow();
-
-    void setRootViewController(std::shared_ptr<ViewController> viewController);
-
-    void presentViewController(std::shared_ptr<ViewController> viewController);
-    void dismissViewController();
+    bool isChecked() const;
+    void setChecked(bool value);
+    void setText(std::string text);
+    void setFont(std::shared_ptr<Font> font);
+    std::shared_ptr<Font> getFont() const;
 
 protected:
-    std::vector<std::shared_ptr<Task>> tasks;
-    std::shared_ptr<Window> window;
-    std::shared_ptr<ViewController> rootViewController;
+    std::string text;
+    bool checked = false;
+    std::shared_ptr<Font> font;
 
-    struct ModalEntry {
-        std::shared_ptr<ViewController> viewController;
-        std::shared_ptr<HatchedView> dimmer;
-        std::weak_ptr<View> previousFocusedView;
-    };
-    std::vector<ModalEntry> modalStack;
+private:
+    std::shared_ptr<CanvasView> canvas;
+    bool canvasValid = false;
+    void renderCanvas();
 };

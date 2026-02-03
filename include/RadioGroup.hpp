@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2025 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,36 +24,24 @@
 
 #pragma once
 
-#include "Focus.hpp"
-#include "Window.hpp"
+#include <memory>
+#include <vector>
+#include <functional>
 
-class HatchedView;
+class RadioButton;
 
-class Application : public std::enable_shared_from_this<Application> {
+class RadioGroup {
 public:
-    Application(const std::shared_ptr<Window>& window);
+    void addButton(std::shared_ptr<RadioButton> button);
+    void removeButton(std::shared_ptr<RadioButton> button);
+    int getSelectedIndex() const;
+    std::shared_ptr<RadioButton> getSelectedButton() const;
+    void setSelectionChangedCallback(std::function<void(int)> callback);
 
-    virtual void setup() = 0;
-    void run();
+    /// Called by RadioButton when it becomes selected. Do not call directly.
+    void _buttonSelected(RadioButton* selected);
 
-    void addTask(std::shared_ptr<Task> task);
-    void generateEvent(int32_t eventType, int32_t userInfo);
-    std::shared_ptr<Window> getWindow();
-
-    void setRootViewController(std::shared_ptr<ViewController> viewController);
-
-    void presentViewController(std::shared_ptr<ViewController> viewController);
-    void dismissViewController();
-
-protected:
-    std::vector<std::shared_ptr<Task>> tasks;
-    std::shared_ptr<Window> window;
-    std::shared_ptr<ViewController> rootViewController;
-
-    struct ModalEntry {
-        std::shared_ptr<ViewController> viewController;
-        std::shared_ptr<HatchedView> dimmer;
-        std::weak_ptr<View> previousFocusedView;
-    };
-    std::vector<ModalEntry> modalStack;
+private:
+    std::vector<std::weak_ptr<RadioButton>> buttons;
+    std::function<void(int)> selectionChangedCallback;
 };

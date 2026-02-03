@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2025 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,36 +24,39 @@
 
 #pragma once
 
-#include "Focus.hpp"
-#include "Window.hpp"
+#include "View.hpp"
+#include <cstddef>
 
-class HatchedView;
+class CollectionViewDataSource;
 
-class Application : public std::enable_shared_from_this<Application> {
+enum class CollectionViewLayout {
+    VerticalList,
+    HorizontalList,
+    Grid
+};
+
+class CollectionView : public View {
 public:
-    Application(const std::shared_ptr<Window>& window);
+    CollectionView(Rect rect);
 
-    virtual void setup() = 0;
-    void run();
+    void setDataSource(CollectionViewDataSource* dataSource);
+    void setLayout(CollectionViewLayout layout);
+    void setItemSize(Size size);
 
-    void addTask(std::shared_ptr<Task> task);
-    void generateEvent(int32_t eventType, int32_t userInfo);
-    std::shared_ptr<Window> getWindow();
+    void reloadData();
+    void goToPage(size_t page);
 
-    void setRootViewController(std::shared_ptr<ViewController> viewController);
+    size_t getCurrentPage() const;
+    size_t getPageCount() const;
+    size_t getItemsPerPage() const;
 
-    void presentViewController(std::shared_ptr<ViewController> viewController);
-    void dismissViewController();
+private:
+    CollectionViewDataSource* dataSource = nullptr;
+    CollectionViewLayout layout = CollectionViewLayout::VerticalList;
+    Size itemSize = {0, 0};
+    size_t currentPage = 0;
 
-protected:
-    std::vector<std::shared_ptr<Task>> tasks;
-    std::shared_ptr<Window> window;
-    std::shared_ptr<ViewController> rootViewController;
-
-    struct ModalEntry {
-        std::shared_ptr<ViewController> viewController;
-        std::shared_ptr<HatchedView> dimmer;
-        std::weak_ptr<View> previousFocusedView;
-    };
-    std::vector<ModalEntry> modalStack;
+    size_t calculateItemsPerPage() const;
+    void loadPage(size_t page);
+    void removeCurrentPageViews();
 };

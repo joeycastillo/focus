@@ -24,6 +24,7 @@
 
 #include "Application.hpp"
 #include "ViewController.hpp"
+#include "HatchedView.hpp"
 #include "Task.hpp"
 #include <algorithm>
 
@@ -95,4 +96,47 @@ void Application::setRootViewController(std::shared_ptr<ViewController> viewCont
     this->rootViewController->viewWillAppear();
     this->window->addSubview(this->rootViewController->view);
     this->rootViewController->viewDidAppear();
+}
+
+void Application::presentViewController(std::shared_ptr<ViewController> viewController) {
+    ModalEntry entry;
+    entry.viewController = viewController;
+    entry.previousFocusedView = this->window->focusedView;
+
+    // Add a dimmer overlay
+    Size windowSize = this->window->getFrame().size;
+    int blackColor = this->window->getForegroundColor();
+    entry.dimmer = std::make_shared<HatchedView>(
+        MakeRect(0, 0, windowSize.width, windowSize.height), blackColor);
+    this->window->addSubview(entry.dimmer);
+
+    // Present the modal VC's view on top
+    viewController->viewWillAppear();
+    this->window->addSubview(viewController->view);
+    viewController->viewDidAppear();
+
+    this->modalStack.push_back(entry);
+}
+
+void Application::dismissViewController() {
+    if (this->modalStack.empty()) return;
+
+    ModalEntry entry = this->modalStack.back();
+    this->modalStack.pop_back();
+
+    // Remove modal VC's view
+    entry.viewController->viewWillDisappear();
+    this->window->removeSubview(entry.viewController->view);
+    entry.viewController->viewDidDisappear();
+
+    // Remove dimmer
+    this->window->removeSubview(entry.dimmer);
+
+    // Restore previous focus
+    if (auto previousView = entry.previousFocusedView.lock()) {
+        previousView->becomeFocused();
+    }
+
+    // Mark full window as needing display
+    this->window->setNeedsDisplay(true);
 }

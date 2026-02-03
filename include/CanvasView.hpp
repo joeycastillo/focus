@@ -44,6 +44,8 @@ public:
     void drawPixel(int x, int y, int color);
     void drawRect(int x, int y, int w, int h, int color);
     void fillRect(int x, int y, int w, int h, int color);
+    void drawCircle(int cx, int cy, int r, int color);
+    void fillCircle(int cx, int cy, int r, int color);
     void clear(int color);
 
     // Text rendering — renders text to the canvas buffer using the view's Font.

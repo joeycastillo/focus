@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2025 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,38 +22,19 @@
  * SOFTWARE.
  */
 
-#pragma once
+#include "PasswordField.hpp"
 
-#include "Focus.hpp"
-#include "Window.hpp"
+PasswordField::PasswordField(Rect rect) : TextField(rect) {
+}
 
-class HatchedView;
-
-class Application : public std::enable_shared_from_this<Application> {
-public:
-    Application(const std::shared_ptr<Window>& window);
-
-    virtual void setup() = 0;
-    void run();
-
-    void addTask(std::shared_ptr<Task> task);
-    void generateEvent(int32_t eventType, int32_t userInfo);
-    std::shared_ptr<Window> getWindow();
-
-    void setRootViewController(std::shared_ptr<ViewController> viewController);
-
-    void presentViewController(std::shared_ptr<ViewController> viewController);
-    void dismissViewController();
-
-protected:
-    std::vector<std::shared_ptr<Task>> tasks;
-    std::shared_ptr<Window> window;
-    std::shared_ptr<ViewController> rootViewController;
-
-    struct ModalEntry {
-        std::shared_ptr<ViewController> viewController;
-        std::shared_ptr<HatchedView> dimmer;
-        std::weak_ptr<View> previousFocusedView;
-    };
-    std::vector<ModalEntry> modalStack;
-};
+std::string PasswordField::getDisplayText() const {
+    // Return bullet characters for each character in the actual text
+    std::string masked;
+    for (size_t i = 0; i < this->text.length(); i++) {
+        // Skip continuation bytes of multi-byte UTF-8 characters
+        if ((this->text[i] & 0xC0) != 0x80) {
+            masked += '*';
+        }
+    }
+    return masked;
+}

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2025 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,36 +24,35 @@
 
 #pragma once
 
-#include "Focus.hpp"
-#include "Window.hpp"
+#include "View.hpp"
+#include <string>
 
-class HatchedView;
+class Font;
+class CanvasView;
 
-class Application : public std::enable_shared_from_this<Application> {
+class TabbedView : public View {
 public:
-    Application(const std::shared_ptr<Window>& window);
+    TabbedView(Rect rect);
 
-    virtual void setup() = 0;
-    void run();
+    void addTab(std::string label, std::shared_ptr<View> content);
+    void selectTab(size_t index);
+    size_t getSelectedTab() const;
+    void setFont(std::shared_ptr<Font> font);
 
-    void addTask(std::shared_ptr<Task> task);
-    void generateEvent(int32_t eventType, int32_t userInfo);
-    std::shared_ptr<Window> getWindow();
+    void draw(int x, int y) override;
+    bool handleEvent(Event event) override;
 
-    void setRootViewController(std::shared_ptr<ViewController> viewController);
-
-    void presentViewController(std::shared_ptr<ViewController> viewController);
-    void dismissViewController();
-
-protected:
-    std::vector<std::shared_ptr<Task>> tasks;
-    std::shared_ptr<Window> window;
-    std::shared_ptr<ViewController> rootViewController;
-
-    struct ModalEntry {
-        std::shared_ptr<ViewController> viewController;
-        std::shared_ptr<HatchedView> dimmer;
-        std::weak_ptr<View> previousFocusedView;
+private:
+    struct Tab {
+        std::string label;
+        std::shared_ptr<View> content;
     };
-    std::vector<ModalEntry> modalStack;
+    std::vector<Tab> tabs;
+    size_t selectedIndex = 0;
+    std::shared_ptr<Font> font;
+    std::shared_ptr<CanvasView> tabBarCanvas;
+    bool canvasValid = false;
+
+    void renderTabBar();
+    int getTabBarHeight() const;
 };

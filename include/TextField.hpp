@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2025 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,36 +24,44 @@
 
 #pragma once
 
-#include "Focus.hpp"
-#include "Window.hpp"
+#include "Control.hpp"
+#include <string>
+#include <functional>
 
-class HatchedView;
+class Font;
+class CanvasView;
 
-class Application : public std::enable_shared_from_this<Application> {
+class TextField : public Control {
 public:
-    Application(const std::shared_ptr<Window>& window);
+    TextField(Rect rect);
 
-    virtual void setup() = 0;
-    void run();
+    std::string getText() const;
+    void setText(std::string text);
+    void setPlaceholder(std::string placeholder);
+    void setMaxLength(size_t maxLength);
+    void setFont(std::shared_ptr<Font> font);
+    std::shared_ptr<Font> getFont() const;
+    void setTextChangedCallback(std::function<void(std::string)> callback);
 
-    void addTask(std::shared_ptr<Task> task);
-    void generateEvent(int32_t eventType, int32_t userInfo);
-    std::shared_ptr<Window> getWindow();
+    void draw(int x, int y) override;
+    bool handleEvent(Event event) override;
+    void didBecomeFocused() override;
+    void didResignFocus() override;
 
-    void setRootViewController(std::shared_ptr<ViewController> viewController);
-
-    void presentViewController(std::shared_ptr<ViewController> viewController);
-    void dismissViewController();
+    void insertText(const std::string& str);
+    void deleteBackward();
 
 protected:
-    std::vector<std::shared_ptr<Task>> tasks;
-    std::shared_ptr<Window> window;
-    std::shared_ptr<ViewController> rootViewController;
+    virtual std::string getDisplayText() const;
 
-    struct ModalEntry {
-        std::shared_ptr<ViewController> viewController;
-        std::shared_ptr<HatchedView> dimmer;
-        std::weak_ptr<View> previousFocusedView;
-    };
-    std::vector<ModalEntry> modalStack;
+    std::string text;
+    std::string placeholder;
+    size_t maxLength = 0; // 0 = no limit
+    std::shared_ptr<Font> font;
+    std::function<void(std::string)> textChangedCallback;
+
+private:
+    std::shared_ptr<CanvasView> canvas;
+    bool canvasValid = false;
+    void renderCanvas();
 };

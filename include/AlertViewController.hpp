@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2025 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,36 +24,35 @@
 
 #pragma once
 
-#include "Focus.hpp"
-#include "Window.hpp"
+#include "ViewController.hpp"
+#include <string>
+#include <vector>
+#include <functional>
 
-class HatchedView;
-
-class Application : public std::enable_shared_from_this<Application> {
+class AlertViewController : public ViewController {
 public:
-    Application(const std::shared_ptr<Window>& window);
+    using CompletionHandler = std::function<void(int buttonIndex)>;
 
-    virtual void setup() = 0;
-    void run();
-
-    void addTask(std::shared_ptr<Task> task);
-    void generateEvent(int32_t eventType, int32_t userInfo);
-    std::shared_ptr<Window> getWindow();
-
-    void setRootViewController(std::shared_ptr<ViewController> viewController);
-
-    void presentViewController(std::shared_ptr<ViewController> viewController);
-    void dismissViewController();
+    static std::shared_ptr<AlertViewController> create(
+        std::shared_ptr<Application> app,
+        std::string title,
+        std::string message,
+        std::vector<std::string> buttonLabels,
+        CompletionHandler completion = nullptr);
 
 protected:
-    std::vector<std::shared_ptr<Task>> tasks;
-    std::shared_ptr<Window> window;
-    std::shared_ptr<ViewController> rootViewController;
+    AlertViewController(std::shared_ptr<Application> app,
+                        std::string title,
+                        std::string message,
+                        std::vector<std::string> buttonLabels,
+                        CompletionHandler completion);
+    void createView() override;
 
-    struct ModalEntry {
-        std::shared_ptr<ViewController> viewController;
-        std::shared_ptr<HatchedView> dimmer;
-        std::weak_ptr<View> previousFocusedView;
-    };
-    std::vector<ModalEntry> modalStack;
+private:
+    std::string alertTitle;
+    std::string alertMessage;
+    std::vector<std::string> buttonLabels;
+    CompletionHandler completion;
+
+    void onButtonPressed(int index);
 };

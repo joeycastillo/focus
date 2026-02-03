@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2025 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,36 +24,49 @@
 
 #pragma once
 
-#include "Focus.hpp"
-#include "Window.hpp"
+#include "View.hpp"
+#include <string>
+#include <functional>
 
-class HatchedView;
+class Font;
+class CanvasView;
 
-class Application : public std::enable_shared_from_this<Application> {
+class KeyboardView : public View {
 public:
-    Application(const std::shared_ptr<Window>& window);
+    using KeyCallback = std::function<void(std::string key)>;
 
-    virtual void setup() = 0;
-    void run();
+    KeyboardView(Rect rect);
 
-    void addTask(std::shared_ptr<Task> task);
-    void generateEvent(int32_t eventType, int32_t userInfo);
-    std::shared_ptr<Window> getWindow();
+    void setKeyCallback(KeyCallback callback);
+    void setFont(std::shared_ptr<Font> font);
 
-    void setRootViewController(std::shared_ptr<ViewController> viewController);
+    void draw(int x, int y) override;
+    bool handleEvent(Event event) override;
 
-    void presentViewController(std::shared_ptr<ViewController> viewController);
-    void dismissViewController();
-
-protected:
-    std::vector<std::shared_ptr<Task>> tasks;
-    std::shared_ptr<Window> window;
-    std::shared_ptr<ViewController> rootViewController;
-
-    struct ModalEntry {
-        std::shared_ptr<ViewController> viewController;
-        std::shared_ptr<HatchedView> dimmer;
-        std::weak_ptr<View> previousFocusedView;
+private:
+    enum class KeyboardPage {
+        Lowercase,
+        Uppercase,
+        Symbols
     };
-    std::vector<ModalEntry> modalStack;
+
+    struct KeyRect {
+        Rect rect;
+        std::string label;
+        std::string value; // what gets sent via callback
+    };
+
+    KeyCallback keyCallback;
+    std::shared_ptr<Font> font;
+    std::shared_ptr<CanvasView> canvas;
+    bool canvasValid = false;
+    KeyboardPage currentPage = KeyboardPage::Lowercase;
+
+    void renderCanvas();
+    void buildKeyLayout(std::vector<KeyRect>& keys) const;
+    int getKeyForTouch(Point localPoint) const;
+
+    // Cached key layout for hit testing
+    mutable std::vector<KeyRect> cachedKeys;
+    mutable bool keysCached = false;
 };
