@@ -51,10 +51,6 @@ public:
     virtual int getBlackColor() = 0;
     virtual int getWhiteColor() = 0;
 
-    virtual void beginOffscreenDraw() {}
-    virtual void endOffscreenDraw() {}
-    virtual void swapBuffers() {}
-    virtual void copyToOffscreen() {}
     virtual void forceFullRefresh() {}
 
     virtual ~Display() {}
