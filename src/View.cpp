@@ -34,6 +34,8 @@ uint16_t View::defaultForegroundColor;
 View::View(Rect rect) {
     // printf("Creating view %p\n", this);
     this->frame = rect;
+    // bounds has origin at (0,0) in the view's local coordinate system
+    this->bounds = MakeRect(0, 0, rect.size.width, rect.size.height);
     this->foregroundColor = View::defaultForegroundColor;
     this->backgroundColor = View::defaultBackgroundColor;
     this->window.reset();
@@ -50,8 +52,12 @@ void View::draw(int x, int y) {
         if (this->opaque) {
             display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->backgroundColor);
         }
+        // Subviews are positioned relative to this view's bounds origin.
+        // We pass the accumulated offset so subviews draw at the correct screen position.
+        int subviewX = x + this->frame.origin.x - this->bounds.origin.x;
+        int subviewY = y + this->frame.origin.y - this->bounds.origin.y;
         for(std::shared_ptr<View> view : this->subviews) {
-            if (!view->hidden) view->draw(this->frame.origin.x, this->frame.origin.y);
+            if (!view->hidden) view->draw(subviewX, subviewY);
         }
     }
 }
@@ -271,7 +277,23 @@ void View::setFrame(Rect frame) {
         dirtyRect.size.width = std::max(this->frame.origin.x + this->frame.size.width, frame.origin.x + frame.size.width) - dirtyRect.origin.x;
         dirtyRect.size.height = std::max(this->frame.origin.y + this->frame.size.height, frame.origin.y + frame.size.height) - dirtyRect.origin.y;
         this->frame = frame;
+        // Keep bounds size in sync with frame size
+        this->bounds.size = frame.size;
         this->setNeedsDisplayInRect(dirtyRect);
+    } else {
+        this->frame = frame;
+        this->bounds.size = frame.size;
+    }
+}
+
+Rect View::getBounds() {
+    return this->bounds;
+}
+
+void View::setBounds(Rect bounds) {
+    this->bounds = bounds;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
     }
 }
 

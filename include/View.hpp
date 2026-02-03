@@ -50,6 +50,8 @@ public:
     virtual void setWindow(std::shared_ptr<Window> window);
     Rect getFrame();
     void setFrame(Rect rect);
+    Rect getBounds();
+    void setBounds(Rect rect);
     bool isOpaque();
     void setOpaque(bool value);
     bool isHidden();
@@ -88,6 +90,7 @@ protected:
     uint16_t backgroundColor;
     uint16_t foregroundColor;
     Rect frame = {};
+    Rect bounds = {};  // View's rectangle in its own coordinate system (origin typically 0,0)
     DirectionalAffinity affinity = DirectionalAffinityVertical;
     std::vector<std::shared_ptr<View>> subviews;
     std::map<int32_t, Action> actions;
