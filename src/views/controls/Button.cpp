@@ -51,16 +51,28 @@ void Button::draw(int x, int y) {
                 textWidth = TextLayout::measureTextWidth(this->text.c_str(), 1, glyphProvider.get());
             }
 
+            // Count explicit newlines in the text
+            int explicitNewlines = 0;
+            for (char c : this->text) {
+                if (c == '\n') explicitNewlines++;
+            }
+
             int horizontalOffset = 0;
             int totalTextHeight = lineHeight;
             int layoutWidth = this->frame.size.width;
 
-            if (textWidth <= this->frame.size.width) {
+            if (explicitNewlines > 0) {
+                // Text has explicit newlines - calculate height based on line count
+                int numLines = explicitNewlines + 1;
+                int lineSpacing = glyphProvider ? TextLayout::calculateLineSpacing(glyphProvider.get()) : 2;
+                totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
+                // Don't center horizontally for multi-line text
+            } else if (textWidth <= this->frame.size.width) {
                 // Single line: center horizontally
                 horizontalOffset = (this->frame.size.width - textWidth) / 2;
                 layoutWidth = this->frame.size.width - horizontalOffset;
             } else {
-                // Multi-line: calculate number of lines needed for vertical centering
+                // Multi-line due to wrapping: calculate number of lines needed for vertical centering
                 int numLines = (textWidth + this->frame.size.width - 1) / this->frame.size.width;
                 int lineSpacing = glyphProvider ? TextLayout::calculateLineSpacing(glyphProvider.get()) : 2;
                 totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
