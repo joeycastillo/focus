@@ -36,6 +36,7 @@ struct WordWrapResult {
     size_t bytesConsumed;        ///< Number of UTF-8 bytes consumed
     bool wrapped;                ///< True if line was wrapped (false if ended at newline or end of text)
     bool isParagraphBreak;       ///< True if line ended with a newline character
+    int16_t endCursorX;          ///< Horizontal position after processing (for continuing partial lines)
 };
 
 /// Shared text layout engine for consistent text measurement and pagination.
@@ -51,13 +52,15 @@ public:
     /// @param layoutWidth Width of the layout area in pixels
     /// @param textSize Text scaling factor (1 = normal)
     /// @param glyphProvider Provider for glyph metrics
+    /// @param initialCursorX Starting X position (for continuing partial lines across chunks)
     /// @return WordWrapResult containing wrap position and metadata
     static WordWrapResult measureLineWrap(
         UNICODE_CODEPOINT* codepoints,
         size_t len,
         int16_t layoutWidth,
         uint8_t textSize,
-        GlyphProvider* glyphProvider
+        GlyphProvider* glyphProvider,
+        int16_t initialCursorX = 0
     );
 
     /// Calculate line height for wrapped lines

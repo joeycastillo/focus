@@ -40,13 +40,15 @@ WordWrapResult TextLayout::measureLineWrap(
     size_t len,
     int16_t layoutWidth,
     uint8_t textSize,
-    GlyphProvider* glyphProvider
+    GlyphProvider* glyphProvider,
+    int16_t initialCursorX
 ) {
     WordWrapResult result = {
         .codepointsConsumed = -1,
         .bytesConsumed = 0,
         .wrapped = false,
-        .isParagraphBreak = false
+        .isParagraphBreak = false,
+        .endCursorX = initialCursorX
     };
 
     if (len == 0 || glyphProvider == nullptr) {
@@ -57,7 +59,7 @@ WordWrapResult TextLayout::measureLineWrap(
     size_t wrapCandidateBytes = 0;
     size_t bytePosition = 0;
     size_t position = 0;
-    int16_t cursorX = 0;
+    int16_t cursorX = initialCursorX;
 
     while (cursorX < layoutWidth) {
         // Check if we've consumed all input (no wrap needed)
@@ -66,6 +68,7 @@ WordWrapResult TextLayout::measureLineWrap(
             result.bytesConsumed = bytePosition;
             result.wrapped = false;
             result.isParagraphBreak = false;
+            result.endCursorX = cursorX;
             return result;
         }
 
@@ -77,6 +80,7 @@ WordWrapResult TextLayout::measureLineWrap(
             result.bytesConsumed = bytePosition + bytesForCodepoint(cp);
             result.wrapped = false;
             result.isParagraphBreak = true;
+            result.endCursorX = 0;  // Line complete, next line starts at 0
             return result;
         }
 
@@ -108,6 +112,7 @@ WordWrapResult TextLayout::measureLineWrap(
     // We exceeded the layout width - need to wrap
     result.wrapped = true;
     result.isParagraphBreak = false;
+    result.endCursorX = 0;  // Line complete, next line starts at 0
 
     if (wrapCandidate > 0) {
         // Wrap at the last good break point (after the space)
