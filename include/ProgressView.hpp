@@ -26,6 +26,9 @@
 
 #include "Focus.hpp"
 #include "View.hpp"
+#include <memory>
+
+class CanvasView;
 
 class ProgressView : public View {
 public:
@@ -35,4 +38,8 @@ public:
     float getProgress();
 protected:
     float progress = 0;
+private:
+    std::shared_ptr<CanvasView> canvas;
+    bool canvasValid = false;
+    void renderCanvas();
 };

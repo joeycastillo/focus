@@ -26,9 +26,13 @@
 
 #include "Focus.hpp"
 #include "View.hpp"
+#include <vector>
 
 class HatchedView : public View {
 public:
     HatchedView(Rect rect, int color);
     void draw(int x, int y) override;
+private:
+    int maskRowBytes;
+    std::vector<uint8_t> mask;
 };

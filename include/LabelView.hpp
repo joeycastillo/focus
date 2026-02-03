@@ -26,8 +26,10 @@
 
 #include "Focus.hpp"
 #include "View.hpp"
+#include <memory>
 
 class Font;
+class CanvasView;
 
 class LabelView : public View {
 public:
@@ -41,4 +43,8 @@ protected:
     std::string text;
     uint8_t textScale = 1;
     std::shared_ptr<Font> font;
+private:
+    std::shared_ptr<CanvasView> canvas;
+    bool canvasValid = false;
+    void renderCanvas();
 };

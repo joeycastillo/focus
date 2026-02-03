@@ -38,43 +38,9 @@ CanvasView::CanvasView(Rect rect)
 
 void CanvasView::draw(int x, int y) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        int screenX = x + this->frame.origin.x;
-        int screenY = y + this->frame.origin.y;
-        int w = this->frame.size.width;
-        int h = this->frame.size.height;
-        int blackColor = display->getBlackColor();
-        int whiteColor = display->getWhiteColor();
-
-        // Fill background white, then only draw black pixels.
-        // Text pages are ~90-95% white, so this avoids most drawPixel calls.
-        display->fillRect(screenX, screenY, w, h, whiteColor);
-
-        for (int py = 0; py < h; py++) {
-            int rowOffset = py * rowBytes;
-            for (int bx = 0; bx < rowBytes; bx++) {
-                uint8_t byte = buffer[rowOffset + bx];
-                // Skip fully white bytes (common for text pages)
-                if (byte == 0xFF) continue;
-                // Fully black byte: draw all pixels
-                if (byte == 0x00) {
-                    int px = bx * 8;
-                    int remaining = w - px;
-                    int count = remaining < 8 ? remaining : 8;
-                    for (int bit = 0; bit < count; bit++) {
-                        display->drawPixel(screenX + px + bit, screenY + py, blackColor);
-                    }
-                    continue;
-                }
-                // Mixed byte: only draw black bits (where bit is 0)
-                for (int bit = 0; bit < 8; bit++) {
-                    int px = bx * 8 + bit;
-                    if (px >= w) break;
-                    if (!(byte & (0x80 >> bit))) {
-                        display->drawPixel(screenX + px, screenY + py, blackColor);
-                    }
-                }
-            }
-        }
+        display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+                            this->frame.size.width, this->frame.size.height,
+                            this->buffer.data(), this->rowBytes);
     }
 
     // Draw subviews on top

@@ -29,17 +29,24 @@
 HatchedView::HatchedView(Rect rect, int color) : View(rect) {
     this->foregroundColor = color;
     this->opaque = false;
+
+    // Generate hatching mask: bit set where (x + y) % 4 != 0
+    this->maskRowBytes = (rect.size.width + 7) / 8;
+    this->mask.resize(this->maskRowBytes * rect.size.height, 0);
+    for (int my = 0; my < rect.size.height; my++) {
+        for (int mx = 0; mx < rect.size.width; mx++) {
+            if ((mx + my) % 4) {
+                this->mask[my * this->maskRowBytes + (mx >> 3)] |= (0x80 >> (mx & 7));
+            }
+        }
+    }
 }
 
 void HatchedView::draw(int x, int y) {
     View::draw(x, y);
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        for(int16_t i = x; i < x + this->frame.size.width; i++) {
-            for(int16_t j = y; j < y + this->frame.size.height; j++) {
-                if ((i + j) % 4) {
-                    display->drawPixel(i, j, this->foregroundColor);
-                }
-            }
-        }
+        display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
+                            this->frame.size.width, this->frame.size.height,
+                            this->foregroundColor, this->mask.data(), this->maskRowBytes);
     }
 }

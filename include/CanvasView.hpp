@@ -59,6 +59,10 @@ public:
     int getCanvasWidth() { return frame.size.width; }
     int getCanvasHeight() { return frame.size.height; }
 
+    // Buffer access — for views that use a CanvasView internally and blit directly
+    const uint8_t* getBufferData() const { return buffer.data(); }
+    int getRowBytes() const { return rowBytes; }
+
 private:
     int rowBytes;                 // bytes per row = (width + 7) / 8
     std::vector<uint8_t> buffer;  // 1 bit per pixel, packed MSB-first

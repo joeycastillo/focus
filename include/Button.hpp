@@ -25,8 +25,10 @@
 #pragma once
 
 #include "Control.hpp"
+#include <memory>
 
 class Font;
+class CanvasView;
 
 class Button : public Control {
 public:
@@ -34,7 +36,14 @@ public:
     void draw(int x, int y) override;
     void setFont(std::shared_ptr<Font> font);
     std::shared_ptr<Font> getFont() const;
+
+    void didBecomeFocused() override;
+    void didResignFocus() override;
 protected:
     std::string text;
     std::shared_ptr<Font> font;
+private:
+    std::shared_ptr<CanvasView> canvas;
+    bool canvasValid = false;
+    void renderCanvas();
 };

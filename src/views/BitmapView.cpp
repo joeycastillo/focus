@@ -33,21 +33,9 @@ BitmapView::BitmapView(Rect rect, const unsigned char *bitmap) : View(rect) {
 void BitmapView::draw(int x, int y) {
     View::draw(x, y);
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        // const uint8_t *pSprite, int cx, int cy, int iPitch, int x, int y, uint8_t iColor
-        int dx = 0;
-        int dy = 0;
-        for(int i = 0; i < this->frame.size.width * this->frame.size.height / 8; i++) {
-            unsigned char b = this->bitmap[i];
-            unsigned char mask = 0x80;
-            while(mask) {
-                if (!!(b & mask)) display->drawPixel(this->frame.origin.x + dx, this->frame.origin.y + dy, this->foregroundColor);
-                dx++;
-                if (dx >= this->frame.size.width) {
-                    dx = 0;
-                    dy++;
-                }
-                mask >>= 1;
-            }
-        }
+        int bitmapRowBytes = (this->frame.size.width + 7) / 8;
+        display->blitMasked(this->frame.origin.x + x, this->frame.origin.y + y,
+                            this->frame.size.width, this->frame.size.height,
+                            this->foregroundColor, this->bitmap, bitmapRowBytes);
     }
 }

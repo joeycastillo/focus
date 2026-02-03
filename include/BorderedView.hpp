@@ -26,9 +26,16 @@
 
 #include "Focus.hpp"
 #include "View.hpp"
+#include <memory>
+
+class CanvasView;
 
 class BorderedView : public View {
 public:
     BorderedView(Rect rect);
     void draw(int x, int y) override;
+private:
+    std::shared_ptr<CanvasView> canvas;
+    bool canvasValid = false;
+    void renderCanvas();
 };

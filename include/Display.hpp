@@ -24,29 +24,21 @@
 
 #pragma once
 
-#include "Focus.hpp"
-#include "utf8_decode.hpp"
-#include "GlyphProvider.hpp"
-#include "unicodetraits.hpp"
+#include <stdint.h>
 
 class Display {
 public:
-    virtual void drawPixel(int x, int y, int color) = 0;
-
-    // virtual void drawLine(int x1, int y1, int x2, int y2, int color) = 0;
-
-    virtual void drawRect(int x, int y, int w, int h, int color) = 0;
     virtual void fillRect(int x, int y, int w, int h, int color) = 0;
-    // virtual void drawRoundRect(int x, int y, int w, int h, int r, int color);
-    // virtual void fillRoundRect(int x, int y, int w, int h, int r, int color);
-    // virtual void drawCircle(int x, int y, int r, int color);
-    // virtual void fillCircle(int x, int y, int r, int color);
-    // virtual void drawEllipse(int x, int y, int rx, int ry, int color);
-    // virtual void fillEllipse(int x, int y, int rx, int ry, int color);
 
-    // virtual void fillScreen(int color);
+    /// Blit a 1bpp MSB-first buffer to the display, overwriting all pixels in the region.
+    /// White bits (1) write white; black bits (0) write black.
+    virtual void blitOpaque(int x, int y, int w, int h,
+                            const uint8_t* data, int rowBytes) = 0;
 
-    int drawText(Rect layoutRect, int color, int text_size, const char * utf8String, GlyphProvider *glyphProvider = NULL);
+    /// Write a solid color to the display only where mask bits are set (1).
+    /// Pixels where mask bit is 0 are left unchanged.
+    virtual void blitMasked(int x, int y, int w, int h, int color,
+                            const uint8_t* mask, int rowBytes) = 0;
 
     virtual int getBlackColor() = 0;
     virtual int getWhiteColor() = 0;
@@ -54,39 +46,4 @@ public:
     virtual void forceFullRefresh() {}
 
     virtual ~Display() {}
-
-    void setDefaultGlyphProvider(std::shared_ptr<GlyphProvider> glyphProvider);
-    std::shared_ptr<GlyphProvider> getDefaultGlyphProvider() const { return defaultGlyphProvider; }
-protected:
-private:
-    std::shared_ptr<GlyphProvider> defaultGlyphProvider = NULL;
-    int8_t direction = 1;
-    bool hasLastGlyph;
-    Rect layoutRect;
-    Point cursor;
-    Point lastGlyphPosition;
-    uint16_t textColor = 0;
-    uint16_t textSize = 1;
-    int16_t lineSpacing = 0;
-    int16_t paragraphSpacing = 0;
-    uint8_t glyphRowCount = 16;
-
-    /*!
-     @brief Writes a series of glyphs in the provided rect, wrapping as appropriate, advancing the line for newlines, and automatically changing the layout mode to RTL or LTR as appropriate.
-     @param codepoints An array of codepoints that you wish to draw
-     @param len The number of codepoints in the array
-     @param glyphProvider The glyph provider offering glyph metrics and data for the string drawing operation.
-     @returns the number of codepoints written
-    */
-    size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
-
-    /*!
-     @brief Writes a glyph at the current internal cursor position
-     @param codepoint The codepoint you wish to draw. Not UTF-8. Not UTF-16. The codepoint itself.
-     @param glyphProvider The glyph provider offering glyph metrics and data for the string drawing operation.
-     @returns the number 1 if a codepoint was written, 0 if one was not.
-    */
-    size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
-
-    int drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph);
 };

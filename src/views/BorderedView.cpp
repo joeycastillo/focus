@@ -23,6 +23,7 @@
  */
 
 #include "BorderedView.hpp"
+#include "CanvasView.hpp"
 #include "Window.hpp"
 #include "Display.hpp"
 
@@ -30,9 +31,29 @@ BorderedView::BorderedView(Rect rect) : View(rect) {
     this->opaque = true;
 }
 
+void BorderedView::renderCanvas() {
+    if (!this->canvas) {
+        this->canvas = std::make_shared<CanvasView>(
+            MakeRect(0, 0, this->frame.size.width, this->frame.size.height));
+    }
+    this->canvas->clear(this->backgroundColor);
+    this->canvas->drawRect(0, 0, this->frame.size.width, this->frame.size.height, this->foregroundColor);
+    this->canvasValid = true;
+}
+
 void BorderedView::draw(int x, int y) {
-    View::draw(x, y);
-    if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        display->drawRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
+    if (!this->canvasValid) this->renderCanvas();
+    if (this->canvas) {
+        if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
+            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+                                this->frame.size.width, this->frame.size.height,
+                                this->canvas->getBufferData(), this->canvas->getRowBytes());
+        }
+    }
+    // Draw subviews on top
+    int subviewX = x + this->frame.origin.x - this->bounds.origin.x;
+    int subviewY = y + this->frame.origin.y - this->bounds.origin.y;
+    for (std::shared_ptr<View> view : this->subviews) {
+        if (!view->isHidden()) view->draw(subviewX, subviewY);
     }
 }

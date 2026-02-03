@@ -23,6 +23,7 @@
  */
 
 #include "LabelView.hpp"
+#include "CanvasView.hpp"
 #include "Window.hpp"
 #include "Display.hpp"
 #include "Font.hpp"
@@ -31,18 +32,51 @@ LabelView::LabelView(Rect rect, std::string text) : View(rect) {
     this->text = text;
 }
 
+void LabelView::renderCanvas() {
+    if (!this->canvas) {
+        this->canvas = std::make_shared<CanvasView>(
+            MakeRect(0, 0, this->frame.size.width, this->frame.size.height));
+    }
+    if (this->font) {
+        this->canvas->setFont(this->font);
+    }
+    Rect layoutRect = MakeRect(0, 0, this->frame.size.width, this->frame.size.height);
+    if (this->opaque) {
+        // Opaque: render full background + text, blit everything
+        this->canvas->clear(this->backgroundColor);
+        this->canvas->drawText(layoutRect, this->foregroundColor,
+                               this->textScale, this->text.c_str());
+    } else {
+        // Non-opaque: render text as a mask (bits set where glyphs are)
+        this->canvas->clear(0);
+        this->canvas->drawText(layoutRect, 1,
+                               this->textScale, this->text.c_str());
+    }
+    this->canvasValid = true;
+}
+
 void LabelView::draw(int x, int y) {
+    if (!this->canvasValid) this->renderCanvas();
     View::draw(x, y);
-    if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        Rect layoutRect = MakeRect(this->frame.origin.x + x, this->frame.origin.y + y, this->frame.size.width, this->frame.size.height);
-        // Use view's font if set, otherwise pass nullptr to use display's default
-        GlyphProvider* provider = this->font ? this->font->getGlyphProvider() : nullptr;
-        display->drawText(layoutRect, this->foregroundColor, this->textScale, this->text.c_str(), provider);
+    if (this->canvas) {
+        if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
+            if (this->opaque) {
+                display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+                                    this->frame.size.width, this->frame.size.height,
+                                    this->canvas->getBufferData(), this->canvas->getRowBytes());
+            } else {
+                display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
+                                    this->frame.size.width, this->frame.size.height,
+                                    this->foregroundColor,
+                                    this->canvas->getBufferData(), this->canvas->getRowBytes());
+            }
+        }
     }
 }
 
 void LabelView::setText(std::string text) {
     this->text = text;
+    this->canvasValid = false;
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);
     }
@@ -50,10 +84,12 @@ void LabelView::setText(std::string text) {
 
 void LabelView::setTextScale(uint8_t scale) {
     this->textScale = scale;
+    this->canvasValid = false;
 }
 
 void LabelView::setFont(std::shared_ptr<Font> font) {
     this->font = font;
+    this->canvasValid = false;
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);
     }

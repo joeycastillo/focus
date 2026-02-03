@@ -23,18 +23,38 @@
  */
 
 #include "ProgressView.hpp"
+#include "CanvasView.hpp"
 #include "Window.hpp"
 #include "Display.hpp"
 
+void ProgressView::renderCanvas() {
+    if (!this->canvas) {
+        this->canvas = std::make_shared<CanvasView>(
+            MakeRect(0, 0, this->frame.size.width, this->frame.size.height));
+    }
+    this->canvas->clear(this->backgroundColor);
+    int filledWidth = (int)(this->frame.size.width * this->progress);
+    if (filledWidth > 0) {
+        this->canvas->fillRect(0, 0, filledWidth, this->frame.size.height, this->foregroundColor);
+    }
+    this->canvasValid = true;
+}
+
 void ProgressView::draw(int x, int y) {
+    if (!this->canvasValid) this->renderCanvas();
     View::draw(x, y);
-    if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, (int16_t)(this->frame.size.width * this->progress), this->frame.size.height, this->foregroundColor);
+    if (this->canvas) {
+        if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
+            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+                                this->frame.size.width, this->frame.size.height,
+                                this->canvas->getBufferData(), this->canvas->getRowBytes());
+        }
     }
 }
 
 void ProgressView::setProgress(float value) {
     this->progress = value;
+    this->canvasValid = false;
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);
     }
