@@ -24,11 +24,15 @@
 
 #include "CanvasView.hpp"
 #include "Display.hpp"
+#include "TextLayout.hpp"
+#include "utf8_parse.hpp"
 #include <algorithm>
+#include <cstring>
 
 CanvasView::CanvasView(Rect rect)
     : View(rect),
-      buffer(rect.size.width * rect.size.height, 255) {
+      rowBytes((rect.size.width + 7) / 8),
+      buffer(((rect.size.width + 7) / 8) * rect.size.height, 0xFF) {
     this->opaque = true;
 }
 
@@ -41,11 +45,34 @@ void CanvasView::draw(int x, int y) {
         int blackColor = display->getBlackColor();
         int whiteColor = display->getWhiteColor();
 
+        // Fill background white, then only draw black pixels.
+        // Text pages are ~90-95% white, so this avoids most drawPixel calls.
+        display->fillRect(screenX, screenY, w, h, whiteColor);
+
         for (int py = 0; py < h; py++) {
-            for (int px = 0; px < w; px++) {
-                uint8_t val = buffer[py * w + px];
-                display->drawPixel(screenX + px, screenY + py,
-                                   val == 0 ? blackColor : whiteColor);
+            int rowOffset = py * rowBytes;
+            for (int bx = 0; bx < rowBytes; bx++) {
+                uint8_t byte = buffer[rowOffset + bx];
+                // Skip fully white bytes (common for text pages)
+                if (byte == 0xFF) continue;
+                // Fully black byte: draw all pixels
+                if (byte == 0x00) {
+                    int px = bx * 8;
+                    int remaining = w - px;
+                    int count = remaining < 8 ? remaining : 8;
+                    for (int bit = 0; bit < count; bit++) {
+                        display->drawPixel(screenX + px + bit, screenY + py, blackColor);
+                    }
+                    continue;
+                }
+                // Mixed byte: only draw black bits (where bit is 0)
+                for (int bit = 0; bit < 8; bit++) {
+                    int px = bx * 8 + bit;
+                    if (px >= w) break;
+                    if (!(byte & (0x80 >> bit))) {
+                        display->drawPixel(screenX + px, screenY + py, blackColor);
+                    }
+                }
             }
         }
     }
@@ -60,7 +87,13 @@ void CanvasView::draw(int x, int y) {
 
 void CanvasView::drawPixel(int x, int y, int color) {
     if (x < 0 || x >= frame.size.width || y < 0 || y >= frame.size.height) return;
-    buffer[y * frame.size.width + x] = (color == 0) ? 0 : 255;
+    int idx = y * rowBytes + (x >> 3);
+    uint8_t mask = 0x80 >> (x & 7);
+    if (color == 0) {
+        buffer[idx] &= ~mask;  // black: clear bit
+    } else {
+        buffer[idx] |= mask;   // white: set bit
+    }
 }
 
 void CanvasView::drawRect(int x, int y, int w, int h, int color) {
@@ -75,17 +108,201 @@ void CanvasView::drawRect(int x, int y, int w, int h, int color) {
 }
 
 void CanvasView::fillRect(int x, int y, int w, int h, int color) {
-    uint8_t val = (color == 0) ? 0 : 255;
-    for (int j = y; j < y + h; j++) {
-        if (j < 0 || j >= frame.size.height) continue;
-        for (int i = x; i < x + w; i++) {
-            if (i < 0 || i >= frame.size.width) continue;
-            buffer[j * frame.size.width + i] = val;
+    // Clamp to canvas bounds
+    int x0 = std::max(0, x);
+    int y0 = std::max(0, y);
+    int x1 = std::min((int)frame.size.width, x + w);
+    int y1 = std::min((int)frame.size.height, y + h);
+    if (x0 >= x1 || y0 >= y1) return;
+
+    uint8_t fillByte = (color == 0) ? 0x00 : 0xFF;
+    int firstByte = x0 >> 3;
+    int lastByte = (x1 - 1) >> 3;
+    int startBit = x0 & 7;
+    int endBit = (x1 - 1) & 7;
+
+    for (int row = y0; row < y1; row++) {
+        int rowOffset = row * rowBytes;
+
+        if (firstByte == lastByte) {
+            // All bits within a single byte
+            uint8_t mask = (0xFF >> startBit) & (0xFF << (7 - endBit));
+            if (color == 0) {
+                buffer[rowOffset + firstByte] &= ~mask;
+            } else {
+                buffer[rowOffset + firstByte] |= mask;
+            }
+        } else {
+            // First partial byte
+            if (startBit > 0) {
+                uint8_t mask = 0xFF >> startBit;
+                if (color == 0) {
+                    buffer[rowOffset + firstByte] &= ~mask;
+                } else {
+                    buffer[rowOffset + firstByte] |= mask;
+                }
+            }
+            // Middle full bytes
+            int midStart = firstByte + (startBit > 0 ? 1 : 0);
+            if (lastByte > midStart) {
+                std::memset(&buffer[rowOffset + midStart], fillByte, lastByte - midStart);
+            }
+            // Last partial byte
+            uint8_t endMask = 0xFF << (7 - endBit);
+            if (color == 0) {
+                buffer[rowOffset + lastByte] &= ~endMask;
+            } else {
+                buffer[rowOffset + lastByte] |= endMask;
+            }
         }
     }
 }
 
 void CanvasView::clear(int color) {
-    uint8_t val = (color == 0) ? 0 : 255;
-    std::fill(buffer.begin(), buffer.end(), val);
+    std::memset(buffer.data(), (color == 0) ? 0x00 : 0xFF, buffer.size());
+}
+
+// --- Font and text rendering ---
+
+void CanvasView::setFont(std::shared_ptr<Font> font) {
+    this->font = font;
+}
+
+int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *utf8String) {
+    GlyphProvider *glyphProvider = nullptr;
+    if (this->font) {
+        glyphProvider = this->font->getGlyphProvider();
+    } else {
+        auto sys = Font::systemFont();
+        if (sys) glyphProvider = sys->getGlyphProvider();
+    }
+    if (glyphProvider == nullptr) return 0;
+    if (strlen(utf8String) == 0) return 0;
+
+    size_t len = utf8_codepoint_length((char *)utf8String);
+
+    this->textSize = text_size;
+    this->textColor = color;
+    this->glyphRowCount = glyphProvider->getGlyphRowCount();
+    this->lineSpacing = TextLayout::calculateLineSpacing(glyphProvider);
+    this->paragraphSpacing = TextLayout::calculateParagraphSpacing(glyphProvider);
+    this->textLayoutRect = layoutRect;
+    this->direction = 1;
+    this->hasLastGlyph = false;
+
+    UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
+    if (!codepoints) return 0;
+
+    utf8_parse((char *)utf8String, codepoints);
+    size_t retVal = this->writeCodepoints(codepoints, len, glyphProvider);
+    free(codepoints);
+
+    return retVal;
+}
+
+size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider) {
+    size_t retVal = 0;
+    size_t pos = 0;
+    this->cursor = this->textLayoutRect.origin;
+
+    while (pos < len) {
+        WordWrapResult result = TextLayout::measureLineWrap(
+            codepoints + pos,
+            len - pos,
+            this->textLayoutRect.size.width,
+            this->textSize,
+            glyphProvider
+        );
+
+        int32_t numGlyphsToDraw;
+        if (result.codepointsConsumed < 0) {
+            numGlyphsToDraw = (int32_t)(len - pos);
+        } else {
+            numGlyphsToDraw = result.codepointsConsumed;
+        }
+
+        for (size_t i = pos; i < pos + numGlyphsToDraw; i++) {
+            retVal += this->writeCodepoint(codepoints[i], glyphProvider);
+        }
+        pos += numGlyphsToDraw;
+
+        if (result.wrapped) {
+            this->cursor.y += TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
+            if (this->direction == 1) {
+                this->cursor.x = this->textLayoutRect.origin.x;
+            } else {
+                this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
+            }
+        }
+
+        if (this->cursor.y >= (this->textLayoutRect.origin.y + this->textLayoutRect.size.height)) break;
+    }
+
+    return retVal;
+}
+
+size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider) {
+    if (codepoint == '\n' || codepoint == '\r') {
+        this->cursor.y += TextLayout::getParagraphHeight(glyphProvider, this->textSize, this->paragraphSpacing);
+        if (this->direction == 1) {
+            this->cursor.x = this->textLayoutRect.origin.x;
+        } else {
+            this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
+        }
+        return 1;
+    }
+    if (codepoint < 0x20) return 1;
+
+    unicode_info_t traits = getTraitsForCodepoint(codepoint);
+    Rect metrics = glyphProvider->metricsForCodepoint(codepoint);
+
+    if (this->direction == 1 && traits.is.rtl) {
+        direction = -1;
+        uint8_t width = metrics.size.width;
+        this->hasLastGlyph = false;
+        this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width - width;
+    } else if (this->direction == -1 && traits.is.ltr) {
+        direction = 1;
+        this->hasLastGlyph = false;
+        this->cursor.x = this->textLayoutRect.origin.x;
+    }
+
+    uint8_t *glyph = glyphProvider->glyphForCodepoint(codepoint);
+    if (traits.is.nsm && this->hasLastGlyph) {
+        drawGlyph(this->lastGlyphPosition.x, this->lastGlyphPosition.y, metrics, traits, glyph);
+    } else {
+        this->hasLastGlyph = true;
+        this->lastGlyphPosition = this->cursor;
+        int advance = drawGlyph(this->cursor.x, this->cursor.y, metrics, traits, glyph);
+        this->cursor.x += advance * this->direction;
+    }
+
+    return 1;
+}
+
+int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph) {
+    uint8_t width = glyphRect.size.width;
+    uint8_t bytesPerRow = (width + 7) / 8;
+    bool mirrored = (this->direction == -1) && traits.is.mirrored;
+
+    for (int row = 0; row < this->glyphRowCount; row++) {
+        for (int byteIdx = 0; byteIdx < bytesPerRow; byteIdx++) {
+            uint8_t line = glyph[row * bytesPerRow + byteIdx];
+            int xOffset = byteIdx * 8;
+
+            for (int8_t j = 7; j >= 0; j--, line >>= 1) {
+                if (line & 1) {
+                    int pixelX = mirrored ? (width - 1 - (xOffset + j)) : (xOffset + j);
+                    if (this->textSize == 1) {
+                        drawPixel(x + pixelX, y + row, this->textColor);
+                    } else {
+                        fillRect(x + pixelX * this->textSize, y + row * this->textSize,
+                                 this->textSize, this->textSize, this->textColor);
+                    }
+                }
+            }
+        }
+    }
+
+    return width * this->textSize;
 }

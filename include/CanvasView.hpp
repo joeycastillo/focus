@@ -25,10 +25,14 @@
 #pragma once
 
 #include "View.hpp"
+#include "Font.hpp"
+#include "GlyphProvider.hpp"
+#include "unicodetraits.hpp"
 #include <vector>
+#include <memory>
 
-/// A view that owns its own pixel buffer for programmatic drawing.
-/// Content is drawn to the internal buffer via drawPixel/drawRect/fillRect,
+/// A view that owns its own 1bpp pixel buffer for programmatic drawing.
+/// Content is drawn to the internal buffer via drawPixel/drawRect/fillRect/drawText,
 /// then blitted to the Display during the normal view draw cycle.
 class CanvasView : public View {
 public:
@@ -42,6 +46,13 @@ public:
     void fillRect(int x, int y, int w, int h, int color);
     void clear(int color);
 
+    // Text rendering — renders text to the canvas buffer using the view's Font.
+    // layoutRect is in canvas-local coordinates.
+    int drawText(Rect layoutRect, int color, int textSize, const char *utf8String);
+
+    // Font property — if null, drawText uses Font::systemFont().
+    void setFont(std::shared_ptr<Font> font);
+
     int getBlackColor() { return 0; }
     int getWhiteColor() { return 1; }
 
@@ -49,5 +60,25 @@ public:
     int getCanvasHeight() { return frame.size.height; }
 
 private:
-    std::vector<uint8_t> buffer;  // 1 byte per pixel: 0 = black, 255 = white
+    int rowBytes;                 // bytes per row = (width + 7) / 8
+    std::vector<uint8_t> buffer;  // 1 bit per pixel, packed MSB-first
+
+    std::shared_ptr<Font> font;
+
+    // Text rendering state (used during drawText)
+    Point cursor = {};
+    Rect textLayoutRect = {};
+    int textSize = 1;
+    int textColor = 0;
+    int lineSpacing = 0;
+    int paragraphSpacing = 0;
+    int direction = 1;            // 1=LTR, -1=RTL
+    int glyphRowCount = 0;
+    Point lastGlyphPosition = {};
+    bool hasLastGlyph = false;
+
+    // Text rendering internals (mirror Display's pipeline)
+    size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
+    size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
+    int drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph);
 };
