@@ -27,6 +27,7 @@
 #include "Display.hpp"
 #include "TextLayout.hpp"
 #include "Font.hpp"
+#include <vector>
 
 Button::Button(Rect rect, std::string text) : Control(rect) {
     this->text = text;
@@ -45,67 +46,48 @@ void Button::draw(int x, int y) {
             }
 
             int lineHeight = 16;  // default fallback
-            int textWidth = 0;
             if (glyphProvider) {
                 lineHeight = glyphProvider->getGlyphRowCount();
-                textWidth = TextLayout::measureTextWidth(this->text.c_str(), 1, glyphProvider.get());
             }
 
-            // Count explicit newlines and find the widest line
-            int explicitNewlines = 0;
-            int maxLineWidth = 0;
-            if (glyphProvider) {
-                size_t lineStart = 0;
-                for (size_t i = 0; i <= this->text.length(); i++) {
-                    if (i == this->text.length() || this->text[i] == '\n') {
-                        if (i > lineStart) {
-                            std::string line = this->text.substr(lineStart, i - lineStart);
-                            int lineWidth = TextLayout::measureTextWidth(line.c_str(), 1, glyphProvider.get());
-                            if (lineWidth > maxLineWidth) maxLineWidth = lineWidth;
-                        }
-                        if (i < this->text.length() && this->text[i] == '\n') {
-                            explicitNewlines++;
-                        }
-                        lineStart = i + 1;
-                    }
+            // Split text into lines and measure each
+            std::vector<std::string> lines;
+            std::vector<int> lineWidths;
+            size_t lineStart = 0;
+            for (size_t i = 0; i <= this->text.length(); i++) {
+                if (i == this->text.length() || this->text[i] == '\n') {
+                    std::string line = (i > lineStart) ? this->text.substr(lineStart, i - lineStart) : "";
+                    lines.push_back(line);
+                    int lineWidth = glyphProvider ? TextLayout::measureTextWidth(line.c_str(), 1, glyphProvider.get()) : 0;
+                    lineWidths.push_back(lineWidth);
+                    lineStart = i + 1;
                 }
             }
 
-            int horizontalOffset = 0;
-            int totalTextHeight = lineHeight;
-            int layoutWidth = this->frame.size.width;
-
-            if (explicitNewlines > 0) {
-                // Text has explicit newlines - calculate height based on line count
-                int numLines = explicitNewlines + 1;
-                int lineSpacing = glyphProvider ? TextLayout::calculateLineSpacing(glyphProvider.get()) : 2;
-                totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
-                // Center horizontally based on widest line
-                if (maxLineWidth < this->frame.size.width) {
-                    horizontalOffset = (this->frame.size.width - maxLineWidth) / 2;
-                    layoutWidth = this->frame.size.width - horizontalOffset;
-                }
-            } else if (textWidth <= this->frame.size.width) {
-                // Single line: center horizontally
-                horizontalOffset = (this->frame.size.width - textWidth) / 2;
-                layoutWidth = this->frame.size.width - horizontalOffset;
-            } else {
-                // Multi-line due to wrapping: calculate number of lines needed for vertical centering
-                int numLines = (textWidth + this->frame.size.width - 1) / this->frame.size.width;
-                int lineSpacing = glyphProvider ? TextLayout::calculateLineSpacing(glyphProvider.get()) : 2;
-                totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
-            }
-
+            int lineSpacing = glyphProvider ? TextLayout::calculateLineSpacing(glyphProvider.get()) : 2;
+            int totalTextHeight = lines.size() * lineHeight + (lines.size() - 1) * lineSpacing;
             int verticalOffset = (this->frame.size.height - totalTextHeight) / 2;
-            Rect layoutRect = MakeRect(this->frame.origin.x + x + horizontalOffset, this->frame.origin.y + y + verticalOffset, layoutWidth, totalTextHeight);
 
+            // Draw button background/border
             GlyphProvider* providerPtr = glyphProvider.get();
+            uint16_t textColor;
             if (this->focused) {
                 display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
-                display->drawText(layoutRect, this->backgroundColor, 1, this->text.c_str(), providerPtr);
+                textColor = this->backgroundColor;
             } else {
                 display->drawRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
-                display->drawText(layoutRect, this->foregroundColor, 1, this->text.c_str(), providerPtr);
+                textColor = this->foregroundColor;
+            }
+
+            // Draw each line centered individually
+            int lineY = this->frame.origin.y + y + verticalOffset;
+            for (size_t i = 0; i < lines.size(); i++) {
+                int horizontalOffset = (this->frame.size.width - lineWidths[i]) / 2;
+                if (horizontalOffset < 0) horizontalOffset = 0;
+                int availableWidth = this->frame.size.width - horizontalOffset;
+                Rect lineRect = MakeRect(this->frame.origin.x + x + horizontalOffset, lineY, availableWidth, lineHeight);
+                display->drawText(lineRect, textColor, 1, lines[i].c_str(), providerPtr);
+                lineY += lineHeight + lineSpacing;
             }
         }
     }
