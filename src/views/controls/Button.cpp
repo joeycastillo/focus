@@ -35,15 +35,32 @@ void Button::draw(int x, int y) {
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         View::draw(x, y);
         if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
-            int textHeight = 16;  // default fallback
+            int lineHeight = 16;  // default fallback
             int textWidth = 0;
-            if (auto glyphProvider = display->getDefaultGlyphProvider()) {
-                textHeight = glyphProvider->getGlyphRowCount();
+            auto glyphProvider = display->getDefaultGlyphProvider();
+            if (glyphProvider) {
+                lineHeight = glyphProvider->getGlyphRowCount();
                 textWidth = TextLayout::measureTextWidth(this->text.c_str(), 1, glyphProvider.get());
             }
-            int verticalOffset = (this->frame.size.height - textHeight) / 2;
-            int horizontalOffset = (this->frame.size.width - textWidth) / 2;
-            Rect layoutRect = MakeRect(this->frame.origin.x + x + horizontalOffset, this->frame.origin.y + y + verticalOffset, this->frame.size.width - horizontalOffset, textHeight);
+
+            int horizontalOffset = 0;
+            int totalTextHeight = lineHeight;
+            int layoutWidth = this->frame.size.width;
+
+            if (textWidth <= this->frame.size.width) {
+                // Single line: center horizontally
+                horizontalOffset = (this->frame.size.width - textWidth) / 2;
+                layoutWidth = this->frame.size.width - horizontalOffset;
+            } else {
+                // Multi-line: calculate number of lines needed for vertical centering
+                int numLines = (textWidth + this->frame.size.width - 1) / this->frame.size.width;
+                int lineSpacing = glyphProvider ? TextLayout::calculateLineSpacing(glyphProvider.get()) : 2;
+                totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
+            }
+
+            int verticalOffset = (this->frame.size.height - totalTextHeight) / 2;
+            Rect layoutRect = MakeRect(this->frame.origin.x + x + horizontalOffset, this->frame.origin.y + y + verticalOffset, layoutWidth, totalTextHeight);
+
             if (this->focused) {
                 display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
                 display->drawText(layoutRect, this->backgroundColor, 1, this->text.c_str());
