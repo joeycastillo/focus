@@ -42,10 +42,10 @@ void Application::run() {
     this->window->becomeFocused();
     this->window->setNeedsDisplay(true);
     while(true) {
-        for(std::shared_ptr<Task> task : this->tasks) {
-            if (task->run(application)) {
-                int index = std::distance(this->tasks.begin(), std::find(this->tasks.begin(), this->tasks.end(), task));
-                this->tasks.erase(this->tasks.begin() + index);
+        for (int i = 0; i < (int)this->tasks.size(); i++) {
+            if (this->tasks[i]->run(application)) {
+                this->tasks.erase(this->tasks.begin() + i);
+                i--;
             }
         }
     }
