@@ -56,7 +56,6 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
     event.type = eventType;
     event.userInfo = userInfo;
     if (this->window.get()->touchEnabled) {
-        // if the window is touch enabled, we need to find the view that should receive a touch event;
         switch (event.type) {
             case FOCUS_EVENT_TOUCH_DOWN:
             case FOCUS_EVENT_TOUCH_MOVED:
@@ -70,7 +69,9 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
             }
                 break;
             default:
-                break;
+                // Non-touch events: deliver to the window
+                this->window->handleEvent(event);
+                return;
         }
     } else if (std::shared_ptr<View> focusedView = this->window->focusedView.lock()) {
         focusedView->handleEvent(event);
