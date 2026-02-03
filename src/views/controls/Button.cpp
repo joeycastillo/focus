@@ -34,9 +34,12 @@ void Button::draw(int x, int y) {
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         View::draw(x, y);
         if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
-            /// TODO: this was old, what was up with it? Check it out.
-            // Rect textRect = MakeRect(this->frame.origin.x + x + 4, this->frame.origin.y + y + this->frame.size.height / 2 - 4, this->frame.size.width, this->frame.size.height);
-            Rect layoutRect = MakeRect(this->frame.origin.x + x, this->frame.origin.y + y, this->frame.size.width, this->frame.size.height);
+            int textHeight = 16;  // default fallback
+            if (auto glyphProvider = display->getDefaultGlyphProvider()) {
+                textHeight = glyphProvider->getGlyphRowCount();
+            }
+            int verticalOffset = (this->frame.size.height - textHeight) / 2;
+            Rect layoutRect = MakeRect(this->frame.origin.x + x, this->frame.origin.y + y + verticalOffset, this->frame.size.width, textHeight);
             if (this->focused) {
                 display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
                 display->drawText(layoutRect, this->backgroundColor, 1, this->text.c_str());
