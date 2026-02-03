@@ -353,9 +353,17 @@ std::weak_ptr<View> View::getViewForTouch(Point touch) {
         return std::weak_ptr<View>();
     }
 
+    // Convert touch from parent's coordinate system to this view's local coordinate system.
+    // Subview frames are expressed in our local coordinate system, so we need to
+    // subtract our frame origin (and account for any bounds offset).
+    Point localTouch = MakePoint(
+        touch.x - this->frame.origin.x + this->bounds.origin.x,
+        touch.y - this->frame.origin.y + this->bounds.origin.y
+    );
+
     for(std::shared_ptr<View> view : this->subviews) {
         // if we contain subviews, check if any of them have the touch.
-        std::weak_ptr<View> viewForTouch = view->getViewForTouch(touch);
+        std::weak_ptr<View> viewForTouch = view->getViewForTouch(localTouch);
         if (viewForTouch.lock()) {
             // if so, they are the view for this touch.
             return viewForTouch;
