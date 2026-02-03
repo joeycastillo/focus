@@ -51,10 +51,24 @@ void Button::draw(int x, int y) {
                 textWidth = TextLayout::measureTextWidth(this->text.c_str(), 1, glyphProvider.get());
             }
 
-            // Count explicit newlines in the text
+            // Count explicit newlines and find the widest line
             int explicitNewlines = 0;
-            for (char c : this->text) {
-                if (c == '\n') explicitNewlines++;
+            int maxLineWidth = 0;
+            if (glyphProvider) {
+                size_t lineStart = 0;
+                for (size_t i = 0; i <= this->text.length(); i++) {
+                    if (i == this->text.length() || this->text[i] == '\n') {
+                        if (i > lineStart) {
+                            std::string line = this->text.substr(lineStart, i - lineStart);
+                            int lineWidth = TextLayout::measureTextWidth(line.c_str(), 1, glyphProvider.get());
+                            if (lineWidth > maxLineWidth) maxLineWidth = lineWidth;
+                        }
+                        if (i < this->text.length() && this->text[i] == '\n') {
+                            explicitNewlines++;
+                        }
+                        lineStart = i + 1;
+                    }
+                }
             }
 
             int horizontalOffset = 0;
@@ -66,7 +80,11 @@ void Button::draw(int x, int y) {
                 int numLines = explicitNewlines + 1;
                 int lineSpacing = glyphProvider ? TextLayout::calculateLineSpacing(glyphProvider.get()) : 2;
                 totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
-                // Don't center horizontally for multi-line text
+                // Center horizontally based on widest line
+                if (maxLineWidth < this->frame.size.width) {
+                    horizontalOffset = (this->frame.size.width - maxLineWidth) / 2;
+                    layoutWidth = this->frame.size.width - horizontalOffset;
+                }
             } else if (textWidth <= this->frame.size.width) {
                 // Single line: center horizontally
                 horizontalOffset = (this->frame.size.width - textWidth) / 2;
