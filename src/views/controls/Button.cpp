@@ -26,6 +26,7 @@
 #include "Window.hpp"
 #include "Display.hpp"
 #include "TextLayout.hpp"
+#include "Font.hpp"
 
 Button::Button(Rect rect, std::string text) : Control(rect) {
     this->text = text;
@@ -35,9 +36,16 @@ void Button::draw(int x, int y) {
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         View::draw(x, y);
         if (std::shared_ptr<Display> display = this->getWindow().lock()->getDisplay().lock()) {
+            // Use button's font if set, otherwise fall back to display's default
+            std::shared_ptr<GlyphProvider> glyphProvider;
+            if (this->font) {
+                glyphProvider = this->font->getSharedGlyphProvider();
+            } else {
+                glyphProvider = display->getDefaultGlyphProvider();
+            }
+
             int lineHeight = 16;  // default fallback
             int textWidth = 0;
-            auto glyphProvider = display->getDefaultGlyphProvider();
             if (glyphProvider) {
                 lineHeight = glyphProvider->getGlyphRowCount();
                 textWidth = TextLayout::measureTextWidth(this->text.c_str(), 1, glyphProvider.get());
@@ -61,13 +69,25 @@ void Button::draw(int x, int y) {
             int verticalOffset = (this->frame.size.height - totalTextHeight) / 2;
             Rect layoutRect = MakeRect(this->frame.origin.x + x + horizontalOffset, this->frame.origin.y + y + verticalOffset, layoutWidth, totalTextHeight);
 
+            GlyphProvider* providerPtr = glyphProvider.get();
             if (this->focused) {
                 display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
-                display->drawText(layoutRect, this->backgroundColor, 1, this->text.c_str());
+                display->drawText(layoutRect, this->backgroundColor, 1, this->text.c_str(), providerPtr);
             } else {
                 display->drawRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->foregroundColor);
-                display->drawText(layoutRect, this->foregroundColor, 1, this->text.c_str());
+                display->drawText(layoutRect, this->foregroundColor, 1, this->text.c_str(), providerPtr);
             }
         }
     }
+}
+
+void Button::setFont(std::shared_ptr<Font> font) {
+    this->font = font;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
+    }
+}
+
+std::shared_ptr<Font> Button::getFont() const {
+    return this->font;
 }

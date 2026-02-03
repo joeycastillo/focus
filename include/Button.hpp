@@ -26,10 +26,15 @@
 
 #include "Control.hpp"
 
+class Font;
+
 class Button : public Control {
 public:
     Button(Rect rect, std::string text);
     void draw(int x, int y) override;
+    void setFont(std::shared_ptr<Font> font);
+    std::shared_ptr<Font> getFont() const;
 protected:
     std::string text;
+    std::shared_ptr<Font> font;
 };

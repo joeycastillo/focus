@@ -52,7 +52,7 @@ public:
     Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
 
     /// Check if the font was loaded successfully
-    bool isValid() const { return valid; }
+    bool isValid() const override { return valid; }
 
     /// Get the number of glyphs loaded
     size_t getGlyphCount() const { return glyphs.size(); }

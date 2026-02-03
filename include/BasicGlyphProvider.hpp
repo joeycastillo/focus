@@ -34,6 +34,7 @@ public:
     Size getMaxSize() override;
     Point getOffset() override;
     uint8_t getGlyphRowCount() override;
+    bool isValid() const override { return true; }
     uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
     Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
 };

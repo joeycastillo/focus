@@ -34,6 +34,7 @@ public:
     virtual Size getMaxSize() = 0;
     virtual Point getOffset() = 0;
     virtual uint8_t getGlyphRowCount() = 0;
+    virtual bool isValid() const = 0;
 
     virtual uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) = 0;
     virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) = 0;

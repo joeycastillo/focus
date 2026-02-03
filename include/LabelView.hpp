@@ -27,13 +27,18 @@
 #include "Focus.hpp"
 #include "View.hpp"
 
+class Font;
+
 class LabelView : public View {
 public:
     LabelView(Rect rect, std::string text);
     void draw(int x, int y) override;
     void setText(std::string text);
     void setTextScale(uint8_t scale);
+    void setFont(std::shared_ptr<Font> font);
+    std::shared_ptr<Font> getFont() const;
 protected:
     std::string text;
     uint8_t textScale = 1;
+    std::shared_ptr<Font> font;
 };

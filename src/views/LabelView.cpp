@@ -25,6 +25,7 @@
 #include "LabelView.hpp"
 #include "Window.hpp"
 #include "Display.hpp"
+#include "Font.hpp"
 
 LabelView::LabelView(Rect rect, std::string text) : View(rect) {
     this->text = text;
@@ -34,7 +35,9 @@ void LabelView::draw(int x, int y) {
     View::draw(x, y);
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         Rect layoutRect = MakeRect(this->frame.origin.x + x, this->frame.origin.y + y, this->frame.size.width, this->frame.size.height);
-        display->drawText(layoutRect, this->foregroundColor, this->textScale, this->text.c_str());
+        // Use view's font if set, otherwise pass nullptr to use display's default
+        GlyphProvider* provider = this->font ? this->font->getGlyphProvider() : nullptr;
+        display->drawText(layoutRect, this->foregroundColor, this->textScale, this->text.c_str(), provider);
     }
 }
 
@@ -47,4 +50,15 @@ void LabelView::setText(std::string text) {
 
 void LabelView::setTextScale(uint8_t scale) {
     this->textScale = scale;
+}
+
+void LabelView::setFont(std::shared_ptr<Font> font) {
+    this->font = font;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
+    }
+}
+
+std::shared_ptr<Font> LabelView::getFont() const {
+    return this->font;
 }
