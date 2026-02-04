@@ -88,3 +88,5 @@ typedef enum {
     DirectionalAffinityVertical,
     DirectionalAffinityHorizontal,
 } DirectionalAffinity;
+
+#include "NotificationCenter.hpp"
