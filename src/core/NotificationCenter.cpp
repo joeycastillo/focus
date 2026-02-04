@@ -24,6 +24,7 @@
 
 #include "NotificationCenter.hpp"
 #include <algorithm>
+#include <any>
 
 NotificationCenter* NotificationCenter::shared() {
     static NotificationCenter instance;
@@ -55,10 +56,10 @@ void NotificationCenter::removeObserver(uint32_t token) {
     }
 }
 
-void NotificationCenter::post(const std::string& name, int32_t userInfo) {
+void NotificationCenter::post(const std::string& name, std::any userInfo) {
     postingDepth++;
 
-    Notification notification{name, userInfo};
+    Notification notification{name, std::move(userInfo)};
 
     // Iterate by index with snapshotted count: observers added during
     // callbacks are appended beyond this bound and won't fire this pass.

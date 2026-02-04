@@ -42,11 +42,16 @@
 #include <functional>
 #include <memory>
 #include <cstdint>
+#include <any>
 
-/// @brief A named notification with an optional integer payload.
+/// @brief A named notification with an optional payload.
 struct Notification {
     std::string name;        ///< The notification name (e.g. "bookLoaded").
-    int32_t userInfo = 0;    ///< Optional payload data.
+    /// @brief Optional payload data.
+    ///
+    /// Prefer small types (integers, pointers) for best performance.
+    /// Strings and other types work but may heap-allocate on embedded targets.
+    std::any userInfo;
 };
 
 /// @brief Callback type for notification observers.
@@ -76,7 +81,7 @@ public:
 
     /// Post a notification to all observers registered for the given name.
     /// Safe to call re-entrantly (i.e., from within a notification callback).
-    void post(const std::string& name, int32_t userInfo = 0);
+    void post(const std::string& name, std::any userInfo = {});
 
     NotificationCenter(const NotificationCenter&) = delete;
     void operator=(const NotificationCenter&) = delete;
