@@ -69,6 +69,9 @@ public:
     /// @brief Set the font for tab labels. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
 
+    /// @brief Get the height of the tab bar area in pixels.
+    int getTabBarHeight() const;
+
     void draw(int x, int y) override;
     /// @brief Handle touch events on the tab bar to switch tabs.
     bool handleEvent(Event event) override;
@@ -86,5 +89,4 @@ private:
     bool canvasValid = false;
 
     void renderTabBar();               ///< Render tab labels to the canvas.
-    int getTabBarHeight() const;       ///< Height of the tab bar area in pixels.
 };

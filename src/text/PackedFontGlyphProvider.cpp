@@ -33,7 +33,9 @@ PackedFontGlyphProvider::PackedFontGlyphProvider(const std::string& bdpFilePath)
 
 bool PackedFontGlyphProvider::loadBDPFile(const std::string& path) {
     FILE* f = fopen(path.c_str(), "rb");
-    if (!f) return false;
+    if (!f) {
+        return false;
+    }
 
     // Read 16-byte header
     uint8_t header[16];
