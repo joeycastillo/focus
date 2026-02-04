@@ -22,6 +22,15 @@
  * SOFTWARE.
  */
 
+/**
+ * @file XMLSettingsBackend.hpp
+ * @brief File-based XML settings backend for the desktop emulator.
+ *
+ * XMLSettingsBackend stores key-value settings in a TinyXML2 document on disk.
+ * It is used by the emulator build where NVS (ESP32 non-volatile storage) is
+ * not available. The file is loaded on construction and saved after every write.
+ */
+
 #pragma once
 
 #include "SettingsBackend.hpp"
@@ -33,8 +42,19 @@ namespace tinyxml2 {
     class XMLElement;
 }
 
+/**
+ * @brief SettingsBackend that persists values to an XML file on disk.
+ *
+ * Each key is stored as an XML element with a type attribute. The file is
+ * created automatically if it doesn't exist, and is rewritten after every
+ * set/erase operation.
+ */
 class XMLSettingsBackend : public SettingsBackend {
 public:
+    /**
+     * @brief Construct an XML settings backend.
+     * @param filePath Path to the XML settings file (created if missing).
+     */
     XMLSettingsBackend(const std::string& filePath);
     ~XMLSettingsBackend();
 
@@ -51,10 +71,13 @@ public:
     void setBool(const std::string& key, bool value) override;
 
 private:
+    /// @brief Find an existing XML element for a key, or nullptr.
     tinyxml2::XMLElement* findElement(const std::string& key);
+    /// @brief Find or create an XML element for a key with the given type.
     tinyxml2::XMLElement* findOrCreateElement(const std::string& key, const char* typeName);
+    /// @brief Write the XML document to disk.
     void save();
 
-    std::string filePath;
-    std::unique_ptr<tinyxml2::XMLDocument> doc;
+    std::string filePath;                          ///< Path to the settings file.
+    std::unique_ptr<tinyxml2::XMLDocument> doc;    ///< The in-memory XML document.
 };

@@ -22,6 +22,15 @@
  * SOFTWARE.
  */
 
+/**
+ * @file Button.hpp
+ * @brief A tappable button control with a text label.
+ *
+ * Renders a bordered rectangle with centered text. The appearance inverts
+ * (swaps foreground/background) when the button has focus. Register a
+ * FOCUS_EVENT_TOUCH_DOWN or FOCUS_EVENT_SELECT action to respond to presses.
+ */
+
 #pragma once
 
 #include "Control.hpp"
@@ -30,20 +39,36 @@
 class Font;
 class CanvasView;
 
+/**
+ * @brief A button control that displays text and responds to tap/select events.
+ *
+ * Uses an internal CanvasView for rendering. The button border and text are
+ * drawn in the foreground color, with colors inverted when focused.
+ */
 class Button : public Control {
 public:
+    /**
+     * @brief Construct a button with a text label.
+     * @param rect Frame rectangle.
+     * @param text The button's label text.
+     */
     Button(Rect rect, std::string text);
     void draw(int x, int y) override;
+
+    /// @brief Set the font for the button label. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
+    /// @brief Get the current font.
     std::shared_ptr<Font> getFont() const;
 
+    /// @brief Invalidate the canvas when focus is gained (inverts colors).
     void didBecomeFocused() override;
+    /// @brief Invalidate the canvas when focus is lost (restores colors).
     void didResignFocus() override;
 protected:
-    std::string text;
-    std::shared_ptr<Font> font;
+    std::string text;              ///< The button's label text.
+    std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
 private:
-    std::shared_ptr<CanvasView> canvas;
+    std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendering.
     bool canvasValid = false;
     void renderCanvas();
 };

@@ -22,13 +22,42 @@
  * SOFTWARE.
  */
 
+/**
+ * @file Task.hpp
+ * @brief Abstract base class for cooperatively scheduled tasks in the run loop.
+ *
+ * Tasks are the primary mechanism for non-UI work in Focus. The Application
+ * runs all registered tasks once per iteration of its main loop. Tasks can
+ * be long-lived (returning false to stay in the list) or one-shot (returning
+ * true to remove themselves after execution).
+ */
+
 #pragma once
 
 #include "Focus.hpp"
 
+/**
+ * @brief Abstract base class for cooperatively scheduled tasks.
+ *
+ * Subclass Task and implement run() to perform periodic work such as
+ * polling input devices, refreshing the display, or running background
+ * computations.
+ */
 class Task {
 public:
     Task();
+
+    /**
+     * @brief Execute one iteration of this task.
+     *
+     * Called once per main loop iteration by the Application.
+     *
+     * @param application The owning application.
+     * @return true to remove this task from the run loop (one-shot),
+     *         false to keep running on subsequent iterations. You
+     *         can of course return false many times before returning
+     *         true (i.e. a long-running task that completes).
+     */
     virtual bool run(std::shared_ptr<Application> application) = 0;
 };
 

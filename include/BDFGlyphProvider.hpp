@@ -22,6 +22,18 @@
  * SOFTWARE.
  */
 
+/**
+ * @file BDFGlyphProvider.hpp
+ * @brief GlyphProvider implementation that loads fonts from BDF (Bitmap Distribution Format) files.
+ *
+ * BDFGlyphProvider parses standard BDF font files and provides glyph bitmaps
+ * and metrics for text rendering. BDF is a widely supported bitmap font format
+ * that can represent variable-width glyphs with per-glyph bounding boxes.
+ *
+ * Glyph bitmaps are converted from the BDF hex encoding to the Focus display
+ * format (MSB-first, row-major, padded to the font's full row count) during loading.
+ */
+
 #pragma once
 
 #include "GlyphProvider.hpp"
@@ -29,19 +41,34 @@
 #include <unordered_map>
 #include <vector>
 
+/**
+ * @brief Parsed data for a single BDF glyph.
+ *
+ * Contains the glyph's bounding box, advance width, and the converted
+ * bitmap ready for display rendering.
+ */
 struct BDFGlyph {
-    uint8_t width;       // BBX width (bitmap width)
-    uint8_t height;      // BBX height (original height before conversion)
-    int8_t xOffset;      // BBX x offset
-    int8_t yOffset;      // BBX y offset (from baseline)
-    uint8_t advance;     // DWIDTH (advance width for cursor)
-    std::vector<uint8_t> bitmap;  // Converted to Display format (16 or 32 bytes)
+    uint8_t width;       ///< BBX width (bitmap width in pixels).
+    uint8_t height;      ///< BBX height (original height before padding).
+    int8_t xOffset;      ///< BBX horizontal offset from the cursor position.
+    int8_t yOffset;      ///< BBX vertical offset from the baseline (positive = above).
+    uint8_t advance;     ///< DWIDTH advance width (how far to move the cursor).
+    std::vector<uint8_t> bitmap;  ///< Bitmap converted to display format (padded to full row count).
 };
 
+/**
+ * @brief GlyphProvider that loads and serves glyphs from BDF font files.
+ *
+ * On construction, the entire BDF file is parsed and all glyphs are converted
+ * to the display bitmap format. Check isValid() after construction to verify
+ * the file was loaded successfully.
+ */
 class BDFGlyphProvider : public GlyphProvider {
 public:
-    /// Construct a BDF glyph provider by loading a BDF font file
-    /// @param bdfFilePath Path to the BDF font file (e.g., "/sdcard/fonts/timR12.bdf")
+    /**
+     * @brief Load a BDF font file and parse all glyphs.
+     * @param bdfFilePath Path to the BDF font file (e.g., "/sdcard/fonts/timR12.bdf").
+     */
     BDFGlyphProvider(const std::string& bdfFilePath);
 
     uint8_t getPointSize() override;
@@ -51,24 +78,28 @@ public:
     uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
     Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
 
-    /// Check if the font was loaded successfully
+    /// @brief Check if the BDF file was parsed successfully.
     bool isValid() const override { return valid; }
 
-    /// Get the number of glyphs loaded
+    /// @brief Get the total number of glyphs loaded from the BDF file.
     size_t getGlyphCount() const { return glyphs.size(); }
 
 private:
+    /// @brief Parse a BDF file, populating the glyphs map and font metrics.
     bool parseBDFFile(const std::string& path);
+
+    /// @brief Convert a glyph's bitmap from BDF hex format to padded display format.
     void convertGlyphToDisplayFormat(BDFGlyph& glyph);
+
     static uint8_t hexCharToNibble(char c);
     static uint8_t hexToByte(const char* hex);
 
-    std::unordered_map<uint32_t, BDFGlyph> glyphs;
+    std::unordered_map<uint32_t, BDFGlyph> glyphs; ///< Codepoint-to-glyph lookup table.
 
-    uint8_t pixelSize = 0;
-    uint8_t fontAscent = 0;
-    uint8_t fontDescent = 0;
-    Size maxSize = {0, 0};
-    uint32_t defaultChar = 0;
-    bool valid = false;
+    uint8_t pixelSize = 0;      ///< PIXEL_SIZE from the BDF file.
+    uint8_t fontAscent = 0;     ///< FONT_ASCENT: pixels above the baseline.
+    uint8_t fontDescent = 0;    ///< FONT_DESCENT: pixels below the baseline.
+    Size maxSize = {0, 0};      ///< Maximum bounding box across all glyphs.
+    uint32_t defaultChar = 0;   ///< DEFAULT_CHAR codepoint for missing glyphs.
+    bool valid = false;         ///< Whether the BDF file was parsed successfully.
 };

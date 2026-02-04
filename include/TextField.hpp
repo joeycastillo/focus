@@ -22,6 +22,15 @@
  * SOFTWARE.
  */
 
+/**
+ * @file TextField.hpp
+ * @brief An editable text input control.
+ *
+ * TextField displays editable text within a bordered rectangle. When tapped,
+ * it presents a KeyboardView for text entry. Supports placeholder text, max
+ * length limits, and a text-changed callback.
+ */
+
 #pragma once
 
 #include "Control.hpp"
@@ -31,34 +40,64 @@
 class Font;
 class CanvasView;
 
+/**
+ * @brief An editable single-line text input control.
+ *
+ * Renders the current text (or placeholder when empty) in a bordered box.
+ * When touched, presents an on-screen keyboard for editing. Subclass
+ * getDisplayText() to customize rendering (e.g. PasswordField masks characters).
+ */
 class TextField : public Control {
 public:
+    /// @brief Construct an empty text field with the given frame.
     TextField(Rect rect);
 
+    /// @brief Get the current text content.
     std::string getText() const;
+    /// @brief Set the text content.
     void setText(std::string text);
+    /// @brief Set placeholder text shown when the field is empty.
     void setPlaceholder(std::string placeholder);
+    /**
+     * @brief Set the maximum number of characters allowed.
+     * @param maxLength Maximum length, or 0 for no limit.
+     */
     void setMaxLength(size_t maxLength);
+    /// @brief Set the font. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
+    /// @brief Get the current font.
     std::shared_ptr<Font> getFont() const;
+    /**
+     * @brief Set a callback invoked whenever the text changes.
+     * @param callback Function called with the new text value.
+     */
     void setTextChangedCallback(std::function<void(std::string)> callback);
 
     void draw(int x, int y) override;
+    /// @brief Handle touch events to present the keyboard.
     bool handleEvent(Event event) override;
     void didBecomeFocused() override;
     void didResignFocus() override;
 
+    /// @brief Insert text at the end (called by KeyboardView).
     void insertText(const std::string& str);
+    /// @brief Delete the last character (called by KeyboardView).
     void deleteBackward();
 
 protected:
+    /**
+     * @brief Get the text to render on screen.
+     *
+     * Override in subclasses for custom display (e.g. masking for passwords).
+     * The default implementation returns the actual text content.
+     */
     virtual std::string getDisplayText() const;
 
-    std::string text;
-    std::string placeholder;
-    size_t maxLength = 0; // 0 = no limit
-    std::shared_ptr<Font> font;
-    std::function<void(std::string)> textChangedCallback;
+    std::string text;                    ///< Current text content.
+    std::string placeholder;             ///< Placeholder shown when text is empty.
+    size_t maxLength = 0;                ///< Max character count (0 = unlimited).
+    std::shared_ptr<Font> font;          ///< Custom font, or nullptr for system font.
+    std::function<void(std::string)> textChangedCallback; ///< Text change callback.
 
 private:
     std::shared_ptr<CanvasView> canvas;

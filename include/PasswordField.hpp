@@ -22,14 +22,28 @@
  * SOFTWARE.
  */
 
+/**
+ * @file PasswordField.hpp
+ * @brief A text field that masks its content for password entry.
+ *
+ * PasswordField is a TextField subclass that overrides getDisplayText() to
+ * replace each character with a bullet (U+2022), hiding the actual text from
+ * view while preserving the underlying content.
+ */
+
 #pragma once
 
 #include "TextField.hpp"
 
+/**
+ * @brief A text input control that hides its content with bullet characters.
+ */
 class PasswordField : public TextField {
 public:
+    /// @brief Construct a password field with the given frame.
     PasswordField(Rect rect);
 
 protected:
+    /// @brief Returns a string of bullet characters matching the text length.
     std::string getDisplayText() const override;
 };

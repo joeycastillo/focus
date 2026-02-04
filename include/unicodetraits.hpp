@@ -1,20 +1,41 @@
+/**
+ * @file unicodetraits.hpp
+ * @brief Unicode character property lookup for text layout and bidirectional support.
+ *
+ * Provides a compact bitfield of Unicode properties for any codepoint, including
+ * whitespace classification, line break opportunities, directional affinity (LTR/RTL),
+ * and combining mark detection. Used by the text layout engine for word wrapping
+ * and by renderers for bidirectional text handling.
+ */
+
 #pragma once
 
 #include <stdint.h>
 #include "utf8_decode.hpp"
 
+/**
+ * @brief Packed bitfield of Unicode character properties.
+ *
+ * Can be accessed either as individual bit flags via the `is` struct, or
+ * as a single packed byte for efficient comparison.
+ */
 typedef union {
     struct {
-        uint8_t controlchar: 1; /// <- is a control character
-        uint8_t whitespace: 1;  /// <- character is whitespace
-        uint8_t linebreak: 1;   /// <- a line break opportunity exists when this character appears in a run
-        uint8_t nsm: 1;         /// <- is a nonspacing mark
-        uint8_t rtl: 1;         /// <- has a strong RTL affinity
-        uint8_t ltr: 1;         /// <- has a strong LTR affinity
-        uint8_t mirrored: 1;    /// <- draws mirrored in RTL text runs
-        uint8_t mapped: 1;      /// <- a mapping exists to this character's mirror image
+        uint8_t controlchar: 1; ///< Is a control character (U+0000..U+001F, etc.).
+        uint8_t whitespace: 1;  ///< Is a whitespace character (space, tab, etc.).
+        uint8_t linebreak: 1;   ///< A line break opportunity exists after this character.
+        uint8_t nsm: 1;         ///< Is a nonspacing mark (combining diacritical, etc.).
+        uint8_t rtl: 1;         ///< Has strong right-to-left directionality (Arabic, Hebrew, etc.).
+        uint8_t ltr: 1;         ///< Has strong left-to-right directionality.
+        uint8_t mirrored: 1;    ///< Should be drawn mirrored in RTL text runs (parentheses, etc.).
+        uint8_t mapped: 1;      ///< A mirror-image mapping exists for this character.
     } is;
-    uint8_t packed;
+    uint8_t packed; ///< All flags packed into a single byte.
 } unicode_info_t;
 
+/**
+ * @brief Look up Unicode properties for a codepoint.
+ * @param codepoint The Unicode codepoint to query.
+ * @return A unicode_info_t with the relevant property flags set.
+ */
 unicode_info_t getTraitsForCodepoint(UNICODE_CODEPOINT codepoint);

@@ -22,6 +22,17 @@
  * SOFTWARE.
  */
 
+/**
+ * @file AlertViewController.hpp
+ * @brief A modal dialog with a title, message, and action buttons.
+ *
+ * AlertViewController presents a centered dialog box with a title, a message
+ * body, and one or more buttons. When a button is pressed, the dialog is
+ * dismissed and the completion handler is called with the button index.
+ *
+ * Use the static create() factory method rather than constructing directly.
+ */
+
 #pragma once
 
 #include "ViewController.hpp"
@@ -29,10 +40,26 @@
 #include <vector>
 #include <functional>
 
+/**
+ * @brief A modal alert dialog with buttons.
+ *
+ * Present via Application::presentViewController(). The dialog auto-dismisses
+ * when any button is pressed.
+ */
 class AlertViewController : public ViewController {
 public:
+    /// @brief Callback invoked when a button is pressed, with the button's index.
     using CompletionHandler = std::function<void(int buttonIndex)>;
 
+    /**
+     * @brief Create an alert dialog.
+     * @param app The application (for modal presentation).
+     * @param title Bold title text at the top of the dialog.
+     * @param message Body text below the title.
+     * @param buttonLabels Labels for each button, displayed left to right.
+     * @param completion Optional callback invoked with the pressed button's index.
+     * @return A shared_ptr to the AlertViewController, ready for presentation.
+     */
     static std::shared_ptr<AlertViewController> create(
         std::shared_ptr<Application> app,
         std::string title,

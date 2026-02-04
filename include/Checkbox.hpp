@@ -22,6 +22,15 @@
  * SOFTWARE.
  */
 
+/**
+ * @file Checkbox.hpp
+ * @brief A toggle checkbox control with a text label.
+ *
+ * Renders a small square indicator followed by a text label. When checked,
+ * the indicator is filled; when unchecked, it is empty. Tapping or selecting
+ * toggles the state and fires a FOCUS_EVENT_VALUE_CHANGED action.
+ */
+
 #pragma once
 
 #include "Control.hpp"
@@ -30,24 +39,41 @@
 class Font;
 class CanvasView;
 
+/**
+ * @brief A checkbox control that toggles between checked and unchecked states.
+ *
+ * The checkbox inverts its appearance when focused (swaps fg/bg colors).
+ * Register a FOCUS_EVENT_VALUE_CHANGED action to respond to state changes.
+ */
 class Checkbox : public Control {
 public:
+    /**
+     * @brief Construct a checkbox with a text label.
+     * @param rect Frame rectangle.
+     * @param text The label displayed next to the checkbox indicator.
+     */
     Checkbox(Rect rect, std::string text);
     void draw(int x, int y) override;
+    /// @brief Handle touch/select events to toggle the checked state.
     bool handleEvent(Event event) override;
     void didBecomeFocused() override;
     void didResignFocus() override;
 
+    /// @brief Check whether the checkbox is currently checked.
     bool isChecked() const;
+    /// @brief Set the checked state programmatically.
     void setChecked(bool value);
+    /// @brief Set the label text.
     void setText(std::string text);
+    /// @brief Set the font for the label. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
+    /// @brief Get the current font.
     std::shared_ptr<Font> getFont() const;
 
 protected:
-    std::string text;
-    bool checked = false;
-    std::shared_ptr<Font> font;
+    std::string text;              ///< Label text.
+    bool checked = false;          ///< Whether the checkbox is checked.
+    std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
 
 private:
     std::shared_ptr<CanvasView> canvas;

@@ -22,6 +22,16 @@
  * SOFTWARE.
  */
 
+/**
+ * @file LabelView.hpp
+ * @brief View that renders a text string with word wrapping.
+ *
+ * LabelView displays a UTF-8 text string rendered with a configurable font
+ * and text scale. The text is word-wrapped within the view's frame and rendered
+ * to an internal CanvasView, which is cached and re-rendered only when the
+ * text, font, or frame changes.
+ */
+
 #pragma once
 
 #include "Focus.hpp"
@@ -31,20 +41,36 @@
 class Font;
 class CanvasView;
 
+/**
+ * @brief A view that displays word-wrapped text.
+ *
+ * Uses an internal CanvasView for off-screen text rendering. If no font is
+ * set, falls back to Font::systemFont().
+ */
 class LabelView : public View {
 public:
+    /**
+     * @brief Construct a label view with initial text.
+     * @param rect Frame rectangle.
+     * @param text The UTF-8 text to display.
+     */
     LabelView(Rect rect, std::string text);
     void draw(int x, int y) override;
+
+    /// @brief Set the displayed text, invalidating the cached rendering.
     void setText(std::string text);
+    /// @brief Set the text scale factor (1 = normal, 2 = double size, etc.).
     void setTextScale(uint8_t scale);
+    /// @brief Set the font to use. Pass nullptr to use the system font.
     void setFont(std::shared_ptr<Font> font);
+    /// @brief Get the currently assigned font (may be nullptr for system font).
     std::shared_ptr<Font> getFont() const;
 protected:
-    std::string text;
-    uint8_t textScale = 1;
-    std::shared_ptr<Font> font;
+    std::string text;              ///< The UTF-8 text content.
+    uint8_t textScale = 1;         ///< Text rendering scale factor.
+    std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
 private:
-    std::shared_ptr<CanvasView> canvas;
-    bool canvasValid = false;
-    void renderCanvas();
+    std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendered text.
+    bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
+    void renderCanvas();                ///< Render the text to the internal canvas.
 };

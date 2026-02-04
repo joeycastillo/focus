@@ -22,6 +22,20 @@
  * SOFTWARE.
  */
 
+/**
+ * @file CanvasView.hpp
+ * @brief View with a 1bpp pixel buffer for programmatic drawing.
+ *
+ * CanvasView owns an in-memory 1-bit-per-pixel framebuffer that can be drawn
+ * to programmatically using drawPixel(), drawRect(), fillRect(), drawCircle(),
+ * fillCircle(), clear(), and drawText(). During the view draw cycle, the buffer
+ * is blitted to the Display.
+ *
+ * CanvasView is used internally by many Focus views (LabelView, Button,
+ * Checkbox, etc.) for off-screen rendering, and can also be used directly
+ * for custom drawing (e.g. the EPUB renderer draws to a CanvasView).
+ */
+
 #pragma once
 
 #include "View.hpp"

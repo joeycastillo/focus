@@ -22,6 +22,16 @@
  * SOFTWARE.
  */
 
+/**
+ * @file RadioButton.hpp
+ * @brief A mutually exclusive radio button control.
+ *
+ * RadioButton renders a circular indicator followed by a text label. When
+ * selected, the indicator is filled. RadioButtons should be grouped using a
+ * RadioGroup, which ensures that only one button in the group is selected
+ * at a time.
+ */
+
 #pragma once
 
 #include "Control.hpp"
@@ -31,26 +41,50 @@ class Font;
 class CanvasView;
 class RadioGroup;
 
+/**
+ * @brief A radio button control for mutually exclusive selection.
+ *
+ * Use with RadioGroup for automatic mutual exclusion. Register a
+ * FOCUS_EVENT_VALUE_CHANGED action to respond to selection changes.
+ */
 class RadioButton : public Control {
 public:
+    /**
+     * @brief Construct a radio button with a text label.
+     * @param rect Frame rectangle.
+     * @param text The label displayed next to the radio indicator.
+     */
     RadioButton(Rect rect, std::string text);
     void draw(int x, int y) override;
+    /// @brief Handle touch/select events to select this radio button.
     bool handleEvent(Event event) override;
     void didBecomeFocused() override;
     void didResignFocus() override;
 
+    /// @brief Check whether this radio button is currently selected.
     bool isSelected() const;
+    /// @brief Set the selection state programmatically.
     void setSelected(bool value);
+    /// @brief Set the label text.
     void setText(std::string text);
+    /// @brief Set the font for the label. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
+    /// @brief Get the current font.
     std::shared_ptr<Font> getFont() const;
+    /**
+     * @brief Associate this radio button with a RadioGroup.
+     *
+     * The group ensures mutual exclusion: selecting this button deselects
+     * all others in the same group.
+     * @param group The RadioGroup to join.
+     */
     void setGroup(std::shared_ptr<RadioGroup> group);
 
 protected:
-    std::string text;
-    bool selected = false;
-    std::shared_ptr<Font> font;
-    std::weak_ptr<RadioGroup> group;
+    std::string text;                     ///< Label text.
+    bool selected = false;                ///< Whether this button is selected.
+    std::shared_ptr<Font> font;           ///< Custom font, or nullptr for system font.
+    std::weak_ptr<RadioGroup> group;      ///< The RadioGroup this button belongs to.
 
 private:
     std::shared_ptr<CanvasView> canvas;

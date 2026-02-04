@@ -22,6 +22,19 @@
  * SOFTWARE.
  */
 
+/**
+ * @file NotificationCenter.hpp
+ * @brief Publish-subscribe notification system for decoupled communication.
+ *
+ * NotificationCenter provides a way for components to communicate without
+ * direct references to each other. Observers register callbacks for named
+ * notifications, and any component can post a notification to invoke all
+ * matching callbacks.
+ *
+ * Observations can optionally be tied to an owner object's lifetime: when the
+ * owner is destroyed, the observation is automatically cleaned up.
+ */
+
 #pragma once
 
 #include <string>
@@ -30,15 +43,24 @@
 #include <memory>
 #include <cstdint>
 
+/// @brief A named notification with an optional integer payload.
 struct Notification {
-    std::string name;
-    int32_t userInfo = 0;
+    std::string name;        ///< The notification name (e.g. "bookLoaded").
+    int32_t userInfo = 0;    ///< Optional payload data.
 };
 
+/// @brief Callback type for notification observers.
 using NotificationCallback = std::function<void(const Notification&)>;
 
+/**
+ * @brief Singleton publish-subscribe notification center.
+ *
+ * Supports re-entrant posting (posting from within a callback) and
+ * automatic cleanup of observations tied to destroyed owner objects.
+ */
 class NotificationCenter {
 public:
+    /// @brief Get the shared NotificationCenter singleton.
     static NotificationCenter* shared();
 
     /// Add an observer for notifications with the given name.
@@ -62,15 +84,16 @@ public:
 private:
     NotificationCenter() = default;
 
+    /// @brief Internal observer record.
     struct Observer {
-        uint32_t token;
-        std::string name;
-        NotificationCallback callback;
-        std::weak_ptr<void> owner;
-        bool hasOwner;
+        uint32_t token;                 ///< Unique token for this observation.
+        std::string name;               ///< Notification name to match.
+        NotificationCallback callback;  ///< Callback to invoke.
+        std::weak_ptr<void> owner;      ///< Optional owner for lifetime tracking.
+        bool hasOwner;                  ///< Whether this observation has a lifetime owner.
     };
 
-    std::vector<Observer> observers;
-    uint32_t nextToken = 1;
-    int postingDepth = 0;
+    std::vector<Observer> observers;  ///< All registered observers.
+    uint32_t nextToken = 1;           ///< Counter for generating unique tokens.
+    int postingDepth = 0;             ///< Re-entrancy depth for safe posting.
 };

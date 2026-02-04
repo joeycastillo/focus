@@ -22,18 +22,37 @@
  * SOFTWARE.
  */
 
+/**
+ * @file Control.hpp
+ * @brief Base class for interactive UI controls.
+ *
+ * Control extends View with an enabled/disabled state and the ability to
+ * receive focus. All interactive elements (Button, Checkbox, Slider, TextField,
+ * etc.) inherit from Control.
+ */
+
 #pragma once
 
 #include "Focus.hpp"
 #include "View.hpp"
 
+/**
+ * @brief Base class for focusable, interactive UI controls.
+ *
+ * Controls can be enabled or disabled. When enabled, they participate in
+ * focus navigation and can handle user input events.
+ */
 class Control : public View {
 public:
+    /// @brief Construct a control with the given frame rectangle.
     Control(Rect rect);
+    /// @brief Check whether this control is enabled.
     bool isEnabled();
+    /// @brief Enable or disable this control.
     void setEnabled(bool value);
+    /// @brief Controls can become focused when enabled (returns true).
     bool canBecomeFocused() override;
 protected:
-    bool enabled = true;
+    bool enabled = true; ///< Whether this control accepts input.
 };
 

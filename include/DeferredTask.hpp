@@ -22,6 +22,11 @@
  * SOFTWARE.
  */
 
+/**
+ * @file DeferredTask.hpp
+ * @brief A one-shot task that executes a callback after a delay.
+ */
+
 #pragma once
 
 #include "Task.hpp"

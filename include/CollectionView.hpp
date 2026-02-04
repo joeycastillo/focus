@@ -22,6 +22,15 @@
  * SOFTWARE.
  */
 
+/**
+ * @file CollectionView.hpp
+ * @brief A paginated view that displays a list or grid of items from a data source.
+ *
+ * CollectionView requests views from a CollectionViewDataSource and arranges
+ * them in a vertical list, horizontal list, or grid layout. Items are loaded
+ * one page at a time, supporting pagination through large data sets.
+ */
+
 #pragma once
 
 #include "View.hpp"
@@ -29,25 +38,41 @@
 
 class CollectionViewDataSource;
 
+/// @brief Layout modes for CollectionView item arrangement.
 enum class CollectionViewLayout {
-    VerticalList,
-    HorizontalList,
-    Grid
+    VerticalList,   ///< Items stacked vertically.
+    HorizontalList, ///< Items arranged horizontally.
+    Grid            ///< Items arranged in a grid.
 };
 
+/**
+ * @brief A paginated collection of item views driven by a data source.
+ *
+ * Set a data source, item size, and layout, then call reloadData() to
+ * populate the view. Use goToPage() to navigate between pages.
+ */
 class CollectionView : public View {
 public:
+    /// @brief Construct a collection view with the given frame.
     CollectionView(Rect rect);
 
+    /// @brief Set the data source that provides items. Not retained (raw pointer).
     void setDataSource(CollectionViewDataSource* dataSource);
+    /// @brief Set the layout mode (vertical list, horizontal list, or grid).
     void setLayout(CollectionViewLayout layout);
+    /// @brief Set the size of each item cell.
     void setItemSize(Size size);
 
+    /// @brief Reload all items from the data source, showing the first page.
     void reloadData();
+    /// @brief Navigate to a specific page (0-based).
     void goToPage(size_t page);
 
+    /// @brief Get the current page index (0-based).
     size_t getCurrentPage() const;
+    /// @brief Get the total number of pages.
     size_t getPageCount() const;
+    /// @brief Get how many items fit on one page.
     size_t getItemsPerPage() const;
 
 private:

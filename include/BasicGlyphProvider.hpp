@@ -22,11 +22,26 @@
  * SOFTWARE.
  */
 
+/**
+ * @file BasicGlyphProvider.hpp
+ * @brief Built-in fixed-width glyph provider used as a fallback font.
+ *
+ * BasicGlyphProvider supplies a minimal 8x8 pixel fixed-width font that is
+ * compiled into the binary. It covers basic ASCII glyphs and is used as a
+ * fallback when no external font files are available.
+ */
+
 #pragma once
 
 #include "Focus.hpp"
 #include "GlyphProvider.hpp"
 
+/**
+ * @brief A minimal built-in 8x8 fixed-width glyph provider.
+ *
+ * Always reports isValid() as true since the font data is compiled in.
+ * Used as a fallback when BDF font files cannot be loaded.
+ */
 class BasicGlyphProvider : public GlyphProvider {
 public:
     BasicGlyphProvider();
@@ -34,6 +49,7 @@ public:
     Size getMaxSize() override;
     Point getOffset() override;
     uint8_t getGlyphRowCount() override;
+    /// @brief Always returns true (built-in font data is always available).
     bool isValid() const override { return true; }
     uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
     Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;

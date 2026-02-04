@@ -22,6 +22,16 @@
  * SOFTWARE.
  */
 
+/**
+ * @file TextLayout.hpp
+ * @brief Shared text measurement and word-wrapping engine.
+ *
+ * TextLayout provides static methods for measuring text width, calculating
+ * line heights, and determining word-wrap break points. It is used by the
+ * display rendering system (for drawing wrapped text) but is also available
+ * to applications that need to do their own measurement of text runs.
+ */
+
 #pragma once
 
 #include "Focus.hpp"

@@ -22,6 +22,15 @@
  * SOFTWARE.
  */
 
+/**
+ * @file BorderedView.hpp
+ * @brief View that draws a 1-pixel border around its frame.
+ *
+ * BorderedView renders a rectangular outline using a CanvasView for
+ * the border pixels. Commonly used as a container for dialog boxes
+ * and modal panels.
+ */
+
 #pragma once
 
 #include "Focus.hpp"
@@ -30,12 +39,22 @@
 
 class CanvasView;
 
+/**
+ * @brief A view that draws a 1-pixel rectangular border.
+ *
+ * The border is rendered to an internal CanvasView and cached. The
+ * interior is filled with the view's background color.
+ */
 class BorderedView : public View {
 public:
+    /**
+     * @brief Construct a bordered view.
+     * @param rect Frame rectangle defining the outer edge of the border.
+     */
     BorderedView(Rect rect);
     void draw(int x, int y) override;
 private:
-    std::shared_ptr<CanvasView> canvas;
-    bool canvasValid = false;
-    void renderCanvas();
+    std::shared_ptr<CanvasView> canvas; ///< Internal canvas for the border pixels.
+    bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
+    void renderCanvas();                ///< Render the border to the canvas.
 };

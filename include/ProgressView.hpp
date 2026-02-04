@@ -22,6 +22,15 @@
  * SOFTWARE.
  */
 
+/**
+ * @file ProgressView.hpp
+ * @brief View that displays a horizontal progress bar.
+ *
+ * ProgressView renders a rectangular track with a filled portion proportional
+ * to its progress value (0.0 to 1.0). Used for displaying pagination progress,
+ * loading status, etc.
+ */
+
 #pragma once
 
 #include "Focus.hpp"
@@ -30,16 +39,31 @@
 
 class CanvasView;
 
+/**
+ * @brief A horizontal progress bar view.
+ *
+ * Renders an outlined track with a filled portion. The filled width is
+ * proportional to the progress value (0.0 = empty, 1.0 = full).
+ */
 class ProgressView : public View {
 public:
+    /// @brief Construct a progress view with the given frame.
     ProgressView(Rect rect) : View(rect) {};
     void draw(int x, int y) override;
+
+    /**
+     * @brief Set the progress value.
+     * @param value Progress from 0.0 (empty) to 1.0 (full). Clamped to range;
+     *              does not go to 11.
+     */
     void setProgress(float value);
+
+    /// @brief Get the current progress value.
     float getProgress();
 protected:
-    float progress = 0;
+    float progress = 0; ///< Current progress (0.0 to 1.0).
 private:
-    std::shared_ptr<CanvasView> canvas;
-    bool canvasValid = false;
-    void renderCanvas();
+    std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendering.
+    bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
+    void renderCanvas();                ///< Render the progress bar to the canvas.
 };

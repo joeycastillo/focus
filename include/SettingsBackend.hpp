@@ -22,24 +22,47 @@
  * SOFTWARE.
  */
 
+/**
+ * @file SettingsBackend.hpp
+ * @brief Abstract interface for persistent key-value storage backends.
+ *
+ * SettingsBackend defines the storage contract used by UserSettings.
+ * Platform-specific implementations include NVSSettingsBackend (ESP32 NVS)
+ * and XMLSettingsBackend (file-based XML for the desktop emulator).
+ */
+
 #pragma once
 
 #include <string>
 #include <cstdint>
 
+/**
+ * @brief Abstract interface for typed key-value persistent storage.
+ *
+ * Implementations must support string, 32-bit integer, and boolean value types,
+ * as well as key existence checking and deletion.
+ */
 class SettingsBackend {
 public:
     virtual ~SettingsBackend() = default;
 
+    /// @brief Check whether a key exists in storage.
     virtual bool hasKey(const std::string& key) = 0;
+    /// @brief Remove a key and its value from storage.
     virtual void eraseKey(const std::string& key) = 0;
 
+    /// @brief Read a string value for the given key.
     virtual std::string getString(const std::string& key) = 0;
+    /// @brief Write a string value for the given key.
     virtual void setString(const std::string& key, const std::string& value) = 0;
 
+    /// @brief Read a 32-bit integer value for the given key.
     virtual int32_t getInt(const std::string& key) = 0;
+    /// @brief Write a 32-bit integer value for the given key.
     virtual void setInt(const std::string& key, int32_t value) = 0;
 
+    /// @brief Read a boolean value for the given key.
     virtual bool getBool(const std::string& key) = 0;
+    /// @brief Write a boolean value for the given key.
     virtual void setBool(const std::string& key, bool value) = 0;
 };

@@ -22,6 +22,32 @@
  * SOFTWARE.
  */
 
+/**
+ * @file UserSettings.hpp
+ * @brief Platform-agnostic key-value settings store with namespacing.
+ *
+ * UserSettings provides typed get/set operations (string, int, bool) backed
+ * by a pluggable SettingsBackend. It's designed to pair well with the ESP32
+ * NVS (non-volatile storage) key/value store, but the storage backing is
+ * plarform agnostic; an XML backend is provided.
+ *
+ * Instances are accessed by namespace (e.g. "libros") and cached — repeated
+ * calls with the same namespace return the same instance. The backend factory
+ * must be registered once at startup via setBackendFactory().
+ *
+ * Usage:
+ * @code
+ *   // At startup
+ *   UserSettings::setBackendFactory([](const std::string& ns) {
+ *       return std::make_unique<NVSSettingsBackend>(ns);
+ *   });
+ *
+ *   // Anywhere in the app
+ *   auto settings = UserSettings::withNamespace("libros");
+ *   std::string font = settings->getString("user_font");
+ * @endcode
+ */
+
 #pragma once
 
 #include <string>
@@ -32,29 +58,53 @@
 
 class SettingsBackend;
 
+/**
+ * @brief Namespaced key-value settings store with a pluggable backend.
+ *
+ * Non-copyable singleton-per-namespace. Delegates all storage operations
+ * to a SettingsBackend instance created by the registered factory.
+ */
 class UserSettings {
 public:
+    /// @brief Factory function type that creates a SettingsBackend for a given namespace.
     using BackendFactory = std::function<std::unique_ptr<SettingsBackend>(const std::string&)>;
 
-    /// Register a factory that creates SettingsBackend instances.
-    /// Must be called once at startup before any withNamespace() calls.
+    /**
+     * @brief Register the factory used to create SettingsBackend instances.
+     *
+     * Must be called once at startup before any withNamespace() calls.
+     * @param factory A function that creates a backend for a given namespace name.
+     */
     static void setBackendFactory(BackendFactory factory);
 
-    /// Get or create a UserSettings instance for the given namespace.
-    /// Returns the same instance on repeated calls with the same name.
+    /**
+     * @brief Get or create a UserSettings instance for the given namespace.
+     *
+     * Returns the same instance on repeated calls with the same name.
+     * @param name The namespace (e.g. "libros").
+     * @return Pointer to the cached UserSettings instance.
+     */
     static UserSettings* withNamespace(const std::string& name);
 
+    /// @brief Check whether a key exists in this namespace.
     bool hasKey(const std::string& key);
 
+    /// @brief Get a string value. If the key doesn't exist, the backend should return an empty string.
     std::string getString(const std::string& key);
+    /// @brief Set a string value.
     void setString(const std::string& key, const std::string& value);
 
+    /// @brief Get a 32-bit integer value. If the key doesn't exist, the backend should return 0.
     int32_t getInt(const std::string& key);
+    /// @brief Set a 32-bit integer value.
     void setInt(const std::string& key, int32_t value);
 
+    /// @brief Get a boolean value. If the key doesn't exist, the backend should return false.
     bool getBool(const std::string& key);
+    /// @brief Set a boolean value.
     void setBool(const std::string& key, bool value);
 
+    /// @brief Delete a key and its value from storage.
     void eraseKey(const std::string& key);
 
     UserSettings(const UserSettings&) = delete;
@@ -63,8 +113,8 @@ public:
 private:
     UserSettings(std::unique_ptr<SettingsBackend> backend);
 
-    std::unique_ptr<SettingsBackend> backend;
+    std::unique_ptr<SettingsBackend> backend; ///< Platform-specific storage backend.
 
-    static BackendFactory backendFactory;
-    static std::map<std::string, UserSettings*> instances;
+    static BackendFactory backendFactory;               ///< Registered backend factory.
+    static std::map<std::string, UserSettings*> instances; ///< Cached instances by namespace.
 };

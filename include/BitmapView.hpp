@@ -22,16 +22,33 @@
  * SOFTWARE.
  */
 
+/**
+ * @file BitmapView.hpp
+ * @brief View that displays a static 1bpp bitmap image.
+ */
+
 #pragma once
 
 #include "Focus.hpp"
 #include "View.hpp"
 
+/**
+ * @brief A view that renders a pre-existing 1bpp bitmap to the display.
+ *
+ * The bitmap data is not owned by this view — it must remain valid for
+ * the lifetime of the BitmapView. The bitmap is blitted opaquely using
+ * the view's frame dimensions.
+ */
 class BitmapView : public View {
 public:
+    /**
+     * @brief Construct a bitmap view.
+     * @param rect Frame rectangle (position and size).
+     * @param bitmap Pointer to 1bpp MSB-first bitmap data. Must remain valid.
+     */
     BitmapView(Rect rect, const unsigned char *bitmap);
     void draw(int x, int y) override;
 protected:
-    const unsigned char *bitmap;
+    const unsigned char *bitmap; ///< Pointer to the external bitmap data.
 };
 

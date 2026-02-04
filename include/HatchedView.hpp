@@ -22,17 +22,37 @@
  * SOFTWARE.
  */
 
+/**
+ * @file HatchedView.hpp
+ * @brief View that draws a semi-transparent hatched overlay.
+ *
+ * HatchedView renders a dense mask pattern over its frame, producing
+ * a visual dimming effect. Used by Application::presentViewController() to
+ * dim the content behind modal view controllers.
+ */
+
 #pragma once
 
 #include "Focus.hpp"
 #include "View.hpp"
 #include <vector>
 
+/**
+ * @brief A view that draws a dither pattern for visual dimming.
+ *
+ * Diagonal lines are drawn in the specified color, creating a ~50% density
+ * hatched overlay. The mask is pre-computed on construction.
+ */
 class HatchedView : public View {
 public:
+    /**
+     * @brief Construct a hatched overlay view.
+     * @param rect Frame rectangle to cover.
+     * @param color The color to draw the hatched pixels in.
+     */
     HatchedView(Rect rect, int color);
     void draw(int x, int y) override;
 private:
-    int maskRowBytes;
-    std::vector<uint8_t> mask;
+    int maskRowBytes;             ///< Bytes per row in the mask buffer.
+    std::vector<uint8_t> mask;    ///< Pre-computed checkerboard mask bitmap.
 };

@@ -22,6 +22,18 @@
  * SOFTWARE.
  */
 
+/**
+ * @file KeyboardView.hpp
+ * @brief An on-screen keyboard for text input on touch-enabled devices.
+ *
+ * KeyboardView renders a QWERTY keyboard layout and handles touch events to
+ * detect key presses. It supports three pages: lowercase, uppercase, and
+ * symbols. Key presses are reported via a callback, with special key values
+ * for backspace ("⌫"), shift ("⇧"), symbols ("123"/"ABC"), and done ("✓").
+ *
+ * Typically presented modally in response to a TextField being tapped.
+ */
+
 #pragma once
 
 #include "View.hpp"
@@ -31,29 +43,39 @@
 class Font;
 class CanvasView;
 
+/**
+ * @brief An on-screen touch keyboard with lowercase, uppercase, and symbol pages.
+ */
 class KeyboardView : public View {
 public:
+    /// @brief Callback type invoked when a key is pressed.
     using KeyCallback = std::function<void(std::string key)>;
 
+    /// @brief Construct a keyboard view with the given frame.
     KeyboardView(Rect rect);
 
+    /// @brief Set the callback invoked for each key press.
     void setKeyCallback(KeyCallback callback);
+    /// @brief Set the font for key labels. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
 
     void draw(int x, int y) override;
+    /// @brief Handle touch events to detect key presses.
     bool handleEvent(Event event) override;
 
 private:
+    /// @brief Available keyboard pages.
     enum class KeyboardPage {
-        Lowercase,
-        Uppercase,
-        Symbols
+        Lowercase, ///< Lowercase letters.
+        Uppercase, ///< Uppercase letters.
+        Symbols    ///< Numbers and symbols.
     };
 
+    /// @brief A key's hit-test rectangle and associated text.
     struct KeyRect {
-        Rect rect;
-        std::string label;
-        std::string value; // what gets sent via callback
+        Rect rect;          ///< Hit-test rectangle in canvas coordinates.
+        std::string label;  ///< Text drawn on the key cap.
+        std::string value;  ///< Value sent via callback when pressed.
     };
 
     KeyCallback keyCallback;
@@ -66,7 +88,6 @@ private:
     void buildKeyLayout(std::vector<KeyRect>& keys) const;
     int getKeyForTouch(Point localPoint) const;
 
-    // Cached key layout for hit testing
     mutable std::vector<KeyRect> cachedKeys;
     mutable bool keysCached = false;
 };

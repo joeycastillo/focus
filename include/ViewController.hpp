@@ -22,26 +22,76 @@
  * SOFTWARE.
  */
 
+/**
+ * @file ViewController.hpp
+ * @brief Controller that manages a view's lifecycle and coordinates with the Application.
+ *
+ * ViewController follows the UIKit pattern: each ViewController owns a single
+ * root view that it creates lazily (on first appearance) and destroys when it
+ * disappears. Subclass ViewController and override createView() to build your
+ * view hierarchy.
+ *
+ * The Application manages ViewController presentation via setRootViewController(),
+ * presentViewController(), and dismissViewController().
+ */
+
 #pragma once
 
 #include "Focus.hpp"
 
+/**
+ * @brief Abstract controller that manages a view and its lifecycle.
+ *
+ * The lifecycle follows a predictable sequence:
+ * 1. viewWillAppear() — called before the view is added to the window.
+ *    The base implementation calls createView() if the view doesn't exist yet.
+ * 2. viewDidAppear() — called after the view is added to the window.
+ * 3. viewWillDisappear() — called before the view is removed.
+ * 4. viewDidDisappear() — called after the view is removed.
+ *    The base implementation calls destroyView() to release the view.
+ */
 class ViewController : public std::enable_shared_from_this<ViewController> {
 public:
+    /**
+     * @brief Construct a view controller associated with an application.
+     * @param application The owning application (stored as a weak reference).
+     */
     ViewController(std::shared_ptr<Application> application);
 
+    /// @brief Called before the view is added to the window. Creates the view if needed.
     virtual void viewWillAppear();
+    /// @brief Called after the view has been added to the window.
     virtual void viewDidAppear() {};
+    /// @brief Called before the view is removed from the window.
     virtual void viewWillDisappear() {};
+    /// @brief Called after the view has been removed. Destroys the view by default.
     virtual void viewDidDisappear();
 
+    /**
+     * @brief Inject an event into the application's event dispatch system.
+     *
+     * Convenience method that forwards to Application::generateEvent().
+     *
+     * @param eventType One of the FOCUS_EVENT_* constants.
+     * @param userInfo Event-specific payload (default 0).
+     */
     void generateEvent(int32_t eventType, int32_t userInfo = 0);
 
 protected:
+    /**
+     * @brief Create this controller's view hierarchy.
+     *
+     * Subclasses must override this to build their view tree. The base
+     * implementation simply destroys any existing view. Assign the root
+     * of your view tree to this->view.
+     */
     virtual void createView();
+
+    /// @brief Destroy the view hierarchy, releasing the root view.
     virtual void destroyView();
-    std::shared_ptr<View> view;
-    std::weak_ptr<Application> application;
+
+    std::shared_ptr<View> view;            ///< The root view managed by this controller.
+    std::weak_ptr<Application> application; ///< Weak reference to the owning application.
 
     friend class Application;
 };
