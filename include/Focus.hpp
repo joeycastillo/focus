@@ -90,3 +90,4 @@ typedef enum {
 } DirectionalAffinity;
 
 #include "NotificationCenter.hpp"
+#include "UserSettings.hpp"
