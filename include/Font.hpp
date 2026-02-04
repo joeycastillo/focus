@@ -27,6 +27,7 @@
 #include "Focus.hpp"
 #include "GlyphProvider.hpp"
 #include <string>
+#include <vector>
 #include <map>
 #include <memory>
 
@@ -53,9 +54,20 @@ public:
     /// @return The system font, or nullptr if not set.
     static std::shared_ptr<Font> systemFont();
 
-    /// Set the path where font files are located.
+    /// Set the path where font files are located (clears any existing paths).
     /// @param path Directory path (e.g., "/sdcard/fonts/")
     static void setFontSearchPath(const std::string& path);
+
+    /// Add an additional search path for font files.
+    /// Paths are searched in the order they are added.
+    /// @param path Directory path (e.g., "/fonts/")
+    static void addFontSearchPath(const std::string& path);
+
+    /// Clear all font search paths.
+    static void clearSearchPaths();
+
+    /// Get the current list of search paths.
+    static const std::vector<std::string>& getSearchPaths();
 
     /// Set the system/default font.
     /// @param font The font to use as the system default.
@@ -85,7 +97,7 @@ private:
 
     // Static members for caching
     static std::map<std::string, std::shared_ptr<Font>> fontCache;
-    static std::string searchPath;
+    static std::vector<std::string> searchPaths;
     static std::shared_ptr<Font> defaultSystemFont;
 
     // Helper to load a font file

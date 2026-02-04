@@ -27,7 +27,7 @@
 
 // Static member initialization
 std::map<std::string, std::shared_ptr<Font>> Font::fontCache;
-std::string Font::searchPath = "";
+std::vector<std::string> Font::searchPaths;
 std::shared_ptr<Font> Font::defaultSystemFont = nullptr;
 
 Font::Font(std::shared_ptr<GlyphProvider> provider) : provider(provider) {}
@@ -56,11 +56,24 @@ std::shared_ptr<Font> Font::systemFont() {
 }
 
 void Font::setFontSearchPath(const std::string& path) {
-    searchPath = path;
-    // Ensure path ends with separator
-    if (!searchPath.empty() && searchPath.back() != '/') {
-        searchPath += '/';
+    clearSearchPaths();
+    addFontSearchPath(path);
+}
+
+void Font::addFontSearchPath(const std::string& path) {
+    std::string p = path;
+    if (!p.empty() && p.back() != '/') {
+        p += '/';
     }
+    searchPaths.push_back(p);
+}
+
+void Font::clearSearchPaths() {
+    searchPaths.clear();
+}
+
+const std::vector<std::string>& Font::getSearchPaths() {
+    return searchPaths;
 }
 
 void Font::setSystemFont(std::shared_ptr<Font> font) {
@@ -72,25 +85,16 @@ void Font::clearCache() {
 }
 
 std::shared_ptr<GlyphProvider> Font::loadFontFile(const std::string& name) {
-    // Try with search path + name + .bdf extension
-    std::string fullPath = searchPath + name;
-    if (fullPath.find(".bdf") == std::string::npos) {
-        fullPath += ".bdf";
-    }
-
-    auto provider = std::make_shared<BDFGlyphProvider>(fullPath);
-    if (provider->isValid()) {
-        return provider;
-    }
-
-    // Try without adding extension (in case name already has it)
-    if (name.find(".bdf") != std::string::npos) {
-        provider = std::make_shared<BDFGlyphProvider>(searchPath + name);
+    for (const auto& path : searchPaths) {
+        std::string fullPath = path + name;
+        if (fullPath.find(".bdf") == std::string::npos) {
+            fullPath += ".bdf";
+        }
+        auto provider = std::make_shared<BDFGlyphProvider>(fullPath);
         if (provider->isValid()) {
             return provider;
         }
     }
-
     return nullptr;
 }
 
