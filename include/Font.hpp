@@ -37,16 +37,16 @@
 /// Usage:
 ///   // At app startup
 ///   Font::setFontSearchPath("/sdcard/fonts/");
-///   Font::setSystemFont(Font::withName("timR18"));
+///   Font::setSystemFont(Font::withName("spleen-12x24"));
 ///
 ///   // In views
-///   label->setFont(Font::withName("timR24"));
+///   label->setFont(Font::withName("spleen-16x32"));
 ///
 class Font {
 public:
     /// Get a font by name. Returns cached instance if already loaded.
     /// Falls back to systemFont() if the font cannot be loaded.
-    /// @param name Font name (e.g., "timR18" or "timR18.bdf")
+    /// @param name Font name (e.g., "spleen-12x24" or "spleen-12x24.bdf")
     static std::shared_ptr<Font> withName(const std::string& name);
 
     /// Get the system/default font.
