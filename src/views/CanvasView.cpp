@@ -290,6 +290,7 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t t
     uint8_t width = glyphRect.size.width;
     uint8_t bytesPerRow = (width + 7) / 8;
     bool mirrored = (this->direction == -1) && traits.is.mirrored;
+    int bbxOffset = glyphRect.origin.x;
 
     for (int row = 0; row < this->glyphRowCount; row++) {
         for (int byteIdx = 0; byteIdx < bytesPerRow; byteIdx++) {
@@ -300,9 +301,9 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t t
                 if (line & 1) {
                     int pixelX = mirrored ? (width - 1 - (xOffset + j)) : (xOffset + j);
                     if (this->textSize == 1) {
-                        drawPixel(x + pixelX, y + row, this->textColor);
+                        drawPixel(x + bbxOffset + pixelX, y + row, this->textColor);
                     } else {
-                        fillRect(x + pixelX * this->textSize, y + row * this->textSize,
+                        fillRect((x + bbxOffset + pixelX) * this->textSize, y + row * this->textSize,
                                  this->textSize, this->textSize, this->textColor);
                     }
                 }
