@@ -23,6 +23,7 @@
  */
 
 #include "Font.hpp"
+#include "PackedFontGlyphProvider.hpp"
 #include "BDFGlyphProvider.hpp"
 
 // Static member initialization
@@ -86,14 +87,24 @@ void Font::clearCache() {
 
 std::shared_ptr<GlyphProvider> Font::loadFontFile(const std::string& name) {
     for (const auto& path : searchPaths) {
-        std::string fullPath = path + name;
-        if (fullPath.find(".bdf") == std::string::npos) {
-            fullPath += ".bdf";
-        }
-        auto provider = std::make_shared<BDFGlyphProvider>(fullPath);
-        if (provider->isValid()) {
-            return provider;
-        }
+        std::string baseName = name;
+        // Strip any existing extension
+        auto bdfPos = baseName.find(".bdf");
+        if (bdfPos != std::string::npos)
+            baseName = baseName.substr(0, bdfPos);
+        auto bdpPos = baseName.find(".bdp");
+        if (bdpPos != std::string::npos)
+            baseName = baseName.substr(0, bdpPos);
+
+        // Try .bdp first
+        std::string bdpPath = path + baseName + ".bdp";
+        auto packed = std::make_shared<PackedFontGlyphProvider>(bdpPath);
+        if (packed->isValid()) return packed;
+
+        // Fall back to .bdf
+        std::string bdfPath = path + baseName + ".bdf";
+        auto bdf = std::make_shared<BDFGlyphProvider>(bdfPath);
+        if (bdf->isValid()) return bdf;
     }
     return nullptr;
 }
