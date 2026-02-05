@@ -41,6 +41,8 @@
 #include "Focus.hpp"
 #include "View.hpp"
 
+class KeyboardView;
+
 /**
  * @brief Root view that connects the view hierarchy to a Display.
  *
@@ -118,6 +120,13 @@ public:
     /// @brief Get the currently focused view, or empty if none.
     std::weak_ptr<View> getFocusedView();
 
+    /// @brief Called after focus changes. Presents or dismisses the keyboard
+    /// depending on whether the newly focused view wants keyboard input.
+    void onFocusedViewChanged();
+
+    /// @brief Check whether a view is the keyboard or a descendant of it.
+    bool isKeyboardView(std::shared_ptr<View> view);
+
     /// @brief Returns an empty weak_ptr (the window has no superview).
     std::weak_ptr<View>getSuperview() override;
     /// @brief Returns a weak_ptr to this window.
@@ -134,6 +143,11 @@ protected:
     bool touchEnabled;                         ///< Whether touch input mode is active.
     std::weak_ptr<View> capturedTouchView;     ///< View capturing current touch sequence.
     Point touchDownPoint;                      ///< Initial touch-down point in window coordinates.
+    std::shared_ptr<KeyboardView> keyboard;    ///< Window-managed on-screen keyboard, or nullptr.
+
+    void presentKeyboard();
+    void dismissKeyboard();
+    void onKeyPressed(std::string key);
 
     friend class Application;
     friend class View;

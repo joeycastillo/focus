@@ -191,13 +191,17 @@ void TextField::draw(int x, int y) {
     }
 }
 
+bool TextField::wantsKeyboardInput() {
+    return true;
+}
+
 bool TextField::handleEvent(Event event) {
     if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
-        // Fire any registered action
+        this->becomeFocused();
         if (this->actions.count(FOCUS_EVENT_TOUCH_DOWN)) {
             this->actions[FOCUS_EVENT_TOUCH_DOWN](event, this->shared_from_this());
-            return true;
         }
+        return true;
     }
     return View::handleEvent(event);
 }

@@ -74,15 +74,14 @@ public:
     void setTextChangedCallback(std::function<void(std::string)> callback);
 
     void draw(int x, int y) override;
-    /// @brief Handle touch events to present the keyboard.
+    /// @brief Handle touch events to request focus (and thereby the keyboard).
     bool handleEvent(Event event) override;
     void didBecomeFocused() override;
     void didResignFocus() override;
 
-    /// @brief Insert text at the end (called by KeyboardView).
-    void insertText(const std::string& str);
-    /// @brief Delete the last character (called by KeyboardView).
-    void deleteBackward();
+    bool wantsKeyboardInput() override;
+    void insertText(const std::string& str) override;
+    void deleteBackward() override;
 
 protected:
     /**

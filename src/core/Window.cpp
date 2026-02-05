@@ -25,6 +25,7 @@
 #include "Window.hpp"
 #include "View.hpp"
 #include "Display.hpp"
+#include "KeyboardView.hpp"
 
 Window::Window(std::shared_ptr<Display> display, Size size) : View(MakeRect(0, 0, size.width, size.height)) {
     this->display = display;
@@ -121,4 +122,57 @@ void Window::clearCapturedTouchView() {
 
 Point Window::getTouchDownPoint() {
     return this->touchDownPoint;
+}
+
+void Window::onFocusedViewChanged() {
+    std::shared_ptr<View> focused = this->focusedView.lock();
+    if (focused && focused->wantsKeyboardInput()) {
+        presentKeyboard();
+    } else {
+        dismissKeyboard();
+    }
+}
+
+void Window::presentKeyboard() {
+    if (this->keyboard) return;
+
+    int keyboardHeight = 260;
+    this->keyboard = std::make_shared<KeyboardView>(
+        MakeRect(0, this->frame.size.height - keyboardHeight,
+                 this->frame.size.width, keyboardHeight));
+    this->keyboard->setKeyCallback(
+        std::bind(&Window::onKeyPressed, this, std::placeholders::_1));
+    this->addSubview(this->keyboard);
+}
+
+void Window::dismissKeyboard() {
+    if (!this->keyboard) return;
+
+    std::shared_ptr<KeyboardView> kb = this->keyboard;
+    this->keyboard.reset();
+    this->removeSubview(kb);
+}
+
+void Window::onKeyPressed(std::string key) {
+    std::shared_ptr<View> focused = this->focusedView.lock();
+    if (!focused) return;
+
+    if (key == "\b") {
+        focused->deleteBackward();
+    } else if (key == "\n") {
+        this->becomeFocused();
+    } else {
+        focused->insertText(key);
+    }
+}
+
+bool Window::isKeyboardView(std::shared_ptr<View> view) {
+    if (!this->keyboard) return false;
+
+    std::shared_ptr<View> v = view;
+    while (v) {
+        if (v == this->keyboard) return true;
+        v = v->getSuperview().lock();
+    }
+    return false;
 }

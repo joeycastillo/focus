@@ -62,6 +62,15 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
             {
                 Point touch = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
                 if (std::shared_ptr<View> touchedView = this->window->getViewForTouch(touch).lock()) {
+                    // If a text-input view is focused and the touch landed outside
+                    // both it and the keyboard, resign focus to dismiss the keyboard.
+                    if (std::shared_ptr<View> focused = this->window->getFocusedView().lock()) {
+                        if (focused->wantsKeyboardInput() &&
+                            touchedView != focused &&
+                            !this->window->isKeyboardView(touchedView)) {
+                            this->window->becomeFocused();
+                        }
+                    }
                     this->window->setCapturedTouchView(touchedView, touch);
                     touchedView->handleEvent(event);
                     return;

@@ -97,11 +97,6 @@ bool View::canBecomeFocused() {
 bool View::becomeFocused() {
     if (this->canBecomeFocused()) {
         if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-            if (window->touchEnabled && window.get() != this) {
-                // in a touch enahled interface, the window is always the focused view.
-                return false;
-            }
-
             std::shared_ptr<View> oldResponder = window->getFocusedView().lock();
             if (oldResponder != NULL) {
                 // if the window has a focused view, let it know it's going out of focus.
@@ -115,6 +110,7 @@ bool View::becomeFocused() {
             this->focused = true;
             window->focusedView = this->shared_from_this();
             this->didBecomeFocused();
+            window->onFocusedViewChanged();
         }
 
         return true;
@@ -430,6 +426,18 @@ void View::SetDefaultBackgroundColor(uint16_t color) {
 
 void View::SetDefaultForegroundColor(uint16_t color) {
     View::defaultForegroundColor = color;
+}
+
+bool View::wantsKeyboardInput() {
+    return false;
+}
+
+void View::insertText(const std::string& text) {
+    // no-op by default
+}
+
+void View::deleteBackward() {
+    // no-op by default
 }
 
 bool View::_contains(Point point) {

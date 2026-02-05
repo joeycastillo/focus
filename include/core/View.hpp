@@ -138,6 +138,21 @@ public:
     virtual void didResignFocus();
     /// @}
 
+    /// @name Text Input
+    /// @brief Override these in views that accept keyboard text input (e.g. TextField).
+    /// @{
+
+    /// @brief Whether this view accepts keyboard text input when focused.
+    /// The Window uses this to auto-present an on-screen keyboard.
+    virtual bool wantsKeyboardInput();
+
+    /// @brief Insert text at the current input position.
+    virtual void insertText(const std::string& text);
+
+    /// @brief Delete the character before the current input position.
+    virtual void deleteBackward();
+    /// @}
+
     /**
      * @brief Handle an event delivered to this view.
      *
