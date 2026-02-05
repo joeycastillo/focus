@@ -25,8 +25,28 @@
 #include "TextLayout.hpp"
 #include "utf8_decode.hpp"
 #include "utf8_parse.hpp"
+#include "esp_timer.h"
+#include "esp_log.h"
 #include <cstring>
 #include <cstdlib>
+
+// Performance counters for measureLineWrap internals
+// These accumulate across calls and can be reset/read externally
+static int64_t _perfTraitsLookupTime = 0;
+static int64_t _perfMetricsLookupTime = 0;
+static uint32_t _perfCodepointsProcessed = 0;
+
+void TextLayout::resetPerfCounters() {
+    _perfTraitsLookupTime = 0;
+    _perfMetricsLookupTime = 0;
+    _perfCodepointsProcessed = 0;
+}
+
+void TextLayout::getPerfCounters(int64_t& traitsTime, int64_t& metricsTime, uint32_t& codepoints) {
+    traitsTime = _perfTraitsLookupTime;
+    metricsTime = _perfMetricsLookupTime;
+    codepoints = _perfCodepointsProcessed;
+}
 
 size_t TextLayout::bytesForCodepoint(UNICODE_CODEPOINT cp) {
     if (cp <= 0x7F) return 1;
@@ -73,6 +93,7 @@ WordWrapResult TextLayout::measureLineWrap(
         }
 
         UNICODE_CODEPOINT cp = codepoints[position];
+        _perfCodepointsProcessed++;
 
         // Handle newline - this is a paragraph break, not a wrap
         if (cp == '\n') {
@@ -91,8 +112,15 @@ WordWrapResult TextLayout::measureLineWrap(
             continue;
         }
 
+        int64_t t0 = esp_timer_get_time();
         unicode_info_t traits = getTraitsForCodepoint(cp);
+        int64_t t1 = esp_timer_get_time();
+        _perfTraitsLookupTime += (t1 - t0);
+
+        int64_t t2 = esp_timer_get_time();
         Rect metrics = glyphProvider->metricsForCodepoint(cp);
+        int64_t t3 = esp_timer_get_time();
+        _perfMetricsLookupTime += (t3 - t2);
 
         // Track potential wrap points (spaces, etc.)
         if (traits.is.linebreak) {
