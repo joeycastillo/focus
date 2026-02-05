@@ -47,6 +47,15 @@ class GlyphProvider : public std::enable_shared_from_this<GlyphProvider> {
 public:
     GlyphProvider();
 
+    /**
+     * @brief Get a pre-populated cache of metrics for ASCII codepoints 0x20..0x7F.
+     *
+     * Returns a pointer to a 96-element Rect array. Index with (codepoint - 0x20).
+     * Populated lazily on first call from metricsForCodepoint().
+     * Used by TextLayout to skip virtual dispatch and hash lookups in the hot loop.
+     */
+    const Rect* getAsciiMetricsCache();
+
     /// @brief Get the font's point size (pixel height).
     virtual uint8_t getPointSize() = 0;
 
@@ -94,4 +103,8 @@ public:
      * @return Bounding box and advance metrics for the glyph.
      */
     virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) = 0;
+
+private:
+    Rect asciiMetricsCache[96];     ///< Cached metrics for codepoints 0x20..0x7F.
+    bool asciiCachePopulated = false;
 };

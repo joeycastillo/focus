@@ -26,3 +26,13 @@
 
 GlyphProvider::GlyphProvider() {
 }
+
+const Rect* GlyphProvider::getAsciiMetricsCache() {
+    if (!asciiCachePopulated) {
+        for (int i = 0; i < 96; i++) {
+            asciiMetricsCache[i] = metricsForCodepoint(0x20 + i);
+        }
+        asciiCachePopulated = true;
+    }
+    return asciiMetricsCache;
+}

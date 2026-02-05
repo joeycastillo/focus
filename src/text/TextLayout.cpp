@@ -25,28 +25,13 @@
 #include "TextLayout.hpp"
 #include "utf8_decode.hpp"
 #include "utf8_parse.hpp"
-#include "esp_timer.h"
-#include "esp_log.h"
 #include <cstring>
 #include <cstdlib>
 
-// Performance counters for measureLineWrap internals
-// These accumulate across calls and can be reset/read externally
-static int64_t _perfTraitsLookupTime = 0;
-static int64_t _perfMetricsLookupTime = 0;
-static uint32_t _perfCodepointsProcessed = 0;
-
-void TextLayout::resetPerfCounters() {
-    _perfTraitsLookupTime = 0;
-    _perfMetricsLookupTime = 0;
-    _perfCodepointsProcessed = 0;
-}
-
-void TextLayout::getPerfCounters(int64_t& traitsTime, int64_t& metricsTime, uint32_t& codepoints) {
-    traitsTime = _perfTraitsLookupTime;
-    metricsTime = _perfMetricsLookupTime;
-    codepoints = _perfCodepointsProcessed;
-}
+// Direct access to the Unicode traits LUT for ASCII fast path.
+// Defined in unicodetraits.cpp. For ASCII codepoints (< 0x80), indexing
+// directly avoids the branch cascade in getTraitsForCodepoint().
+extern const uint8_t _unicode_info_0000_33FF[];
 
 size_t TextLayout::bytesForCodepoint(UNICODE_CODEPOINT cp) {
     if (cp <= 0x7F) return 1;
@@ -81,6 +66,9 @@ WordWrapResult TextLayout::measureLineWrap(
     size_t position = 0;
     int16_t cursorX = initialCursorX;
 
+    // Pre-fetch ASCII metrics cache to avoid virtual dispatch in the hot loop
+    const Rect* asciiMetrics = glyphProvider->getAsciiMetricsCache();
+
     while (cursorX < layoutWidth) {
         // Check if we've consumed all input (no wrap needed)
         if (position >= len) {
@@ -93,12 +81,11 @@ WordWrapResult TextLayout::measureLineWrap(
         }
 
         UNICODE_CODEPOINT cp = codepoints[position];
-        _perfCodepointsProcessed++;
 
         // Handle newline - this is a paragraph break, not a wrap
         if (cp == '\n') {
             result.codepointsConsumed = position + 1;
-            result.bytesConsumed = bytePosition + bytesForCodepoint(cp);
+            result.bytesConsumed = bytePosition + 1;
             result.wrapped = false;
             result.isParagraphBreak = true;
             result.endCursorX = 0;  // Line complete, next line starts at 0
@@ -107,20 +94,22 @@ WordWrapResult TextLayout::measureLineWrap(
 
         // Skip control characters but count their bytes
         if (cp < 0x20) {
-            bytePosition += bytesForCodepoint(cp);
+            bytePosition += 1;  // Control chars are always single-byte
             position++;
             continue;
         }
 
-        int64_t t0 = esp_timer_get_time();
-        unicode_info_t traits = getTraitsForCodepoint(cp);
-        int64_t t1 = esp_timer_get_time();
-        _perfTraitsLookupTime += (t1 - t0);
+        unicode_info_t traits;
+        Rect metrics;
 
-        int64_t t2 = esp_timer_get_time();
-        Rect metrics = glyphProvider->metricsForCodepoint(cp);
-        int64_t t3 = esp_timer_get_time();
-        _perfMetricsLookupTime += (t3 - t2);
+        if (cp < 0x80) {
+            // ASCII fast path: direct array lookups, no function calls
+            traits.packed = _unicode_info_0000_33FF[cp];
+            metrics = asciiMetrics[cp - 0x20];
+        } else {
+            traits = getTraitsForCodepoint(cp);
+            metrics = glyphProvider->metricsForCodepoint(cp);
+        }
 
         // Track potential wrap points (spaces, etc.)
         if (traits.is.linebreak) {
@@ -133,7 +122,7 @@ WordWrapResult TextLayout::measureLineWrap(
             cursorX += metrics.size.width * textSize;
         }
 
-        bytePosition += bytesForCodepoint(cp);
+        bytePosition += (cp < 0x80) ? 1 : bytesForCodepoint(cp);
         position++;
     }
 

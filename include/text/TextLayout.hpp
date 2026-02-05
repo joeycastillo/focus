@@ -98,12 +98,4 @@ public:
     /// @return Width of the text in pixels
     static int16_t measureTextWidth(const char* utf8String, uint8_t textSize, GlyphProvider* glyphProvider);
 
-    /// Reset performance counters for measureLineWrap internals
-    static void resetPerfCounters();
-
-    /// Get accumulated performance counters
-    /// @param traitsTime Output: time spent in getTraitsForCodepoint
-    /// @param metricsTime Output: time spent in metricsForCodepoint
-    /// @param codepoints Output: number of codepoints processed
-    static void getPerfCounters(int64_t& traitsTime, int64_t& metricsTime, uint32_t& codepoints);
 };
