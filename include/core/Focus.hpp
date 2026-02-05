@@ -80,7 +80,19 @@
 #define FOCUS_EVENT_BUS_POWER_CHANGED (2000)    ///< External power connected or disconnected.
 #define FOCUS_EVENT_CHARGE_STATE_CHANGED (2001) ///< Battery charge state changed.
 #define FOCUS_EVENT_CARD_STATUS_CHANGED (2002)  ///< SD card inserted or removed.
+#define FOCUS_EVENT_ORIENTATION_CHANGED (2003)  ///< Device orientation changed (userInfo is FocusOrientation).
 /// @}
+
+/// @brief Device orientation as detected by accelerometer.
+typedef enum {
+    FOCUS_ORIENTATION_UNKNOWN = 0,            ///< Orientation could not be determined.
+    FOCUS_ORIENTATION_PORTRAIT = 1,           ///< Device upright (Y+ up).
+    FOCUS_ORIENTATION_PORTRAIT_UPSIDE_DOWN = 2, ///< Device upside down (Y- up).
+    FOCUS_ORIENTATION_LANDSCAPE_LEFT = 3,     ///< Left edge down (X- up).
+    FOCUS_ORIENTATION_LANDSCAPE_RIGHT = 4,    ///< Right edge down (X+ up).
+    FOCUS_ORIENTATION_FACE_UP = 5,            ///< Screen facing up (Z+ up).
+    FOCUS_ORIENTATION_FACE_DOWN = 6,          ///< Screen facing down (Z- up).
+} FocusOrientation;
 
 class Application;
 class Display;
