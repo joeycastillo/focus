@@ -65,10 +65,13 @@ public:
     void setFont(std::shared_ptr<Font> font);
     /// @brief Get the currently assigned font (may be nullptr for system font).
     std::shared_ptr<Font> getFont() const;
+    /// @brief Set the horizontal text alignment.
+    void setTextAlignment(TextAlignment alignment);
 protected:
     std::string text;              ///< The UTF-8 text content.
     uint8_t textScale = 1;         ///< Text rendering scale factor.
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
+    TextAlignment textAlignment = TextAlignmentLeft; ///< Text alignment.
 private:
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendered text.
     bool canvasValid = false;           ///< Whether the canvas needs re-rendering.

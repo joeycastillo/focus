@@ -45,12 +45,12 @@ void LabelView::renderCanvas() {
         // Opaque: render full background + text, blit everything
         this->canvas->clear(this->backgroundColor);
         this->canvas->drawText(layoutRect, this->foregroundColor,
-                               this->textScale, this->text.c_str());
+                               this->textScale, this->text.c_str(), this->textAlignment);
     } else {
         // Non-opaque: render text as a mask (bits set where glyphs are)
         this->canvas->clear(0);
         this->canvas->drawText(layoutRect, 1,
-                               this->textScale, this->text.c_str());
+                               this->textScale, this->text.c_str(), this->textAlignment);
     }
     this->canvasValid = true;
 }
@@ -97,4 +97,12 @@ void LabelView::setFont(std::shared_ptr<Font> font) {
 
 std::shared_ptr<Font> LabelView::getFont() const {
     return this->font;
+}
+
+void LabelView::setTextAlignment(TextAlignment alignment) {
+    this->textAlignment = alignment;
+    this->canvasValid = false;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
+    }
 }

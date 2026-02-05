@@ -64,7 +64,8 @@ public:
 
     // Text rendering — renders text to the canvas buffer using the view's Font.
     // layoutRect is in canvas-local coordinates.
-    int drawText(Rect layoutRect, int color, int textSize, const char *utf8String);
+    int drawText(Rect layoutRect, int color, int textSize, const char *utf8String,
+                 TextAlignment alignment = TextAlignmentLeft);
 
     // Font property — if null, drawText uses Font::systemFont().
     void setFont(std::shared_ptr<Font> font);
@@ -96,9 +97,11 @@ private:
     int glyphRowCount = 0;
     Point lastGlyphPosition = {};
     bool hasLastGlyph = false;
+    TextAlignment textAlignment = TextAlignmentLeft;
 
     // Text rendering internals (mirror Display's pipeline)
     size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
+    int16_t measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
     size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
     int drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph);
 };

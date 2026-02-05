@@ -29,6 +29,8 @@
 #include <algorithm>
 #include <cstring>
 
+extern const uint8_t _unicode_info_0000_33FF[];
+
 CanvasView::CanvasView(Rect rect)
     : View(rect),
       rowBytes((rect.size.width + 7) / 8),
@@ -174,7 +176,8 @@ void CanvasView::setFont(std::shared_ptr<Font> font) {
     this->font = font;
 }
 
-int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *utf8String) {
+int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *utf8String,
+                         TextAlignment alignment) {
     GlyphProvider *glyphProvider = nullptr;
     if (this->font) {
         glyphProvider = this->font->getGlyphProvider();
@@ -193,6 +196,7 @@ int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *
     this->lineSpacing = TextLayout::calculateLineSpacing(glyphProvider);
     this->paragraphSpacing = TextLayout::calculateParagraphSpacing(glyphProvider);
     this->textLayoutRect = layoutRect;
+    this->textAlignment = alignment;
     this->direction = 1;
     this->hasLastGlyph = false;
 
@@ -204,6 +208,28 @@ int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *
     free(codepoints);
 
     return retVal;
+}
+
+int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider) {
+    int16_t width = 0;
+    const Rect* asciiMetrics = glyphProvider->getAsciiMetricsCache();
+    for (size_t i = 0; i < len; i++) {
+        UNICODE_CODEPOINT cp = codepoints[i];
+        if (cp < 0x20) continue;
+        unicode_info_t traits;
+        Rect metrics;
+        if (cp < 0x80) {
+            traits.packed = _unicode_info_0000_33FF[cp];
+            metrics = asciiMetrics[cp - 0x20];
+        } else {
+            traits = getTraitsForCodepoint(cp);
+            metrics = glyphProvider->metricsForCodepoint(cp);
+        }
+        if (!(traits.is.nsm || traits.is.controlchar)) {
+            width += metrics.size.width * this->textSize;
+        }
+    }
+    return width;
 }
 
 size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider) {
@@ -227,6 +253,19 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             numGlyphsToDraw = result.codepointsConsumed;
         }
 
+        // Apply text alignment offset for this line
+        if (this->textAlignment != TextAlignmentLeft && this->direction == 1) {
+            int16_t lineWidth = measureCodepointsWidth(codepoints + pos, numGlyphsToDraw, glyphProvider);
+            int16_t slack = this->textLayoutRect.size.width - lineWidth;
+            if (slack > 0) {
+                if (this->textAlignment == TextAlignmentCenter) {
+                    this->cursor.x = this->textLayoutRect.origin.x + slack / 2;
+                } else if (this->textAlignment == TextAlignmentRight) {
+                    this->cursor.x = this->textLayoutRect.origin.x + slack;
+                }
+            }
+        }
+
         for (size_t i = pos; i < pos + numGlyphsToDraw; i++) {
             retVal += this->writeCodepoint(codepoints[i], glyphProvider);
         }
@@ -239,6 +278,11 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             } else {
                 this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
             }
+        }
+
+        // Also handle paragraph breaks (newlines)
+        if (result.isParagraphBreak) {
+            this->cursor.x = this->textLayoutRect.origin.x;
         }
 
         if (this->cursor.y >= (this->textLayoutRect.origin.y + this->textLayoutRect.size.height)) break;

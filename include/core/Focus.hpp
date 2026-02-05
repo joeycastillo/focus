@@ -151,6 +151,13 @@ inline bool SizesEqual(Size a, Size b) { return (a.width == b.width) && (a.heigh
 /// @brief Test whether two Rects are equal.
 inline bool RectsEqual(Rect a, Rect b) { return PointsEqual(a.origin, b.origin) && SizesEqual(a.size, b.size); }
 
+/// @brief Controls horizontal text alignment within a layout rect.
+typedef enum {
+    TextAlignmentLeft,   ///< Align text to the left edge (default).
+    TextAlignmentCenter, ///< Center text horizontally.
+    TextAlignmentRight,  ///< Align text to the right edge.
+} TextAlignment;
+
 /// @brief Controls how a view's subviews are navigated with directional events.
 ///
 /// When a view receives directional navigation events and the focused view is one
