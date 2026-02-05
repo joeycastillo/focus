@@ -66,9 +66,10 @@ void fireTimer(std::shared_ptr<Timer> timer) {
         timer->callback();
     }
 
-    // Reschedule if repeating
+    // Reschedule if repeating — use the scheduled fire time as the base,
+    // not the current time, to avoid drift from callback execution time
     if (timer->repeats && timer->valid) {
-        timer->fireDate = Timer::Clock::now() + std::chrono::milliseconds(timer->intervalMs);
+        timer->fireDate = timer->fireDate + std::chrono::milliseconds(timer->intervalMs);
         timer->schedule();
     } else {
         timer->valid = false;
