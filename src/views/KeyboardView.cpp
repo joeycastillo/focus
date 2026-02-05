@@ -97,8 +97,8 @@ void KeyboardView::buildKeyLayout(std::vector<KeyRect>& keys) const {
         return;
     }
 
-    // 5 rows of keys
-    int rowCount = 5;
+    // 4 rows of keys
+    int rowCount = 4;
     int rowHeight = h / rowCount;
     int keyPadding = 2;
 
