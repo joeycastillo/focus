@@ -26,6 +26,7 @@
 #include "ViewController.hpp"
 #include "HatchedView.hpp"
 #include "Task.hpp"
+#include "Timer.hpp"
 #include <algorithm>
 
 Application::Application(const std::shared_ptr<Window>& window) {
@@ -43,6 +44,9 @@ void Application::run() {
     this->window->becomeFocused();
     this->window->setNeedsDisplay(true);
     while(true) {
+        // Drain any pending timer callbacks first
+        Timer::drainPendingCallbacks();
+
         for (int i = 0; i < (int)this->tasks.size(); i++) {
             if (this->tasks[i]->run(application)) {
                 this->tasks.erase(this->tasks.begin() + i);
