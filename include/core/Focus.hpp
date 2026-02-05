@@ -168,5 +168,12 @@ typedef enum {
     DirectionalAffinityHorizontal, ///< Left/Right navigate between siblings.
 } DirectionalAffinity;
 
+/// @brief Type of on-screen keyboard to present for text input.
+typedef enum {
+    KeyboardTypeDefault,    ///< Standard QWERTY keyboard with letters and symbols.
+    KeyboardTypeNumberPad,  ///< Numeric keypad for integer input.
+    KeyboardTypeDecimalPad, ///< Numeric keypad with decimal point.
+} KeyboardType;
+
 #include "NotificationCenter.hpp"
 #include "UserSettings.hpp"

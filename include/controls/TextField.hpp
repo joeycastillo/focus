@@ -72,6 +72,8 @@ public:
      * @param callback Function called with the new text value.
      */
     void setTextChangedCallback(std::function<void(std::string)> callback);
+    /// @brief Set the type of keyboard to present when this field is focused.
+    void setKeyboardType(KeyboardType type);
 
     void draw(int x, int y) override;
     /// @brief Handle touch events to request focus (and thereby the keyboard).
@@ -80,6 +82,7 @@ public:
     void didResignFocus() override;
 
     bool wantsKeyboardInput() override;
+    KeyboardType keyboardType() override;
     void insertText(const std::string& str) override;
     void deleteBackward() override;
 
@@ -97,6 +100,7 @@ protected:
     size_t maxLength = 0;                ///< Max character count (0 = unlimited).
     std::shared_ptr<Font> font;          ///< Custom font, or nullptr for system font.
     std::function<void(std::string)> textChangedCallback; ///< Text change callback.
+    KeyboardType _keyboardType = KeyboardTypeDefault;    ///< Requested keyboard layout.
 
 private:
     std::shared_ptr<CanvasView> canvas;

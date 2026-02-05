@@ -134,15 +134,29 @@ void Window::onFocusedViewChanged() {
 }
 
 void Window::presentKeyboard() {
+    std::shared_ptr<View> focused = this->focusedView.lock();
+    if (!focused) return;
+
+    KeyboardType requestedType = focused->keyboardType();
+
+    // If keyboard exists but has wrong type, dismiss it first
+    if (this->keyboard && this->currentKeyboardType != requestedType) {
+        dismissKeyboard();
+    }
+
     if (this->keyboard) return;
 
     int keyboardHeight = 260;
     this->keyboard = std::make_shared<KeyboardView>(
         MakeRect(0, this->frame.size.height - keyboardHeight,
-                 this->frame.size.width, keyboardHeight));
+                 this->frame.size.width, keyboardHeight),
+        requestedType);
     this->keyboard->setKeyCallback(
         std::bind(&Window::onKeyPressed, this, std::placeholders::_1));
-    this->addSubview(this->keyboard);
+    this->currentKeyboardType = requestedType;
+    // Use View::addSubview to add the keyboard directly to the window,
+    // bypassing any subclass overrides.
+    View::addSubview(this->keyboard);
 }
 
 void Window::dismissKeyboard() {
@@ -150,7 +164,8 @@ void Window::dismissKeyboard() {
 
     std::shared_ptr<KeyboardView> kb = this->keyboard;
     this->keyboard.reset();
-    this->removeSubview(kb);
+    this->currentKeyboardType = KeyboardTypeDefault;
+    View::removeSubview(kb);
 }
 
 void Window::onKeyPressed(std::string key) {

@@ -195,6 +195,14 @@ bool TextField::wantsKeyboardInput() {
     return true;
 }
 
+void TextField::setKeyboardType(KeyboardType type) {
+    this->_keyboardType = type;
+}
+
+KeyboardType TextField::keyboardType() {
+    return this->_keyboardType;
+}
+
 bool TextField::handleEvent(Event event) {
     if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
         this->becomeFocused();

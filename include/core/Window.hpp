@@ -144,6 +144,7 @@ protected:
     std::weak_ptr<View> capturedTouchView;     ///< View capturing current touch sequence.
     Point touchDownPoint;                      ///< Initial touch-down point in window coordinates.
     std::shared_ptr<KeyboardView> keyboard;    ///< Window-managed on-screen keyboard, or nullptr.
+    KeyboardType currentKeyboardType = KeyboardTypeDefault; ///< Type of currently presented keyboard.
 
     void presentKeyboard();
     void dismissKeyboard();

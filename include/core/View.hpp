@@ -151,6 +151,9 @@ public:
 
     /// @brief Delete the character before the current input position.
     virtual void deleteBackward();
+
+    /// @brief The type of keyboard to present when this view receives focus.
+    virtual KeyboardType keyboardType();
     /// @}
 
     /**

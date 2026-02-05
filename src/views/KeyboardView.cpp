@@ -30,7 +30,8 @@
 #include "TextLayout.hpp"
 #include <cstring>
 
-KeyboardView::KeyboardView(Rect rect) : View(rect) {
+KeyboardView::KeyboardView(Rect rect, KeyboardType type) : View(rect) {
+    this->type = type;
 }
 
 void KeyboardView::setKeyCallback(KeyCallback callback) {
@@ -51,6 +52,50 @@ void KeyboardView::buildKeyLayout(std::vector<KeyRect>& keys) const {
 
     int w = this->frame.size.width;
     int h = this->frame.size.height;
+
+    if (this->type == KeyboardTypeNumberPad || this->type == KeyboardTypeDecimalPad) {
+        int rows = 4;
+        int cols = 3;
+        int rowHeight = h / rows;
+        int keyWidth = w / cols;
+        int keyPadding = 2;
+
+        const char* digits[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
+        for (int i = 0; i < 9; i++) {
+            int row = i / 3;
+            int col = i % 3;
+            KeyRect kr;
+            kr.rect = MakeRect(col * keyWidth + keyPadding, row * rowHeight + keyPadding,
+                               keyWidth - 2 * keyPadding, rowHeight - 2 * keyPadding);
+            kr.label = digits[i];
+            kr.value = digits[i];
+            keys.push_back(kr);
+        }
+
+        // Bottom row: Del, 0, Done
+        KeyRect delKey;
+        delKey.rect = MakeRect(keyPadding, 3 * rowHeight + keyPadding,
+                               keyWidth - 2 * keyPadding, rowHeight - 2 * keyPadding);
+        delKey.label = "Del";
+        delKey.value = "\b";
+        keys.push_back(delKey);
+
+        KeyRect zeroKey;
+        zeroKey.rect = MakeRect(keyWidth + keyPadding, 3 * rowHeight + keyPadding,
+                                keyWidth - 2 * keyPadding, rowHeight - 2 * keyPadding);
+        zeroKey.label = "0";
+        zeroKey.value = "0";
+        keys.push_back(zeroKey);
+
+        KeyRect doneKey;
+        doneKey.rect = MakeRect(2 * keyWidth + keyPadding, 3 * rowHeight + keyPadding,
+                                keyWidth - 2 * keyPadding, rowHeight - 2 * keyPadding);
+        doneKey.label = "Done";
+        doneKey.value = "\n";
+        keys.push_back(doneKey);
+
+        return;
+    }
 
     // 5 rows of keys
     int rowCount = 5;

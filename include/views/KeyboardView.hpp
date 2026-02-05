@@ -51,8 +51,8 @@ public:
     /// @brief Callback type invoked when a key is pressed.
     using KeyCallback = std::function<void(std::string key)>;
 
-    /// @brief Construct a keyboard view with the given frame.
-    KeyboardView(Rect rect);
+    /// @brief Construct a keyboard view with the given frame and layout type.
+    KeyboardView(Rect rect, KeyboardType type = KeyboardTypeDefault);
 
     /// @brief Set the callback invoked for each key press.
     void setKeyCallback(KeyCallback callback);
@@ -78,6 +78,7 @@ private:
         std::string value;  ///< Value sent via callback when pressed.
     };
 
+    KeyboardType type;
     KeyCallback keyCallback;
     std::shared_ptr<Font> font;
     std::shared_ptr<CanvasView> canvas;

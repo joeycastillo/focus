@@ -440,6 +440,10 @@ void View::deleteBackward() {
     // no-op by default
 }
 
+KeyboardType View::keyboardType() {
+    return KeyboardTypeDefault;
+}
+
 bool View::_contains(Point point) {
     return (
         (this->frame.origin.x <= point.x) && (point.x <= (this->frame.origin.x + this->frame.size.width)) &&
