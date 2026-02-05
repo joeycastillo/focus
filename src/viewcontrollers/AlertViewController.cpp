@@ -185,7 +185,7 @@ void AlertViewController::createView() {
                 [this, buttonIndex](Event, std::weak_ptr<View>) {
                     this->onButtonPressed(buttonIndex);
                 },
-                FOCUS_EVENT_TOUCH_DOWN);
+                FOCUS_EVENT_TOUCH_UP_INSIDE);
 
             alertBox->addSubview(button);
         }
@@ -200,7 +200,7 @@ void AlertViewController::createView() {
                 [this, buttonIndex](Event, std::weak_ptr<View>) {
                     this->onButtonPressed(buttonIndex);
                 },
-                FOCUS_EVENT_TOUCH_DOWN);
+                FOCUS_EVENT_TOUCH_UP_INSIDE);
 
             alertBox->addSubview(button);
             yPos += buttonHeight + buttonSpacing;

@@ -256,6 +256,9 @@ public:
     /// accounting for the full superview chain (frame origins and bounds offsets).
     Point convertPointFromWindow(Point windowPoint);
 
+    /// @brief Test if a point (in window coordinates) is inside this view's bounds.
+    bool containsPointInWindowCoordinates(Point windowPoint);
+
     /// @brief Get a human-readable description of this view (type, address, tag, frame).
     std::string description();
 

@@ -73,6 +73,8 @@
 #define FOCUS_EVENT_TOUCH_DOWN (1000)  ///< Finger touched the screen.
 #define FOCUS_EVENT_TOUCH_MOVED (1001) ///< Finger moved while touching.
 #define FOCUS_EVENT_TOUCH_UP (1002)    ///< Finger lifted from the screen.
+#define FOCUS_EVENT_TOUCH_UP_INSIDE (1003)   ///< Finger lifted inside the captured view's bounds.
+#define FOCUS_EVENT_TOUCH_UP_OUTSIDE (1004)  ///< Finger lifted outside the captured view's bounds.
 /// @}
 
 /// @name Hardware Status Events

@@ -59,16 +59,42 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
     if (this->window.get()->touchEnabled) {
         switch (event.type) {
             case FOCUS_EVENT_TOUCH_DOWN:
-            case FOCUS_EVENT_TOUCH_MOVED:
-            case FOCUS_EVENT_TOUCH_UP:
             {
                 Point touch = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
-                if (std::shared_ptr<View> touchedView = this->window.get()->getViewForTouch(touch).lock()) {
-                    touchedView.get()->handleEvent(event);
+                if (std::shared_ptr<View> touchedView = this->window->getViewForTouch(touch).lock()) {
+                    this->window->setCapturedTouchView(touchedView, touch);
+                    touchedView->handleEvent(event);
                     return;
                 }
             }
-                break;
+            break;
+
+            case FOCUS_EVENT_TOUCH_MOVED:
+            {
+                if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
+                    capturedView->handleEvent(event);
+                    return;
+                }
+            }
+            break;
+
+            case FOCUS_EVENT_TOUCH_UP:
+            {
+                if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
+                    Point touchUp = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
+                    bool isInside = capturedView->containsPointInWindowCoordinates(touchUp);
+
+                    Event upEvent;
+                    upEvent.userInfo = event.userInfo;
+                    upEvent.type = isInside ? FOCUS_EVENT_TOUCH_UP_INSIDE : FOCUS_EVENT_TOUCH_UP_OUTSIDE;
+                    capturedView->handleEvent(upEvent);
+
+                    this->window->clearCapturedTouchView();
+                    return;
+                }
+            }
+            break;
+
             default:
                 // Non-touch events: deliver to the window
                 this->window->handleEvent(event);

@@ -389,6 +389,12 @@ Point View::convertPointFromWindow(Point windowPoint) {
     return MakePoint(windowPoint.x - offsetX, windowPoint.y - offsetY);
 }
 
+bool View::containsPointInWindowCoordinates(Point windowPoint) {
+    Point localPoint = this->convertPointFromWindow(windowPoint);
+    return (localPoint.x >= 0 && localPoint.x < this->bounds.size.width &&
+            localPoint.y >= 0 && localPoint.y < this->bounds.size.height);
+}
+
 void View::setNeedsDisplayInRect(Rect rect) {
     std::shared_ptr<View> shared_this = this->shared_from_this();
     std::shared_ptr<View> superview(shared_this);

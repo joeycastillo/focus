@@ -104,3 +104,21 @@ std::weak_ptr<Window> Window::getWindow() {
 void Window::setWindow(std::shared_ptr<Window> window) {
     // nothing to do here
 }
+
+std::weak_ptr<View> Window::getCapturedTouchView() {
+    return this->capturedTouchView;
+}
+
+void Window::setCapturedTouchView(std::weak_ptr<View> view, Point touchDownPoint) {
+    this->capturedTouchView = view;
+    this->touchDownPoint = touchDownPoint;
+}
+
+void Window::clearCapturedTouchView() {
+    this->capturedTouchView.reset();
+    this->touchDownPoint = MakePoint(0, 0);
+}
+
+Point Window::getTouchDownPoint() {
+    return this->touchDownPoint;
+}

@@ -77,6 +77,18 @@ public:
     /// @brief Check whether touch input is enabled.
     bool isTouchEnabled();
 
+    /// @brief Get the view currently capturing touch events, or empty if none.
+    std::weak_ptr<View> getCapturedTouchView();
+
+    /// @brief Capture a view to receive all touch events until TOUCH_UP.
+    void setCapturedTouchView(std::weak_ptr<View> view, Point touchDownPoint);
+
+    /// @brief Clear the captured touch view (called after TOUCH_UP).
+    void clearCapturedTouchView();
+
+    /// @brief Get the initial touch-down point for the current touch sequence.
+    Point getTouchDownPoint();
+
     /// @brief Check whether any region needs to be redrawn.
     bool needsDisplay();
 
@@ -120,6 +132,8 @@ protected:
     bool dirty;                                ///< Whether any region needs redrawing.
     Rect dirtyRect;                            ///< Accumulated region that needs redrawing.
     bool touchEnabled;                         ///< Whether touch input mode is active.
+    std::weak_ptr<View> capturedTouchView;     ///< View capturing current touch sequence.
+    Point touchDownPoint;                      ///< Initial touch-down point in window coordinates.
 
     friend class Application;
     friend class View;
