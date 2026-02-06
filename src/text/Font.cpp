@@ -52,6 +52,32 @@ std::shared_ptr<Font> Font::withName(const std::string& name) {
     return systemFont();
 }
 
+std::shared_ptr<Font> Font::withProvider(
+    std::shared_ptr<GlyphProvider> provider,
+    const std::string& cacheKey)
+{
+    if (!provider || !provider->isValid()) {
+        return nullptr;
+    }
+
+    // Check cache if key provided
+    if (!cacheKey.empty()) {
+        auto it = fontCache.find(cacheKey);
+        if (it != fontCache.end()) {
+            return it->second;
+        }
+    }
+
+    auto font = std::shared_ptr<Font>(new Font(provider));
+
+    // Cache if key provided
+    if (!cacheKey.empty()) {
+        fontCache[cacheKey] = font;
+    }
+
+    return font;
+}
+
 std::shared_ptr<Font> Font::systemFont() {
     return defaultSystemFont;
 }

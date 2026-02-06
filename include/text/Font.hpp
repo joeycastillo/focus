@@ -50,6 +50,15 @@ public:
     /// @param name Font name (e.g., "spleen-12x24" or "spleen-12x24.bdf")
     static std::shared_ptr<Font> withName(const std::string& name);
 
+    /// Create a font from a custom GlyphProvider.
+    /// Use this for fonts that don't come from files (e.g., Unifont, embedded fonts).
+    /// @param provider The glyph provider to use.
+    /// @param cacheKey Optional key for caching. If empty, font is not cached.
+    /// @return A shared_ptr to the font, or nullptr if provider is invalid.
+    static std::shared_ptr<Font> withProvider(
+        std::shared_ptr<GlyphProvider> provider,
+        const std::string& cacheKey = "");
+
     /// Get the system/default font.
     /// @return The system font, or nullptr if not set.
     static std::shared_ptr<Font> systemFont();
