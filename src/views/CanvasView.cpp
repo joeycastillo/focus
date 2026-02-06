@@ -177,6 +177,10 @@ void CanvasView::setFont(std::shared_ptr<Font> font) {
     this->font = font;
 }
 
+void CanvasView::setArabicShaping(bool enabled) {
+    this->arabicShaping = enabled;
+}
+
 int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *utf8String,
                          TextAlignment alignment) {
     GlyphProvider *glyphProvider = nullptr;
@@ -205,7 +209,9 @@ int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *
     if (!codepoints) return 0;
 
     utf8_parse((char *)utf8String, codepoints);
-    shapeArabic(codepoints, len);
+    if (this->arabicShaping) {
+        shapeArabic(codepoints, len);
+    }
     size_t retVal = this->writeCodepoints(codepoints, len, glyphProvider);
     free(codepoints);
 

@@ -43,7 +43,6 @@
 /// Result of a word wrap measurement
 struct WordWrapResult {
     int32_t codepointsConsumed;  ///< Number of codepoints on this line (-1 if no wrap needed)
-    size_t bytesConsumed;        ///< Number of UTF-8 bytes consumed
     bool wrapped;                ///< True if line was wrapped (false if ended at newline or end of text)
     bool isParagraphBreak;       ///< True if line ended with a newline character
     int16_t endCursorX;          ///< Horizontal position after processing (for continuing partial lines)

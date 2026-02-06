@@ -50,7 +50,6 @@ WordWrapResult TextLayout::measureLineWrap(
 ) {
     WordWrapResult result = {
         .codepointsConsumed = -1,
-        .bytesConsumed = 0,
         .wrapped = false,
         .isParagraphBreak = false,
         .endCursorX = initialCursorX
@@ -61,8 +60,6 @@ WordWrapResult TextLayout::measureLineWrap(
     }
 
     size_t wrapCandidate = 0;
-    size_t wrapCandidateBytes = 0;
-    size_t bytePosition = 0;
     size_t position = 0;
     int16_t cursorX = initialCursorX;
 
@@ -73,7 +70,6 @@ WordWrapResult TextLayout::measureLineWrap(
         // Check if we've consumed all input (no wrap needed)
         if (position >= len) {
             result.codepointsConsumed = -1;
-            result.bytesConsumed = bytePosition;
             result.wrapped = false;
             result.isParagraphBreak = false;
             result.endCursorX = cursorX;
@@ -85,16 +81,14 @@ WordWrapResult TextLayout::measureLineWrap(
         // Handle newline - this is a paragraph break, not a wrap
         if (cp == '\n') {
             result.codepointsConsumed = position + 1;
-            result.bytesConsumed = bytePosition + 1;
             result.wrapped = false;
             result.isParagraphBreak = true;
-            result.endCursorX = 0;  // Line complete, next line starts at 0
+            result.endCursorX = 0;
             return result;
         }
 
-        // Skip control characters but count their bytes
+        // Skip control characters
         if (cp < 0x20) {
-            bytePosition += 1;  // Control chars are always single-byte
             position++;
             continue;
         }
@@ -114,7 +108,6 @@ WordWrapResult TextLayout::measureLineWrap(
         // Track potential wrap points (spaces, etc.)
         if (traits.is.linebreak) {
             wrapCandidate = position;
-            wrapCandidateBytes = bytePosition;
         }
 
         // Advance cursor for non-combining characters
@@ -122,23 +115,20 @@ WordWrapResult TextLayout::measureLineWrap(
             cursorX += metrics.size.width * textSize;
         }
 
-        bytePosition += (cp < 0x80) ? 1 : bytesForCodepoint(cp);
         position++;
     }
 
     // We exceeded the layout width - need to wrap
     result.wrapped = true;
     result.isParagraphBreak = false;
-    result.endCursorX = 0;  // Line complete, next line starts at 0
+    result.endCursorX = 0;
 
     if (wrapCandidate > 0) {
         // Wrap at the last good break point (after the space)
         result.codepointsConsumed = wrapCandidate + 1;
-        result.bytesConsumed = wrapCandidateBytes + bytesForCodepoint(codepoints[wrapCandidate]);
     } else {
         // No good break point found - force break at current position
         result.codepointsConsumed = position;
-        result.bytesConsumed = bytePosition;
     }
 
     return result;
