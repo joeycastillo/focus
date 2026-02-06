@@ -81,7 +81,7 @@ void AlertViewController::createView() {
     int sectionSpacing = 16;
 
     // Resolve fonts
-    auto titleFont = Font::withName("spleen-16x32");
+    auto titleFont = Font::withName("unifont32");
     auto messageFont = Font::systemFont();
 
     // Measure title height
