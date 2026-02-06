@@ -84,6 +84,9 @@
 #define FOCUS_EVENT_CARD_STATUS_CHANGED (2002)  ///< SD card inserted or removed.
 #define FOCUS_EVENT_ORIENTATION_CHANGED (2003)  ///< Device orientation changed (userInfo is FocusOrientation).
 #define FOCUS_EVENT_BATTERY_VOLTAGE_CHANGED (2004) ///< Battery voltage changed (userInfo is millivolts).
+#define FOCUS_EVENT_WIFI_CONNECTED (2005)        ///< WiFi connected (userInfo unused).
+#define FOCUS_EVENT_WIFI_DISCONNECTED (2006)     ///< WiFi disconnected (userInfo unused).
+#define FOCUS_EVENT_WIFI_SIGNAL_CHANGED (2007)   ///< WiFi signal level changed (userInfo = 0-3).
 /// @}
 
 /// @brief Device orientation as detected by accelerometer.
