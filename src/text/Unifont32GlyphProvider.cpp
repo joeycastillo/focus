@@ -23,7 +23,9 @@
  */
 
 #include "Unifont32GlyphProvider.hpp"
-#include <hqx/HQ2x.hh>
+#include <scalenx.h>
+#include <hqx.h>
+#include <xbr.h>
 #include <cstring>
 
 static const uint32_t BLACK = 0xFF000000;
@@ -86,12 +88,12 @@ uint8_t* Unifont32GlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, 
         }
     }
 
-    // Run hq2x: produces (baseWidth*2) x (baseHeight*2) output
+    // Scale 2x: produces (baseWidth*2) x (baseHeight*2) output
+    // To try a different algorithm, swap scale2x for scale2xSFX, block2, etc.
     int outWidth = baseWidth * 2;
     int outHeight = baseHeight * 2;
     uint32_t output[32 * 32]; // max 32x32
-    HQ2x scaler;
-    scaler.resize(input, baseWidth, baseHeight, output);
+    scale2x(input, baseWidth, baseHeight, output);
 
     // Pack ARGB output back to 1-bit MSB-first bitmap
     int outBytesPerRow = (outWidth + 7) / 8;
