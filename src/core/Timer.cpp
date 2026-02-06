@@ -178,6 +178,11 @@ void Timer::drainPendingCallbacks() {
     }
 }
 
+size_t Timer::getScheduledCount() {
+    std::lock_guard<std::mutex> lock(timerMutex);
+    return scheduledTimers.size();
+}
+
 void Timer::schedule() {
     // Ensure the timer thread is running
     initialize();

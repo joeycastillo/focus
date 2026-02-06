@@ -170,6 +170,12 @@ public:
      */
     static void shutdown();
 
+    /**
+     * @brief Get the number of currently scheduled timers.
+     * @return The count of timers waiting to fire.
+     */
+    static size_t getScheduledCount();
+
 private:
     Timer(TimePoint fireDate, int64_t intervalMs, std::function<void()> callback, bool repeats);
 
