@@ -83,6 +83,7 @@
 #define FOCUS_EVENT_CHARGE_STATE_CHANGED (2001) ///< Battery charge state changed.
 #define FOCUS_EVENT_CARD_STATUS_CHANGED (2002)  ///< SD card inserted or removed.
 #define FOCUS_EVENT_ORIENTATION_CHANGED (2003)  ///< Device orientation changed (userInfo is FocusOrientation).
+#define FOCUS_EVENT_BATTERY_VOLTAGE_CHANGED (2004) ///< Battery voltage changed (userInfo is millivolts).
 /// @}
 
 /// @brief Device orientation as detected by accelerometer.
