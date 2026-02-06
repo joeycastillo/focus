@@ -35,9 +35,7 @@
 
 #include <cstdint>
 #include <cstddef>
-
-// Forward declaration for UNICODE_CODEPOINT
-using UNICODE_CODEPOINT = uint32_t;
+#include "utf8_decode.hpp"
 
 namespace UnicodeMappings {
 

@@ -25,6 +25,7 @@
 #include "CanvasView.hpp"
 #include "Display.hpp"
 #include "TextLayout.hpp"
+#include "ArabicShaping.hpp"
 #include "utf8_parse.hpp"
 #include <algorithm>
 #include <cstring>
@@ -204,6 +205,7 @@ int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *
     if (!codepoints) return 0;
 
     utf8_parse((char *)utf8String, codepoints);
+    shapeArabic(codepoints, len);
     size_t retVal = this->writeCodepoints(codepoints, len, glyphProvider);
     free(codepoints);
 
@@ -282,7 +284,11 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
 
         // Also handle paragraph breaks (newlines)
         if (result.isParagraphBreak) {
-            this->cursor.x = this->textLayoutRect.origin.x;
+            if (this->direction == 1) {
+                this->cursor.x = this->textLayoutRect.origin.x;
+            } else {
+                this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
+            }
         }
 
         if (this->cursor.y >= (this->textLayoutRect.origin.y + this->textLayoutRect.size.height)) break;
@@ -308,9 +314,8 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
 
     if (this->direction == 1 && traits.is.rtl) {
         direction = -1;
-        uint8_t width = metrics.size.width;
         this->hasLastGlyph = false;
-        this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width - width;
+        this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
     } else if (this->direction == -1 && traits.is.ltr) {
         direction = 1;
         this->hasLastGlyph = false;
@@ -322,9 +327,16 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
         drawGlyph(this->lastGlyphPosition.x, this->lastGlyphPosition.y, metrics, traits, glyph);
     } else {
         this->hasLastGlyph = true;
+        // In RTL mode, cursor.x is the right boundary — subtract glyph width
+        // before drawing so the glyph fits within the canvas.
+        if (this->direction == -1) {
+            this->cursor.x -= metrics.size.width * this->textSize;
+        }
         this->lastGlyphPosition = this->cursor;
         int advance = drawGlyph(this->cursor.x, this->cursor.y, metrics, traits, glyph);
-        this->cursor.x += advance * this->direction;
+        if (this->direction == 1) {
+            this->cursor.x += advance;
+        }
     }
 
     return 1;
