@@ -316,6 +316,8 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
     if (codepoint < 0x20) return 1;
 
     unicode_info_t traits = getTraitsForCodepoint(codepoint);
+    if (traits.is.controlchar) return 1;
+
     Rect metrics = glyphProvider->metricsForCodepoint(codepoint);
 
     if (this->direction == 1 && traits.is.rtl) {
