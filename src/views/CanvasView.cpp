@@ -182,7 +182,7 @@ void CanvasView::setArabicShaping(bool enabled) {
 }
 
 int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *utf8String,
-                         TextAlignment alignment) {
+                         TextAlignment alignment, int initialEmphasisDepth, int initialIndentLevel) {
     GlyphProvider *glyphProvider = nullptr;
     if (this->font) {
         glyphProvider = this->font->getGlyphProvider();
@@ -204,9 +204,10 @@ int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *
     this->textAlignment = alignment;
     this->direction = 1;
     this->hasLastGlyph = false;
-    this->emphasisDepth = 0;
+    this->emphasisDepth = initialEmphasisDepth;
     this->readingTitle = false;
     this->lastWasNewline = false;
+    this->initialIndentLevel = initialIndentLevel;
 
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
     if (!codepoints) return 0;
@@ -262,6 +263,12 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
     int16_t currentIndent = 0;
     Rect spaceMetrics = glyphProvider->metricsForCodepoint(' ');
     int16_t indentPerLevel = spaceMetrics.size.width * this->textSize * 3;
+
+    // Apply initial indent from page break record (for mid-paragraph starts)
+    if (this->initialIndentLevel > 0) {
+        currentIndent = this->initialIndentLevel * indentPerLevel;
+        atLineStart = false;
+    }
 
     while (pos < len) {
         // Scan for DLE+> prefix at the start of a logical line

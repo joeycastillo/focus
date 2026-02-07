@@ -65,7 +65,8 @@ public:
     // Text rendering — renders text to the canvas buffer using the view's Font.
     // layoutRect is in canvas-local coordinates.
     int drawText(Rect layoutRect, int color, int textSize, const char *utf8String,
-                 TextAlignment alignment = TextAlignmentLeft);
+                 TextAlignment alignment = TextAlignmentLeft,
+                 int initialEmphasisDepth = 0, int initialIndentLevel = 0);
 
     // Font property — if null, drawText uses Font::systemFont().
     void setFont(std::shared_ptr<Font> font);
@@ -108,6 +109,7 @@ private:
     int emphasisDepth = 0;        // 0=normal, 1=italic, 2=bold, 3=bold+italic
     bool readingTitle = false;    // true after FS/GS/RS, until next newline
     int savedEmphasisDepth = 0;   // emphasis depth saved when entering title mode
+    int initialIndentLevel = 0;   // Block quote indent level for mid-paragraph page starts
 
     // Text rendering internals (mirror Display's pipeline)
     size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
