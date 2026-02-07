@@ -204,6 +204,8 @@ int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *
     this->textAlignment = alignment;
     this->direction = 1;
     this->hasLastGlyph = false;
+    this->emphasisDepth = 0;
+    this->readingTitle = false;
 
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
     if (!codepoints) return 0;
@@ -305,6 +307,41 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
 
 size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider) {
     if (codepoint == '\n' || codepoint == '\r') {
+        if (this->readingTitle) {
+            this->readingTitle = false;
+            this->emphasisDepth = this->savedEmphasisDepth;
+            // Extra spacing after title line
+            this->cursor.y += TextLayout::getParagraphHeight(glyphProvider, this->textSize, this->paragraphSpacing) + this->paragraphSpacing;
+        } else {
+            this->cursor.y += TextLayout::getParagraphHeight(glyphProvider, this->textSize, this->paragraphSpacing);
+        }
+        if (this->direction == 1) {
+            this->cursor.x = this->textLayoutRect.origin.x;
+        } else {
+            this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
+        }
+        return 1;
+    }
+
+    // .text format: SO (Shift Out) increases emphasis depth
+    if (codepoint == 0x0E) {
+        this->emphasisDepth = std::min(this->emphasisDepth + 1, 3);
+        return 1;
+    }
+    // .text format: SI (Shift In) decreases emphasis depth
+    if (codepoint == 0x0F) {
+        this->emphasisDepth = std::max(this->emphasisDepth - 1, 0);
+        return 1;
+    }
+    // .text format: FS/GS/RS (0x1C–0x1E) — chapter separator, enter title mode
+    if (codepoint >= 0x1C && codepoint <= 0x1E) {
+        this->readingTitle = true;
+        this->savedEmphasisDepth = this->emphasisDepth;
+        this->emphasisDepth = 2; // render title bold
+        return 1;
+    }
+    // .text format: US (0x1F) — scene break, add vertical whitespace
+    if (codepoint == 0x1F) {
         this->cursor.y += TextLayout::getParagraphHeight(glyphProvider, this->textSize, this->paragraphSpacing);
         if (this->direction == 1) {
             this->cursor.x = this->textLayoutRect.origin.x;
@@ -313,6 +350,7 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
         }
         return 1;
     }
+
     if (codepoint < 0x20) return 1;
 
     unicode_info_t traits = getTraitsForCodepoint(codepoint);
@@ -356,7 +394,15 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t t
     bool mirrored = (this->direction == -1) && traits.is.mirrored;
     int bbxOffset = glyphRect.origin.x;
 
+    // .text emphasis: italic (depth 1 or 3) uses shear, bold (depth 2 or 3) draws twice
+    bool bold = (this->emphasisDepth == 2 || this->emphasisDepth == 3);
+    int shear = (this->emphasisDepth == 1 || this->emphasisDepth == 3)
+                ? this->glyphRowCount / 4 : 0;
+
     for (int row = 0; row < this->glyphRowCount; row++) {
+        int shift = (shear && this->glyphRowCount > 1)
+                    ? shear * (this->glyphRowCount - 1 - row) / (this->glyphRowCount - 1) : 0;
+
         for (int byteIdx = 0; byteIdx < bytesPerRow; byteIdx++) {
             uint8_t line = glyph[row * bytesPerRow + byteIdx];
             int xOffset = byteIdx * 8;
@@ -365,10 +411,13 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t t
                 if (line & 1) {
                     int pixelX = mirrored ? (width - 1 - (xOffset + j)) : (xOffset + j);
                     if (this->textSize == 1) {
-                        drawPixel(x + bbxOffset + pixelX, y + row, this->textColor);
+                        drawPixel(x + bbxOffset + pixelX + shift, y + row, this->textColor);
+                        if (bold) drawPixel(x + bbxOffset + pixelX + shift + 1, y + row, this->textColor);
                     } else {
-                        fillRect((x + bbxOffset + pixelX) * this->textSize, y + row * this->textSize,
+                        fillRect((x + bbxOffset + pixelX + shift) * this->textSize, y + row * this->textSize,
                                  this->textSize, this->textSize, this->textColor);
+                        if (bold) fillRect((x + bbxOffset + pixelX + shift + 1) * this->textSize, y + row * this->textSize,
+                                          this->textSize, this->textSize, this->textColor);
                     }
                 }
             }

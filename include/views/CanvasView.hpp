@@ -103,6 +103,11 @@ private:
     bool hasLastGlyph = false;
     TextAlignment textAlignment = TextAlignmentLeft;
 
+    // .text format emphasis state (SO/SI control codes)
+    int emphasisDepth = 0;        // 0=normal, 1=italic, 2=bold, 3=bold+italic
+    bool readingTitle = false;    // true after FS/GS/RS, until next newline
+    int savedEmphasisDepth = 0;   // emphasis depth saved when entering title mode
+
     // Text rendering internals (mirror Display's pipeline)
     size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
     int16_t measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);

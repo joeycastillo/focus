@@ -87,7 +87,17 @@ WordWrapResult TextLayout::measureLineWrap(
             return result;
         }
 
-        // Skip control characters
+        // Handle .text format information separators (FS, GS, RS, US)
+        // These act as line terminators, similar to newlines
+        if (cp >= 0x1C && cp <= 0x1F) {
+            result.codepointsConsumed = position + 1;
+            result.wrapped = false;
+            result.isParagraphBreak = true;
+            result.endCursorX = 0;
+            return result;
+        }
+
+        // Skip other control characters (including SO/SI which have no width)
         if (cp < 0x20) {
             position++;
             continue;
