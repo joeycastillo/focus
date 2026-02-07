@@ -39,6 +39,7 @@
 #pragma once
 
 #include "View.hpp"
+#include "Display.hpp"
 #include "Font.hpp"
 #include "GlyphProvider.hpp"
 #include "unicodetraits.hpp"
@@ -75,18 +76,30 @@ public:
     void setArabicShaping(bool enabled);
 
     int getBlackColor() { return 0; }
-    int getWhiteColor() { return 1; }
+    int getWhiteColor() { return 3; }
+    int getDarkGrayColor() { return 1; }
+    int getLightGrayColor() { return 2; }
 
     int getCanvasWidth() { return frame.size.width; }
     int getCanvasHeight() { return frame.size.height; }
 
+    // Display mode — set to TwoBpp before drawing to enable 4-level grayscale.
+    void setCanvasMode(DisplayMode mode);
+    DisplayMode getCanvasMode() const { return canvasMode; }
+
     // Buffer access — for views that use a CanvasView internally and blit directly
     const uint8_t* getBufferData() const { return buffer.data(); }
+    const uint8_t* getPlane1Data() const { return buffer1.data(); }
     int getRowBytes() const { return rowBytes; }
 
 private:
     int rowBytes;                 // bytes per row = (width + 7) / 8
-    std::vector<uint8_t> buffer;  // 1 bit per pixel, packed MSB-first
+    std::vector<uint8_t> buffer;  // 1bpp plane0 (high bit of color), packed MSB-first
+    std::vector<uint8_t> buffer1; // 1bpp plane1 (low bit of color), only used in TwoBpp mode
+    DisplayMode canvasMode = DisplayMode::OneBpp;
+
+    // Private helper for fillRect — fills a single plane buffer
+    void _fillPlane(uint8_t* plane, int x0, int y0, int x1, int y1, uint8_t fillByte);
 
     std::shared_ptr<Font> font;
 

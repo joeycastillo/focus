@@ -39,11 +39,28 @@ CanvasView::CanvasView(Rect rect)
     this->opaque = true;
 }
 
+void CanvasView::setCanvasMode(DisplayMode mode) {
+    canvasMode = mode;
+    if (mode == DisplayMode::TwoBpp) {
+        buffer1.resize(rowBytes * frame.size.height, 0xFF);
+    } else {
+        buffer1.clear();
+        buffer1.shrink_to_fit();
+    }
+}
+
 void CanvasView::draw(int x, int y) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
-                            this->frame.size.width, this->frame.size.height,
-                            this->buffer.data(), this->rowBytes);
+        if (canvasMode == DisplayMode::TwoBpp) {
+            display->blitOpaque2bpp(x + this->frame.origin.x, y + this->frame.origin.y,
+                                    this->frame.size.width, this->frame.size.height,
+                                    this->buffer.data(), this->buffer1.data(),
+                                    this->rowBytes);
+        } else {
+            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+                                this->frame.size.width, this->frame.size.height,
+                                this->buffer.data(), this->rowBytes);
+        }
     }
 
     // Draw subviews on top
@@ -58,10 +75,26 @@ void CanvasView::drawPixel(int x, int y, int color) {
     if (x < 0 || x >= frame.size.width || y < 0 || y >= frame.size.height) return;
     int idx = y * rowBytes + (x >> 3);
     uint8_t mask = 0x80 >> (x & 7);
-    if (color == 0) {
-        buffer[idx] &= ~mask;  // black: clear bit
+
+    if (canvasMode == DisplayMode::TwoBpp) {
+        // plane0 (buffer) stores bit 1 (high bit) of color
+        if (color & 0x02) {
+            buffer[idx] |= mask;
+        } else {
+            buffer[idx] &= ~mask;
+        }
+        // plane1 (buffer1) stores bit 0 (low bit) of color
+        if (color & 0x01) {
+            buffer1[idx] |= mask;
+        } else {
+            buffer1[idx] &= ~mask;
+        }
     } else {
-        buffer[idx] |= mask;   // white: set bit
+        if (color == 0) {
+            buffer[idx] &= ~mask;  // black: clear bit
+        } else {
+            buffer[idx] |= mask;   // white: set bit
+        }
     }
 }
 
@@ -76,6 +109,46 @@ void CanvasView::drawRect(int x, int y, int w, int h, int color) {
     }
 }
 
+void CanvasView::_fillPlane(uint8_t* plane, int x0, int y0, int x1, int y1, uint8_t fillByte) {
+    int firstByte = x0 >> 3;
+    int lastByte = (x1 - 1) >> 3;
+    int startBit = x0 & 7;
+    int endBit = (x1 - 1) & 7;
+    bool setBits = (fillByte != 0);
+
+    for (int row = y0; row < y1; row++) {
+        int rowOffset = row * rowBytes;
+
+        if (firstByte == lastByte) {
+            uint8_t mask = (0xFF >> startBit) & (0xFF << (7 - endBit));
+            if (setBits) {
+                plane[rowOffset + firstByte] |= mask;
+            } else {
+                plane[rowOffset + firstByte] &= ~mask;
+            }
+        } else {
+            if (startBit > 0) {
+                uint8_t mask = 0xFF >> startBit;
+                if (setBits) {
+                    plane[rowOffset + firstByte] |= mask;
+                } else {
+                    plane[rowOffset + firstByte] &= ~mask;
+                }
+            }
+            int midStart = firstByte + (startBit > 0 ? 1 : 0);
+            if (lastByte > midStart) {
+                std::memset(&plane[rowOffset + midStart], fillByte, lastByte - midStart);
+            }
+            uint8_t endMask = 0xFF << (7 - endBit);
+            if (setBits) {
+                plane[rowOffset + lastByte] |= endMask;
+            } else {
+                plane[rowOffset + lastByte] &= ~endMask;
+            }
+        }
+    }
+}
+
 void CanvasView::fillRect(int x, int y, int w, int h, int color) {
     // Clamp to canvas bounds
     int x0 = std::max(0, x);
@@ -84,46 +157,11 @@ void CanvasView::fillRect(int x, int y, int w, int h, int color) {
     int y1 = std::min((int)frame.size.height, y + h);
     if (x0 >= x1 || y0 >= y1) return;
 
-    uint8_t fillByte = (color == 0) ? 0x00 : 0xFF;
-    int firstByte = x0 >> 3;
-    int lastByte = (x1 - 1) >> 3;
-    int startBit = x0 & 7;
-    int endBit = (x1 - 1) & 7;
-
-    for (int row = y0; row < y1; row++) {
-        int rowOffset = row * rowBytes;
-
-        if (firstByte == lastByte) {
-            // All bits within a single byte
-            uint8_t mask = (0xFF >> startBit) & (0xFF << (7 - endBit));
-            if (color == 0) {
-                buffer[rowOffset + firstByte] &= ~mask;
-            } else {
-                buffer[rowOffset + firstByte] |= mask;
-            }
-        } else {
-            // First partial byte
-            if (startBit > 0) {
-                uint8_t mask = 0xFF >> startBit;
-                if (color == 0) {
-                    buffer[rowOffset + firstByte] &= ~mask;
-                } else {
-                    buffer[rowOffset + firstByte] |= mask;
-                }
-            }
-            // Middle full bytes
-            int midStart = firstByte + (startBit > 0 ? 1 : 0);
-            if (lastByte > midStart) {
-                std::memset(&buffer[rowOffset + midStart], fillByte, lastByte - midStart);
-            }
-            // Last partial byte
-            uint8_t endMask = 0xFF << (7 - endBit);
-            if (color == 0) {
-                buffer[rowOffset + lastByte] &= ~endMask;
-            } else {
-                buffer[rowOffset + lastByte] |= endMask;
-            }
-        }
+    if (canvasMode == DisplayMode::TwoBpp) {
+        _fillPlane(buffer.data(), x0, y0, x1, y1, (color & 0x02) ? 0xFF : 0x00);
+        _fillPlane(buffer1.data(), x0, y0, x1, y1, (color & 0x01) ? 0xFF : 0x00);
+    } else {
+        _fillPlane(buffer.data(), x0, y0, x1, y1, (color != 0) ? 0xFF : 0x00);
     }
 }
 
@@ -168,7 +206,12 @@ void CanvasView::fillCircle(int cx, int cy, int r, int color) {
 }
 
 void CanvasView::clear(int color) {
-    std::memset(buffer.data(), (color == 0) ? 0x00 : 0xFF, buffer.size());
+    if (canvasMode == DisplayMode::TwoBpp) {
+        std::memset(buffer.data(), (color & 0x02) ? 0xFF : 0x00, buffer.size());
+        std::memset(buffer1.data(), (color & 0x01) ? 0xFF : 0x00, buffer1.size());
+    } else {
+        std::memset(buffer.data(), (color != 0) ? 0xFF : 0x00, buffer.size());
+    }
 }
 
 // --- Font and text rendering ---
