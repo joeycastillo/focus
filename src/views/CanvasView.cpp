@@ -223,9 +223,16 @@ int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *
 
 int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider) {
     int16_t width = 0;
+    int16_t lastAdvance = 0;
     const Rect* asciiMetrics = glyphProvider->getAsciiMetricsCache();
     for (size_t i = 0; i < len; i++) {
         UNICODE_CODEPOINT cp = codepoints[i];
+        if (cp == 0x08) {
+            width -= lastAdvance;
+            if (width < 0) width = 0;
+            lastAdvance = 0;
+            continue;
+        }
         if (cp < 0x20) continue;
         unicode_info_t traits;
         Rect metrics;
@@ -237,7 +244,9 @@ int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_
             metrics = glyphProvider->metricsForCodepoint(cp);
         }
         if (!(traits.is.nsm || traits.is.controlchar)) {
-            width += metrics.size.width * this->textSize;
+            int16_t advance = metrics.size.width * this->textSize;
+            width += advance;
+            lastAdvance = advance;
         }
     }
     return width;
@@ -248,11 +257,38 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
     size_t pos = 0;
     this->cursor = this->textLayoutRect.origin;
 
+    // Block quote indentation state
+    bool atLineStart = true;
+    int16_t currentIndent = 0;
+    Rect spaceMetrics = glyphProvider->metricsForCodepoint(' ');
+    int16_t indentPerLevel = spaceMetrics.size.width * this->textSize * 3;
+
     while (pos < len) {
+        // Scan for DLE+> prefix at the start of a logical line
+        if (atLineStart) {
+            int indentLevel = 0;
+            while (pos + 1 < len &&
+                   codepoints[pos] == 0x10 &&
+                   codepoints[pos + 1] == '>') {
+                indentLevel++;
+                pos += 2;
+                retVal += 2;
+            }
+            currentIndent = indentLevel * indentPerLevel;
+        }
+
+        int16_t effectiveWidth = this->textLayoutRect.size.width - 2 * currentIndent;
+        int16_t indentedOriginX = this->textLayoutRect.origin.x + currentIndent;
+
+        // Set cursor to indented position for this line
+        if (this->direction == 1) {
+            this->cursor.x = indentedOriginX;
+        }
+
         WordWrapResult result = TextLayout::measureLineWrap(
             codepoints + pos,
             len - pos,
-            this->textLayoutRect.size.width,
+            effectiveWidth,
             this->textSize,
             glyphProvider
         );
@@ -267,12 +303,12 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
         // Apply text alignment offset for this line
         if (this->textAlignment != TextAlignmentLeft && this->direction == 1) {
             int16_t lineWidth = measureCodepointsWidth(codepoints + pos, numGlyphsToDraw, glyphProvider);
-            int16_t slack = this->textLayoutRect.size.width - lineWidth;
+            int16_t slack = effectiveWidth - lineWidth;
             if (slack > 0) {
                 if (this->textAlignment == TextAlignmentCenter) {
-                    this->cursor.x = this->textLayoutRect.origin.x + slack / 2;
+                    this->cursor.x = indentedOriginX + slack / 2;
                 } else if (this->textAlignment == TextAlignmentRight) {
-                    this->cursor.x = this->textLayoutRect.origin.x + slack;
+                    this->cursor.x = indentedOriginX + slack;
                 }
             }
         }
@@ -285,10 +321,11 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
         if (result.wrapped) {
             this->cursor.y += TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
             if (this->direction == 1) {
-                this->cursor.x = this->textLayoutRect.origin.x;
+                this->cursor.x = indentedOriginX;
             } else {
-                this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
+                this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width - currentIndent;
             }
+            atLineStart = false; // Word-wrap continuation inherits indent
         }
 
         // Also handle paragraph breaks (newlines)
@@ -298,6 +335,7 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             } else {
                 this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
             }
+            atLineStart = true; // Next line will scan for its own DLE+> prefix
         }
 
         if (this->cursor.y >= (this->textLayoutRect.origin.y + this->textLayoutRect.size.height)) break;
@@ -341,11 +379,25 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
         this->emphasisDepth = std::max(this->emphasisDepth - 1, 0);
         return 1;
     }
+    // .text format: BS (0x08) — backspace for typewriter overprinting
+    // Move cursor back to the last glyph position so the next character overprints
+    if (codepoint == 0x08) {
+        if (this->hasLastGlyph) {
+            this->cursor.x = this->lastGlyphPosition.x;
+        }
+        return 1;
+    }
     // .text format: FS/GS/RS (0x1C–0x1E) — chapter separator, enter title mode
     if (codepoint >= 0x1C && codepoint <= 0x1E) {
         this->readingTitle = true;
         this->savedEmphasisDepth = this->emphasisDepth;
         this->emphasisDepth = 2; // render title bold
+        return 1;
+    }
+    // .text format: FF (0x0C) — forced page break
+    // Paginator places page breaks here; push cursor past layout to end rendering
+    if (codepoint == 0x0C) {
+        this->cursor.y = this->textLayoutRect.origin.y + this->textLayoutRect.size.height;
         return 1;
     }
     // .text format: US (0x1F) — scene break, add vertical whitespace
