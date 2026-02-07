@@ -206,6 +206,7 @@ int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *
     this->hasLastGlyph = false;
     this->emphasisDepth = 0;
     this->readingTitle = false;
+    this->lastWasNewline = false;
 
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
     if (!codepoints) return 0;
@@ -306,15 +307,22 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
 }
 
 size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider) {
-    if (codepoint == '\n' || codepoint == '\r') {
+    if (codepoint == '\r') return 1; // Ignore CR; LF handles line breaks
+
+    if (codepoint == '\n') {
         if (this->readingTitle) {
             this->readingTitle = false;
             this->emphasisDepth = this->savedEmphasisDepth;
             // Extra spacing after title line
-            this->cursor.y += TextLayout::getParagraphHeight(glyphProvider, this->textSize, this->paragraphSpacing) + this->paragraphSpacing;
+            this->cursor.y += TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing) + this->paragraphSpacing;
+        } else if (this->lastWasNewline) {
+            // Consecutive newline = paragraph break, just add paragraph spacing
+            this->cursor.y += this->paragraphSpacing;
         } else {
-            this->cursor.y += TextLayout::getParagraphHeight(glyphProvider, this->textSize, this->paragraphSpacing);
+            // Single newline = line break (same as word wrap)
+            this->cursor.y += TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
         }
+        this->lastWasNewline = true;
         if (this->direction == 1) {
             this->cursor.x = this->textLayoutRect.origin.x;
         } else {
@@ -355,6 +363,8 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
 
     unicode_info_t traits = getTraitsForCodepoint(codepoint);
     if (traits.is.controlchar) return 1;
+
+    this->lastWasNewline = false; // Visible character breaks consecutive newline tracking
 
     Rect metrics = glyphProvider->metricsForCodepoint(codepoint);
 

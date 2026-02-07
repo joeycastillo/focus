@@ -101,6 +101,7 @@ private:
     int glyphRowCount = 0;
     Point lastGlyphPosition = {};
     bool hasLastGlyph = false;
+    bool lastWasNewline = false;  // Tracks consecutive newlines for paragraph detection
     TextAlignment textAlignment = TextAlignmentLeft;
 
     // .text format emphasis state (SO/SI control codes)
