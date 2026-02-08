@@ -133,14 +133,6 @@ public:
     DisplayMode getDisplayMode() const { return displayMode; }
 
     /**
-     * @brief Request that the next screen update be a full refresh.
-     *
-     * On e-paper displays this triggers a full black-white-black waveform to
-     * clear ghosting artifacts. No-op by default for displays that don't need it.
-     */
-    virtual void forceFullRefresh() {}
-
-    /**
      * @brief Set the display rotation.
      * @param degrees Rotation angle: 0, 90, 180, or 270.
      */
