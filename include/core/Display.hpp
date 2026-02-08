@@ -66,7 +66,7 @@ public:
      * @param h Height in pixels.
      * @param color Fill color (0 = black, 3 = white; 1/2 for grays in TwoBpp).
      */
-    virtual void fillRect(int x, int y, int w, int h, int color) = 0;
+    virtual void fillRect(int x, int y, int w, int h, uint16_t color) = 0;
 
     /**
      * @brief Blit a 1bpp MSB-first bitmap, overwriting all pixels in the region.
@@ -118,21 +118,8 @@ public:
      * @param mask Pointer to the 1bpp mask data (MSB-first, row-major).
      * @param rowBytes Number of bytes per row in the mask data.
      */
-    virtual void blitMasked(int x, int y, int w, int h, int color,
+    virtual void blitMasked(int x, int y, int w, int h, uint16_t color,
                             const uint8_t* mask, int rowBytes) = 0;
-
-    /// @brief Black color constant. Always 0.
-    int getBlackColor() { return 0; }
-
-    /// @brief White color constant. Always 3.
-    /// In OneBpp mode, all nonzero values are treated as white by drawing code.
-    int getWhiteColor() { return 3; }
-
-    /// @brief Dark gray color constant (only meaningful in TwoBpp mode).
-    int getDarkGrayColor() { return 1; }
-
-    /// @brief Light gray color constant (only meaningful in TwoBpp mode).
-    int getLightGrayColor() { return 2; }
 
     /**
      * @brief Set the display operating mode.

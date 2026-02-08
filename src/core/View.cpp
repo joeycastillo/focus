@@ -28,16 +28,13 @@
 #include <algorithm>
 #include <cxxabi.h>
 
-uint16_t View::defaultBackgroundColor;
-uint16_t View::defaultForegroundColor;
-
 View::View(Rect rect) {
     // printf("Creating view %p\n", this);
     this->frame = rect;
     // bounds has origin at (0,0) in the view's local coordinate system
     this->bounds = MakeRect(0, 0, rect.size.width, rect.size.height);
-    this->foregroundColor = View::defaultForegroundColor;
-    this->backgroundColor = View::defaultBackgroundColor;
+    this->foregroundColor = Color::DefaultForegroundColor();
+    this->backgroundColor = Color::DefaultBackgroundColor();
     this->window.reset();
     this->superview.reset();
 }
@@ -421,11 +418,11 @@ void View::clearTouchChecked() {
 }
 
 void View::SetDefaultBackgroundColor(uint16_t color) {
-    View::defaultBackgroundColor = color;
+    Color::SetDefaultBackgroundColor(color);
 }
 
 void View::SetDefaultForegroundColor(uint16_t color) {
-    View::defaultForegroundColor = color;
+    Color::SetDefaultForegroundColor(color);
 }
 
 bool View::wantsKeyboardInput() {

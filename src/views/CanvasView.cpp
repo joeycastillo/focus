@@ -71,7 +71,7 @@ void CanvasView::draw(int x, int y) {
     }
 }
 
-void CanvasView::drawPixel(int x, int y, int color) {
+void CanvasView::drawPixel(int x, int y, uint16_t color) {
     if (x < 0 || x >= frame.size.width || y < 0 || y >= frame.size.height) return;
     int idx = y * rowBytes + (x >> 3);
     uint8_t mask = 0x80 >> (x & 7);
@@ -98,7 +98,7 @@ void CanvasView::drawPixel(int x, int y, int color) {
     }
 }
 
-void CanvasView::drawRect(int x, int y, int w, int h, int color) {
+void CanvasView::drawRect(int x, int y, int w, int h, uint16_t color) {
     for (int i = x; i < x + w; i++) {
         drawPixel(i, y, color);
         drawPixel(i, y + h - 1, color);
@@ -149,7 +149,7 @@ void CanvasView::_fillPlane(uint8_t* plane, int x0, int y0, int x1, int y1, uint
     }
 }
 
-void CanvasView::fillRect(int x, int y, int w, int h, int color) {
+void CanvasView::fillRect(int x, int y, int w, int h, uint16_t color) {
     // Clamp to canvas bounds
     int x0 = std::max(0, x);
     int y0 = std::max(0, y);
@@ -165,7 +165,7 @@ void CanvasView::fillRect(int x, int y, int w, int h, int color) {
     }
 }
 
-void CanvasView::drawCircle(int cx, int cy, int r, int color) {
+void CanvasView::drawCircle(int cx, int cy, int r, uint16_t color) {
     int x = r, y = 0;
     int d = 1 - r;
     while (x >= y) {
@@ -187,7 +187,7 @@ void CanvasView::drawCircle(int cx, int cy, int r, int color) {
     }
 }
 
-void CanvasView::fillCircle(int cx, int cy, int r, int color) {
+void CanvasView::fillCircle(int cx, int cy, int r, uint16_t color) {
     int x = r, y = 0;
     int d = 1 - r;
     while (x >= y) {
@@ -205,7 +205,7 @@ void CanvasView::fillCircle(int cx, int cy, int r, int color) {
     }
 }
 
-void CanvasView::clear(int color) {
+void CanvasView::clear(uint16_t color) {
     if (canvasMode == DisplayMode::TwoBpp) {
         std::memset(buffer.data(), (color & 0x02) ? 0xFF : 0x00, buffer.size());
         std::memset(buffer1.data(), (color & 0x01) ? 0xFF : 0x00, buffer1.size());
@@ -224,7 +224,7 @@ void CanvasView::setArabicShaping(bool enabled) {
     this->arabicShaping = enabled;
 }
 
-int CanvasView::drawText(Rect layoutRect, int color, int text_size, const char *utf8String,
+int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const char *utf8String,
                          TextAlignment alignment, int initialEmphasisDepth, int initialIndentLevel) {
     GlyphProvider *glyphProvider = nullptr;
     if (this->font) {

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2026 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,37 +22,12 @@
  * SOFTWARE.
  */
 
-/**
- * @file HatchedView.hpp
- * @brief View that draws a semi-transparent hatched overlay.
- *
- * HatchedView renders a dense mask pattern over its frame, producing
- * a visual dimming effect. Used by Application::presentViewController() to
- * dim the content behind modal view controllers.
- */
+#include "Color.hpp"
 
-#pragma once
+static uint16_t defaultFG = Color::Black();
+static uint16_t defaultBG = Color::White();
 
-#include "Focus.hpp"
-#include "View.hpp"
-#include <vector>
-
-/**
- * @brief A view that draws a dither pattern for visual dimming.
- *
- * Diagonal lines are drawn in the specified color, creating a ~50% density
- * hatched overlay. The mask is pre-computed on construction.
- */
-class HatchedView : public View {
-public:
-    /**
-     * @brief Construct a hatched overlay view.
-     * @param rect Frame rectangle to cover.
-     * @param color The color to draw the hatched pixels in.
-     */
-    HatchedView(Rect rect, uint16_t color);
-    void draw(int x, int y) override;
-private:
-    int maskRowBytes;             ///< Bytes per row in the mask buffer.
-    std::vector<uint8_t> mask;    ///< Pre-computed checkerboard mask bitmap.
-};
+uint16_t Color::DefaultForegroundColor() { return defaultFG; }
+uint16_t Color::DefaultBackgroundColor() { return defaultBG; }
+void Color::SetDefaultForegroundColor(uint16_t color) { defaultFG = color; }
+void Color::SetDefaultBackgroundColor(uint16_t color) { defaultBG = color; }

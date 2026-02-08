@@ -230,9 +230,9 @@ void PaginatedCollectionView::updateIndicators() {
 void PaginatedCollectionView::drawArrow(std::shared_ptr<CanvasView> canvas, bool forward) {
     int cw = canvas->getCanvasWidth();
     int ch = canvas->getCanvasHeight();
-    int black = canvas->getBlackColor();
+    uint16_t black = Color::Black();
 
-    canvas->clear(canvas->getWhiteColor());
+    canvas->clear(Color::White());
 
     bool isVertical = (this->currentLayout != CollectionViewLayout::HorizontalList);
 

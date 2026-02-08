@@ -26,7 +26,7 @@
 #include "Window.hpp"
 #include "Display.hpp"
 
-HatchedView::HatchedView(Rect rect, int color) : View(rect) {
+HatchedView::HatchedView(Rect rect, uint16_t color) : View(rect) {
     this->foregroundColor = color;
     this->opaque = false;
 

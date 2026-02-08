@@ -56,16 +56,16 @@ public:
     void draw(int x, int y) override;
 
     // Drawing API — coordinates are local to the canvas (0,0 = top-left)
-    void drawPixel(int x, int y, int color);
-    void drawRect(int x, int y, int w, int h, int color);
-    void fillRect(int x, int y, int w, int h, int color);
-    void drawCircle(int cx, int cy, int r, int color);
-    void fillCircle(int cx, int cy, int r, int color);
-    void clear(int color);
+    void drawPixel(int x, int y, uint16_t color);
+    void drawRect(int x, int y, int w, int h, uint16_t color);
+    void fillRect(int x, int y, int w, int h, uint16_t color);
+    void drawCircle(int cx, int cy, int r, uint16_t color);
+    void fillCircle(int cx, int cy, int r, uint16_t color);
+    void clear(uint16_t color);
 
     // Text rendering — renders text to the canvas buffer using the view's Font.
     // layoutRect is in canvas-local coordinates.
-    int drawText(Rect layoutRect, int color, int textSize, const char *utf8String,
+    int drawText(Rect layoutRect, uint16_t color, int textSize, const char *utf8String,
                  TextAlignment alignment = TextAlignmentLeft,
                  int initialEmphasisDepth = 0, int initialIndentLevel = 0);
 
@@ -74,11 +74,6 @@ public:
 
     // Enable Arabic contextual shaping for drawText.
     void setArabicShaping(bool enabled);
-
-    int getBlackColor() { return 0; }
-    int getWhiteColor() { return 3; }
-    int getDarkGrayColor() { return 1; }
-    int getLightGrayColor() { return 2; }
 
     int getCanvasWidth() { return frame.size.width; }
     int getCanvasHeight() { return frame.size.height; }
@@ -107,7 +102,7 @@ private:
     Point cursor = {};
     Rect textLayoutRect = {};
     int textSize = 1;
-    int textColor = 0;
+    uint16_t textColor = 0;
     int lineSpacing = 0;
     int paragraphSpacing = 0;
     int direction = 1;            // 1=LTR, -1=RTL

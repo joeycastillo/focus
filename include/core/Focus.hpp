@@ -179,5 +179,6 @@ typedef enum {
     KeyboardTypeDecimalPad, ///< Numeric keypad with decimal point.
 } KeyboardType;
 
+#include "Color.hpp"
 #include "NotificationCenter.hpp"
 #include "UserSettings.hpp"

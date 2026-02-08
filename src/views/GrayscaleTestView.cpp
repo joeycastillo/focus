@@ -35,10 +35,10 @@ void GrayscaleTestView::renderContent() {
     int h = frame.size.height;
     int bandWidth = w / 4;
 
-    int black = canvas->getBlackColor();
-    int darkGray = canvas->getDarkGrayColor();
-    int lightGray = canvas->getLightGrayColor();
-    int white = canvas->getWhiteColor();
+    uint16_t black = Color::Black();
+    uint16_t darkGray = Color::DarkGray();
+    uint16_t lightGray = Color::LightGray();
+    uint16_t white = Color::White();
 
     // Draw four vertical bands
     canvas->fillRect(0, 0, bandWidth, h, black);

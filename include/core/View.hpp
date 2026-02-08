@@ -311,8 +311,6 @@ protected:
     std::map<int32_t, Action> actions;           ///< Registered event action callbacks.
     std::weak_ptr<View> superview;               ///< Parent view in the hierarchy.
 
-    static uint16_t defaultBackgroundColor; ///< Default background for new views.
-    static uint16_t defaultForegroundColor; ///< Default foreground for new views.
 private:
     std::weak_ptr<Window> window; ///< The window this view belongs to.
 
