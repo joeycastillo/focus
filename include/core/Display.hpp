@@ -153,8 +153,38 @@ public:
      */
     virtual void forceFullRefresh() {}
 
+    /**
+     * @brief Set the display rotation.
+     * @param degrees Rotation angle: 0, 90, 180, or 270.
+     */
+    virtual void setRotation(int degrees) {
+        rotation = (degrees / 90) & 0x03;
+    }
+
+    /// @brief Get the rotation index (0=0°, 1=90°, 2=180°, 3=270°).
+    uint8_t getRotation() const { return rotation; }
+
+    /// @brief Get the display width accounting for rotation.
+    int getWidth() const {
+        return (rotation & 1) ? nativeHeight : nativeWidth;
+    }
+
+    /// @brief Get the display height accounting for rotation.
+    int getHeight() const {
+        return (rotation & 1) ? nativeWidth : nativeHeight;
+    }
+
+    /// @brief Get the native (unrotated) panel width.
+    int getNativeWidth() const { return nativeWidth; }
+
+    /// @brief Get the native (unrotated) panel height.
+    int getNativeHeight() const { return nativeHeight; }
+
     virtual ~Display() {}
 
 protected:
     DisplayMode displayMode = DisplayMode::OneBpp;
+    uint8_t rotation = 0;      ///< Rotation index: 0=0°, 1=90°, 2=180°, 3=270°.
+    int nativeWidth = 0;       ///< Panel width in pixels (unrotated).
+    int nativeHeight = 0;      ///< Panel height in pixels (unrotated).
 };

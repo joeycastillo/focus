@@ -105,7 +105,6 @@ class Display;
 class Window;
 class View;
 class Task;
-class Timer;
 class ViewController;
 
 /// @brief An event delivered to views via the event dispatch system.

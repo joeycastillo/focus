@@ -26,7 +26,7 @@
 #include "ViewController.hpp"
 #include "HatchedView.hpp"
 #include "Task.hpp"
-#include "Timer.hpp"
+#include "Display.hpp"
 #include <algorithm>
 
 Application::Application(const std::shared_ptr<Window>& window) {
@@ -43,10 +43,7 @@ void Application::run() {
     this->window->application = application;
     this->window->becomeFocused();
     this->window->setNeedsDisplay(true);
-    while(true) {
-        // Drain any pending timer callbacks first
-        Timer::drainPendingCallbacks();
-
+    while(this->running) {
         for (int i = 0; i < (int)this->tasks.size(); i++) {
             if (this->tasks[i]->run(application)) {
                 this->tasks.erase(this->tasks.begin() + i);
@@ -60,6 +57,29 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
     Event event;
     event.type = eventType;
     event.userInfo = userInfo;
+
+    // For touch events, transform native panel coordinates to logical coordinates.
+    // Each case is the inverse of the rendering rotation in EPaperDisplay.
+    if (eventType == FOCUS_EVENT_TOUCH_DOWN ||
+        eventType == FOCUS_EVENT_TOUCH_MOVED ||
+        eventType == FOCUS_EVENT_TOUCH_UP) {
+        if (auto display = this->window->getDisplay().lock()) {
+            int nx = userInfo >> 16;
+            int ny = userInfo & 0xFFFF;
+            int lx, ly;
+            int nw = display->getNativeWidth();
+            int nh = display->getNativeHeight();
+            switch (display->getRotation()) {
+                case 0:  lx = nx;       ly = ny;       break;
+                case 1:  lx = ny;       ly = nw-1-nx;  break;
+                case 2:  lx = nw-1-nx;  ly = nh-1-ny;  break;
+                case 3:  lx = nh-1-ny;  ly = nx;       break;
+                default: lx = nx;       ly = ny;       break;
+            }
+            event.userInfo = (lx << 16) | ly;
+        }
+    }
+
     if (this->window.get()->touchEnabled) {
         switch (event.type) {
             case FOCUS_EVENT_TOUCH_DOWN:
@@ -178,4 +198,8 @@ void Application::dismissViewController() {
 
     // Mark full window as needing display
     this->window->setNeedsDisplay(true);
+}
+
+void Application::quit() {
+    this->running = false;
 }

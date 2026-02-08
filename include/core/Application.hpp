@@ -132,7 +132,16 @@ public:
      */
     void dismissViewController();
 
+    /**
+     * @brief Request the application to stop its run loop.
+     *
+     * The run loop will exit after the current iteration completes.
+     * Calling this from a task or event handler causes run() to return.
+     */
+    void quit();
+
 protected:
+    bool running = true;                                ///< Whether the run loop should continue.
     std::vector<std::shared_ptr<Task>> tasks;      ///< Registered background tasks.
     std::shared_ptr<Window> window;                ///< The root window.
     std::shared_ptr<ViewController> rootViewController; ///< The primary view controller.
