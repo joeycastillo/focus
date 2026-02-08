@@ -27,8 +27,8 @@
  * @brief Abstract interface for persistent key-value storage backends.
  *
  * SettingsBackend defines the storage contract used by UserSettings.
- * Platform-specific implementations include NVSSettingsBackend (ESP32 NVS)
- * and XMLSettingsBackend (file-based XML for the desktop emulator).
+ * Implementations include InMemorySettingsBackend (in-memory, no persistence)
+ * and NVSSettingsBackend (ESP32 NVS, in the application layer).
  */
 
 #pragma once
