@@ -55,8 +55,7 @@ void CanvasView::draw(int x, int y) {
         if (canvasMode == DisplayMode::TwoBpp) {
             display->blitOpaque2bpp(x + this->frame.origin.x, y + this->frame.origin.y,
                                     this->frame.size.width, this->frame.size.height,
-                                    this->buffer.data(), this->buffer.data() + this->planeSize,
-                                    this->rowBytes);
+                                    this->buffer.data(), this->rowBytes);
         } else {
             display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,

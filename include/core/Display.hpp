@@ -85,24 +85,22 @@ public:
                             const uint8_t* data, int rowBytes) = 0;
 
     /**
-     * @brief Blit two 1bpp planes as a 2bpp grayscale image.
+     * @brief Blit a 2bpp grayscale image stored as two contiguous 1bpp planes.
      *
-     * Each pixel's color is encoded across two planes:
-     *   plane0 holds bit 1 (high bit) of the color value.
-     *   plane1 holds bit 0 (low bit) of the color value.
-     * Both planes use the same MSB-first packing as blitOpaque.
+     * Each pixel's color is encoded across two planes laid out consecutively
+     * in memory: plane 0 (high bit) occupies the first rowBytes*h bytes,
+     * followed immediately by plane 1 (low bit). Both planes use the same
+     * MSB-first packing as blitOpaque.
      *
      * @param x Left edge of the destination region.
      * @param y Top edge of the destination region.
      * @param w Width of the image in pixels.
      * @param h Height of the image in pixels.
-     * @param plane0 Pointer to the 1bpp high-bit plane (MSB-first, row-major).
-     * @param plane1 Pointer to the 1bpp low-bit plane (MSB-first, row-major).
+     * @param data Pointer to the two contiguous 1bpp planes (plane0 then plane1).
      * @param rowBytes Number of bytes per row in each plane.
      */
     virtual void blitOpaque2bpp(int x, int y, int w, int h,
-                                const uint8_t* plane0, const uint8_t* plane1,
-                                int rowBytes) = 0;
+                                const uint8_t* data, int rowBytes) = 0;
 
     /**
      * @brief Write a solid color only where mask bits are set.
