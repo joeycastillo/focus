@@ -35,6 +35,7 @@ extern const uint8_t _unicode_info_0000_33FF[];
 CanvasView::CanvasView(Rect rect)
     : View(rect),
       rowBytes((rect.size.width + 7) / 8),
+      planeSize(((rect.size.width + 7) / 8) * rect.size.height),
       buffer(((rect.size.width + 7) / 8) * rect.size.height, 0xFF) {
     this->opaque = true;
 }
@@ -42,10 +43,10 @@ CanvasView::CanvasView(Rect rect)
 void CanvasView::setCanvasMode(DisplayMode mode) {
     canvasMode = mode;
     if (mode == DisplayMode::TwoBpp) {
-        buffer1.resize(rowBytes * frame.size.height, 0xFF);
+        buffer.resize(2 * planeSize, 0xFF);
     } else {
-        buffer1.clear();
-        buffer1.shrink_to_fit();
+        buffer.resize(planeSize);
+        buffer.shrink_to_fit();
     }
 }
 
@@ -54,7 +55,7 @@ void CanvasView::draw(int x, int y) {
         if (canvasMode == DisplayMode::TwoBpp) {
             display->blitOpaque2bpp(x + this->frame.origin.x, y + this->frame.origin.y,
                                     this->frame.size.width, this->frame.size.height,
-                                    this->buffer.data(), this->buffer1.data(),
+                                    this->buffer.data(), this->buffer.data() + this->planeSize,
                                     this->rowBytes);
         } else {
             display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
@@ -83,11 +84,11 @@ void CanvasView::drawPixel(int x, int y, uint16_t color) {
         } else {
             buffer[idx] &= ~mask;
         }
-        // plane1 (buffer1) stores bit 0 (low bit) of color
+        // plane1 stores bit 0 (low bit) of color
         if (color & 0x01) {
-            buffer1[idx] |= mask;
+            buffer[planeSize + idx] |= mask;
         } else {
-            buffer1[idx] &= ~mask;
+            buffer[planeSize + idx] &= ~mask;
         }
     } else {
         if (color == 0) {
@@ -159,7 +160,7 @@ void CanvasView::fillRect(int x, int y, int w, int h, uint16_t color) {
 
     if (canvasMode == DisplayMode::TwoBpp) {
         _fillPlane(buffer.data(), x0, y0, x1, y1, (color & 0x02) ? 0xFF : 0x00);
-        _fillPlane(buffer1.data(), x0, y0, x1, y1, (color & 0x01) ? 0xFF : 0x00);
+        _fillPlane(buffer.data() + planeSize, x0, y0, x1, y1, (color & 0x01) ? 0xFF : 0x00);
     } else {
         _fillPlane(buffer.data(), x0, y0, x1, y1, (color != 0) ? 0xFF : 0x00);
     }
@@ -207,10 +208,10 @@ void CanvasView::fillCircle(int cx, int cy, int r, uint16_t color) {
 
 void CanvasView::clear(uint16_t color) {
     if (canvasMode == DisplayMode::TwoBpp) {
-        std::memset(buffer.data(), (color & 0x02) ? 0xFF : 0x00, buffer.size());
-        std::memset(buffer1.data(), (color & 0x01) ? 0xFF : 0x00, buffer1.size());
+        std::memset(buffer.data(), (color & 0x02) ? 0xFF : 0x00, planeSize);
+        std::memset(buffer.data() + planeSize, (color & 0x01) ? 0xFF : 0x00, planeSize);
     } else {
-        std::memset(buffer.data(), (color != 0) ? 0xFF : 0x00, buffer.size());
+        std::memset(buffer.data(), (color != 0) ? 0xFF : 0x00, planeSize);
     }
 }
 

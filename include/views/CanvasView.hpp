@@ -84,13 +84,15 @@ public:
 
     // Buffer access — for views that use a CanvasView internally and blit directly
     const uint8_t* getBufferData() const { return buffer.data(); }
-    const uint8_t* getPlane1Data() const { return buffer1.data(); }
     int getRowBytes() const { return rowBytes; }
 
 private:
     int rowBytes;                 // bytes per row = (width + 7) / 8
-    std::vector<uint8_t> buffer;  // 1bpp plane0 (high bit of color), packed MSB-first
-    std::vector<uint8_t> buffer1; // 1bpp plane1 (low bit of color), only used in TwoBpp mode
+    // 2bpp support — some displays use a two-plane buffer for 4-level grayscale.
+    // In TwoBpp mode, plane 1 occupies the second half of buffer (offset planeSize).
+    int planeSize;                // bytes per plane = rowBytes * height
+    std::vector<uint8_t> buffer;  // OneBpp: planeSize bytes; TwoBpp: 2*planeSize (plane0 then plane1)
+    const uint8_t* getPlane1Data() const { return buffer.data() + planeSize; }
     DisplayMode canvasMode = DisplayMode::OneBpp;
 
     // Private helper for fillRect — fills a single plane buffer
