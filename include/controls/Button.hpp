@@ -55,6 +55,11 @@ public:
     Button(Rect rect, std::string text);
     void draw(int x, int y) override;
 
+    /// @brief Set the background color and invalidate the cached canvas.
+    void setBackgroundColor(uint16_t value);
+    /// @brief Set the foreground color and invalidate the cached canvas.
+    void setForegroundColor(uint16_t value);
+
     /// @brief Set the font for the button label. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
     /// @brief Get the current font.

@@ -154,6 +154,16 @@ void Button::didResignFocus() {
     this->canvasValid = false;
 }
 
+void Button::setBackgroundColor(uint16_t value) {
+    View::setBackgroundColor(value);
+    this->canvasValid = false;
+}
+
+void Button::setForegroundColor(uint16_t value) {
+    View::setForegroundColor(value);
+    this->canvasValid = false;
+}
+
 void Button::setFont(std::shared_ptr<Font> font) {
     this->font = font;
     this->canvasValid = false;
