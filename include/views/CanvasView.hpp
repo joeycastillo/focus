@@ -72,9 +72,6 @@ public:
     // Font property — if null, drawText uses Font::systemFont().
     void setFont(std::shared_ptr<Font> font);
 
-    // Enable Arabic contextual shaping for drawText.
-    void setArabicShaping(bool enabled);
-
     int getCanvasWidth() { return frame.size.width; }
     int getCanvasHeight() { return frame.size.height; }
 
@@ -108,7 +105,6 @@ private:
     int lineSpacing = 0;
     int paragraphSpacing = 0;
     int direction = 1;            // 1=LTR, -1=RTL
-    bool arabicShaping = false;   // Apply Arabic contextual shaping
     int glyphRowCount = 0;
     Point lastGlyphPosition = {};
     bool hasLastGlyph = false;

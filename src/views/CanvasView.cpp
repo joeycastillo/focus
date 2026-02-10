@@ -220,9 +220,6 @@ void CanvasView::setFont(std::shared_ptr<Font> font) {
     this->font = font;
 }
 
-void CanvasView::setArabicShaping(bool enabled) {
-    this->arabicShaping = enabled;
-}
 
 int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const char *utf8String,
                          TextAlignment alignment, int initialEmphasisDepth, int initialIndentLevel) {
@@ -256,7 +253,16 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
     if (!codepoints) return 0;
 
     utf8_parse((char *)utf8String, codepoints);
-    if (this->arabicShaping) {
+
+    // Auto-detect Arabic codepoints (U+0621–U+06D2) and shape if present
+    bool needsShaping = false;
+    for (size_t i = 0; i < len; i++) {
+        if (codepoints[i] >= 0x0621 && codepoints[i] <= 0x06D2) {
+            needsShaping = true;
+            break;
+        }
+    }
+    if (needsShaping) {
         shapeArabic(codepoints, len);
     }
     size_t retVal = this->writeCodepoints(codepoints, len, glyphProvider);
