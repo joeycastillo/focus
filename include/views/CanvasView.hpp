@@ -42,7 +42,7 @@
 #include "Display.hpp"
 #include "Font.hpp"
 #include "GlyphProvider.hpp"
-#include "unicodetraits.hpp"
+#include "UnicodeTraits.hpp"
 #include <vector>
 #include <memory>
 

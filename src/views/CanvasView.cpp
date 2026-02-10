@@ -30,7 +30,7 @@
 #include <algorithm>
 #include <cstring>
 
-extern const uint8_t _unicode_info_0000_33FF[];
+extern const uint16_t _unicode_info_0000_33FF[];
 
 CanvasView::CanvasView(Rect rect)
     : View(rect),
@@ -307,14 +307,16 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
     size_t pos = 0;
     this->cursor = this->textLayoutRect.origin;
 
-    // Pre-detect text direction from first strongly-directional character
+    // Pre-detect paragraph direction from first strongly-directional character
+    int paragraphDir = 1; // default LTR
     for (size_t i = 0; i < len; i++) {
-        unicode_info_t traits = getTraitsForCodepoint(codepoints[i]);
-        if (traits.is.rtl) {
+        uint8_t bc = getTraitsForCodepoint(codepoints[i]).is.bidi_class;
+        if (bidiIsRTL(bc)) {
+            paragraphDir = -1;
             this->direction = -1;
             this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
             break;
-        } else if (traits.is.ltr) {
+        } else if (bidiIsLTR(bc)) {
             break;
         }
     }
@@ -390,41 +392,175 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             }
         }
 
-        // Render with inline bidi handling: when RTL text contains an LTR run
-        // (e.g. "הגדרות WiFi"), measure the LTR run, reserve space by shifting
-        // the RTL cursor left, render the LTR run left-to-right, then resume RTL.
+        // Simplified UAX#9 bidi algorithm: resolve each codepoint in this line
+        // to a directional run (L or R), then render runs in visual order.
         {
-            size_t i = pos;
-            size_t lineEnd = pos + numGlyphsToDraw;
-            while (i < lineEnd) {
-                unicode_info_t t = getTraitsForCodepoint(codepoints[i]);
-                if (this->direction == -1 && t.is.ltr) {
-                    // Found LTR run within RTL text — find its extent
-                    size_t ltrStart = i;
-                    while (i < lineEnd) {
-                        unicode_info_t t2 = getTraitsForCodepoint(codepoints[i]);
-                        if (t2.is.rtl) break;
-                        i++;
+            size_t lineLen = (size_t)numGlyphsToDraw;
+            // Step 1: Get bidi class for each codepoint
+            uint8_t resolved[lineLen];
+            for (size_t i = 0; i < lineLen; i++) {
+                resolved[i] = getTraitsForCodepoint(codepoints[pos + i]).is.bidi_class;
+            }
+
+            // Step 2: Resolve weak types (simplified W rules)
+            for (size_t i = 0; i < lineLen; i++) {
+                uint8_t bc = resolved[i];
+                if (bc == BIDI_NSM) {
+                    // W1: NSM inherits preceding character's resolved type
+                    resolved[i] = (i > 0) ? resolved[i - 1] : (paragraphDir == -1 ? BIDI_R : BIDI_L);
+                }
+            }
+            // W2 (EN after AL → AN) deliberately skipped: modern Arabic text
+            // commonly uses European digits, so we keep EN as-is.
+            for (size_t i = 0; i < lineLen; i++) {
+                if (resolved[i] == BIDI_AL) resolved[i] = BIDI_R; // W3: AL → R
+            }
+            for (size_t i = 1; i + 1 < lineLen; i++) {
+                // W4: ES between EN+EN → EN; CS between EN+EN → EN; CS between AN+AN → AN
+                if (resolved[i] == BIDI_ES && resolved[i-1] == BIDI_EN && resolved[i+1] == BIDI_EN) {
+                    resolved[i] = BIDI_EN;
+                } else if (resolved[i] == BIDI_CS) {
+                    if (resolved[i-1] == BIDI_EN && resolved[i+1] == BIDI_EN) resolved[i] = BIDI_EN;
+                    else if (resolved[i-1] == BIDI_AN && resolved[i+1] == BIDI_AN) resolved[i] = BIDI_AN;
+                }
+            }
+            for (size_t i = 0; i < lineLen; i++) {
+                // W5: ET adjacent to EN → EN
+                if (resolved[i] == BIDI_ET) {
+                    bool adjacentEN = false;
+                    if (i > 0 && resolved[i-1] == BIDI_EN) adjacentEN = true;
+                    if (i + 1 < lineLen && resolved[i+1] == BIDI_EN) adjacentEN = true;
+                    if (adjacentEN) resolved[i] = BIDI_EN;
+                }
+            }
+            for (size_t i = 0; i < lineLen; i++) {
+                // W6: Remaining ES, ET, CS → ON
+                if (resolved[i] == BIDI_ES || resolved[i] == BIDI_ET || resolved[i] == BIDI_CS) {
+                    resolved[i] = BIDI_ON;
+                }
+            }
+            for (size_t i = 0; i < lineLen; i++) {
+                // W7: EN preceded by L (searching back past neutrals) → L
+                if (resolved[i] == BIDI_EN) {
+                    for (int j = (int)i - 1; j >= 0; j--) {
+                        if (resolved[j] == BIDI_L) { resolved[i] = BIDI_L; break; }
+                        if (resolved[j] == BIDI_R) break;
                     }
-                    // Measure and reserve space
-                    int16_t ltrWidth = measureCodepointsWidth(
-                        codepoints + ltrStart, i - ltrStart, glyphProvider);
-                    this->cursor.x -= ltrWidth;
-                    int16_t savedCursorX = this->cursor.x;
-                    // Render LTR run left-to-right
-                    int savedDir = this->direction;
-                    this->direction = 1;
-                    this->hasLastGlyph = false;
-                    for (size_t j = ltrStart; j < i; j++) {
-                        retVal += this->writeCodepoint(codepoints[j], glyphProvider);
+                    // If no strong type found, check paragraph direction
+                    if (resolved[i] == BIDI_EN && paragraphDir == 1) resolved[i] = BIDI_L;
+                }
+            }
+
+            // Step 3: Resolve neutrals (simplified N rules)
+            // Map everything to L or R based on context
+            for (size_t i = 0; i < lineLen; i++) {
+                uint8_t bc = resolved[i];
+                if (bc == BIDI_ON || bc == BIDI_WS || bc == BIDI_BN ||
+                    bc == BIDI_B || bc == BIDI_S) {
+                    // Find preceding strong type
+                    uint8_t prevStrong = paragraphDir == -1 ? BIDI_R : BIDI_L;
+                    for (int j = (int)i - 1; j >= 0; j--) {
+                        if (resolved[j] == BIDI_L || resolved[j] == BIDI_R ||
+                            resolved[j] == BIDI_AN || resolved[j] == BIDI_EN) {
+                            prevStrong = (resolved[j] == BIDI_L) ? BIDI_L : BIDI_R;
+                            break;
+                        }
                     }
-                    // Restore RTL direction and cursor
-                    this->direction = savedDir;
-                    this->cursor.x = savedCursorX;
+                    // Find following strong type
+                    uint8_t nextStrong = paragraphDir == -1 ? BIDI_R : BIDI_L;
+                    for (size_t j = i + 1; j < lineLen; j++) {
+                        if (resolved[j] == BIDI_L || resolved[j] == BIDI_R ||
+                            resolved[j] == BIDI_AN || resolved[j] == BIDI_EN) {
+                            nextStrong = (resolved[j] == BIDI_L) ? BIDI_L : BIDI_R;
+                            break;
+                        }
+                    }
+                    // N1: If both sides agree, use that direction
+                    // N2: Otherwise, use paragraph direction
+                    if (prevStrong == nextStrong) {
+                        resolved[i] = prevStrong;
+                    } else {
+                        resolved[i] = paragraphDir == -1 ? BIDI_R : BIDI_L;
+                    }
+                } else if (bc == BIDI_EN || bc == BIDI_AN) {
+                    // I1/I2: Numbers in RTL context get rendered LTR but positioned RTL
+                    // EN stays as L (already converted by W7 if preceded by L),
+                    // AN stays as R for positioning purposes
+                    resolved[i] = (bc == BIDI_AN) ? BIDI_R : BIDI_L;
+                }
+                // L and R are already resolved
+            }
+
+            // Step 4: Build and render directional runs
+            //
+            // In an LTR paragraph, cursor starts at the left edge and advances right.
+            // Each run is rendered in sequence. LTR runs advance cursor right normally;
+            // RTL runs need to be rendered right-to-left within a reserved space.
+            //
+            // In an RTL paragraph, cursor starts at the right edge and advances left.
+            // Each run reserves its width leftward. RTL runs render right-to-left
+            // within their space; LTR runs render left-to-right within their space.
+            size_t i = 0;
+            while (i < lineLen) {
+                bool runIsRTL = (resolved[i] == BIDI_R);
+                size_t runStart = i;
+                while (i < lineLen && (resolved[i] == BIDI_R) == runIsRTL) {
+                    i++;
+                }
+                size_t runLen = i - runStart;
+                int16_t runWidth = measureCodepointsWidth(
+                    codepoints + pos + runStart, runLen, glyphProvider);
+
+                if (paragraphDir == -1) {
+                    // RTL paragraph: cursor.x is the right edge of remaining space
+                    // Reserve space for this run by moving cursor left
+                    this->cursor.x -= runWidth;
+                    int16_t runLeftEdge = this->cursor.x;
+
+                    if (runIsRTL) {
+                        // RTL run: writeCodepoint in dir=-1 expects cursor.x at
+                        // right edge and subtracts glyph width before drawing
+                        this->direction = -1;
+                        this->hasLastGlyph = false;
+                        int16_t rtlCursor = runLeftEdge + runWidth; // right edge of run
+                        this->cursor.x = rtlCursor;
+                        for (size_t j = runStart; j < runStart + runLen; j++) {
+                            retVal += this->writeCodepoint(codepoints[pos + j], glyphProvider);
+                        }
+                    } else {
+                        // LTR island in RTL paragraph: render left-to-right
+                        this->direction = 1;
+                        this->hasLastGlyph = false;
+                        this->cursor.x = runLeftEdge;
+                        for (size_t j = runStart; j < runStart + runLen; j++) {
+                            retVal += this->writeCodepoint(codepoints[pos + j], glyphProvider);
+                        }
+                    }
+                    // Restore cursor to left edge of this run for next run's reservation
+                    this->cursor.x = runLeftEdge;
                     this->hasLastGlyph = false;
                 } else {
-                    retVal += this->writeCodepoint(codepoints[i], glyphProvider);
-                    i++;
+                    // LTR paragraph: cursor.x is the left edge of remaining space
+                    if (runIsRTL) {
+                        // RTL island in LTR paragraph: render right-to-left
+                        // writeCodepoint in dir=-1 expects cursor at right edge
+                        this->direction = -1;
+                        this->hasLastGlyph = false;
+                        int16_t runRightEdge = this->cursor.x + runWidth;
+                        this->cursor.x = runRightEdge;
+                        for (size_t j = runStart; j < runStart + runLen; j++) {
+                            retVal += this->writeCodepoint(codepoints[pos + j], glyphProvider);
+                        }
+                        // Advance cursor past this run
+                        this->cursor.x = runRightEdge;
+                    } else {
+                        // LTR run in LTR paragraph: simple left-to-right
+                        this->direction = 1;
+                        this->hasLastGlyph = false;
+                        for (size_t j = runStart; j < runStart + runLen; j++) {
+                            retVal += this->writeCodepoint(codepoints[pos + j], glyphProvider);
+                        }
+                    }
                 }
             }
         }
@@ -532,15 +668,8 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
 
     Rect metrics = glyphProvider->metricsForCodepoint(codepoint);
 
-    if (this->direction == 1 && traits.is.rtl) {
-        direction = -1;
-        this->hasLastGlyph = false;
-        this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
-    } else if (this->direction == -1 && traits.is.ltr) {
-        direction = 1;
-        this->hasLastGlyph = false;
-        this->cursor.x = this->textLayoutRect.origin.x;
-    }
+    // Direction is set by the run-based renderer in writeCodepoints;
+    // writeCodepoint just renders in the current direction.
 
     uint8_t *glyph = glyphProvider->glyphForCodepoint(codepoint);
     if (traits.is.nsm && this->hasLastGlyph) {

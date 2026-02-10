@@ -29,9 +29,9 @@
 #include <cstdlib>
 
 // Direct access to the Unicode traits LUT for ASCII fast path.
-// Defined in unicodetraits.cpp. For ASCII codepoints (< 0x80), indexing
+// Defined in UnicodeTraits.cpp. For ASCII codepoints (< 0x80), indexing
 // directly avoids the branch cascade in getTraitsForCodepoint().
-extern const uint8_t _unicode_info_0000_33FF[];
+extern const uint16_t _unicode_info_0000_33FF[];
 
 size_t TextLayout::bytesForCodepoint(UNICODE_CODEPOINT cp) {
     if (cp <= 0x7F) return 1;

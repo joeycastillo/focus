@@ -24,7 +24,7 @@
 
 #include "ArabicShaping.hpp"
 #include "UnicodeArabicPresentation.hpp"
-#include "unicodetraits.hpp"
+#include "UnicodeTraits.hpp"
 
 using namespace UnicodeArabicPresentation;
 

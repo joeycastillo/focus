@@ -36,7 +36,7 @@
 
 #include "Focus.hpp"
 #include "GlyphProvider.hpp"
-#include "unicodetraits.hpp"
+#include "UnicodeTraits.hpp"
 #include <cstdint>
 #include <cstddef>
 
