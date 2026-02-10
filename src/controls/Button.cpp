@@ -79,55 +79,22 @@ void Button::renderCanvas() {
         this->canvas->setFont(resolvedFont);
     }
 
-    bool hasNewlines = this->text.find('\n') != std::string::npos;
-
-    if (hasNewlines) {
-        // Text has explicit newlines — draw each line centered individually
-        std::vector<std::string> lines;
-        std::vector<int> lineWidths;
-        size_t lineStart = 0;
-        for (size_t i = 0; i <= this->text.length(); i++) {
-            if (i == this->text.length() || this->text[i] == '\n') {
-                std::string line = (i > lineStart) ? this->text.substr(lineStart, i - lineStart) : "";
-                lines.push_back(line);
-                int lineWidth = providerPtr ? TextLayout::measureTextWidth(line.c_str(), 1, providerPtr) : 0;
-                lineWidths.push_back(lineWidth);
-                lineStart = i + 1;
-            }
-        }
-
+    // Calculate total text height for vertical centering
+    int totalTextHeight = lineHeight;
+    if (textWidth > this->frame.size.width) {
+        int numLines = (textWidth + this->frame.size.width - 1) / this->frame.size.width;
         int lineSpacing = providerPtr ? TextLayout::calculateLineSpacing(providerPtr) : 2;
-        int totalTextHeight = lines.size() * lineHeight + (lines.size() - 1) * lineSpacing;
-        int verticalOffset = (this->frame.size.height - totalTextHeight) / 2;
-
-        int lineY = verticalOffset;
-        for (size_t i = 0; i < lines.size(); i++) {
-            int horizontalOffset = (this->frame.size.width - lineWidths[i]) / 2;
-            if (horizontalOffset < 0) horizontalOffset = 0;
-            int availableWidth = this->frame.size.width - horizontalOffset;
-            Rect lineRect = MakeRect(horizontalOffset, lineY, availableWidth, lineHeight);
-            this->canvas->drawText(lineRect, textColor, 1, lines[i].c_str());
-            lineY += lineHeight + lineSpacing;
-        }
-    } else {
-        // No newlines — standard text rendering with word wrap support
-        int horizontalOffset = 0;
-        int totalTextHeight = lineHeight;
-        int layoutWidth = this->frame.size.width;
-
-        if (textWidth <= this->frame.size.width) {
-            horizontalOffset = (this->frame.size.width - textWidth) / 2;
-            layoutWidth = this->frame.size.width - horizontalOffset;
-        } else {
-            int numLines = (textWidth + this->frame.size.width - 1) / this->frame.size.width;
-            int lineSpacing = providerPtr ? TextLayout::calculateLineSpacing(providerPtr) : 2;
-            totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
-        }
-
-        int verticalOffset = (this->frame.size.height - totalTextHeight) / 2;
-        Rect layoutRect = MakeRect(horizontalOffset, verticalOffset, layoutWidth, totalTextHeight);
-        this->canvas->drawText(layoutRect, textColor, 1, this->text.c_str());
+        totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
+    } else if (this->text.find('\n') != std::string::npos) {
+        int numLines = 1;
+        for (char c : this->text) if (c == '\n') numLines++;
+        int lineSpacing = providerPtr ? TextLayout::calculateLineSpacing(providerPtr) : 2;
+        totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
     }
+
+    int verticalOffset = (this->frame.size.height - totalTextHeight) / 2;
+    Rect layoutRect = MakeRect(0, verticalOffset, this->frame.size.width, totalTextHeight);
+    this->canvas->drawText(layoutRect, textColor, 1, this->text.c_str(), TextAlignmentCenter);
 
     this->canvasValid = true;
 }

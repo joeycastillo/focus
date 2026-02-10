@@ -307,6 +307,18 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
     size_t pos = 0;
     this->cursor = this->textLayoutRect.origin;
 
+    // Pre-detect text direction from first strongly-directional character
+    for (size_t i = 0; i < len; i++) {
+        unicode_info_t traits = getTraitsForCodepoint(codepoints[i]);
+        if (traits.is.rtl) {
+            this->direction = -1;
+            this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
+            break;
+        } else if (traits.is.ltr) {
+            break;
+        }
+    }
+
     // Block quote indentation state
     bool atLineStart = true;
     int16_t currentIndent = 0;
@@ -339,6 +351,8 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
         // Set cursor to indented position for this line
         if (this->direction == 1) {
             this->cursor.x = indentedOriginX;
+        } else {
+            this->cursor.x = indentedOriginX + effectiveWidth;
         }
 
         WordWrapResult result = TextLayout::measureLineWrap(
@@ -357,20 +371,62 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
         }
 
         // Apply text alignment offset for this line
-        if (this->textAlignment != TextAlignmentLeft && this->direction == 1) {
+        if (this->textAlignment != TextAlignmentLeft) {
             int16_t lineWidth = measureCodepointsWidth(codepoints + pos, numGlyphsToDraw, glyphProvider);
             int16_t slack = effectiveWidth - lineWidth;
             if (slack > 0) {
                 if (this->textAlignment == TextAlignmentCenter) {
-                    this->cursor.x = indentedOriginX + slack / 2;
+                    if (this->direction == 1) {
+                        this->cursor.x = indentedOriginX + slack / 2;
+                    } else {
+                        this->cursor.x = indentedOriginX + effectiveWidth - slack / 2;
+                    }
                 } else if (this->textAlignment == TextAlignmentRight) {
-                    this->cursor.x = indentedOriginX + slack;
+                    if (this->direction == 1) {
+                        this->cursor.x = indentedOriginX + slack;
+                    }
+                    // RTL right-align is the default (cursor at right edge)
                 }
             }
         }
 
-        for (size_t i = pos; i < pos + numGlyphsToDraw; i++) {
-            retVal += this->writeCodepoint(codepoints[i], glyphProvider);
+        // Render with inline bidi handling: when RTL text contains an LTR run
+        // (e.g. "הגדרות WiFi"), measure the LTR run, reserve space by shifting
+        // the RTL cursor left, render the LTR run left-to-right, then resume RTL.
+        {
+            size_t i = pos;
+            size_t lineEnd = pos + numGlyphsToDraw;
+            while (i < lineEnd) {
+                unicode_info_t t = getTraitsForCodepoint(codepoints[i]);
+                if (this->direction == -1 && t.is.ltr) {
+                    // Found LTR run within RTL text — find its extent
+                    size_t ltrStart = i;
+                    while (i < lineEnd) {
+                        unicode_info_t t2 = getTraitsForCodepoint(codepoints[i]);
+                        if (t2.is.rtl) break;
+                        i++;
+                    }
+                    // Measure and reserve space
+                    int16_t ltrWidth = measureCodepointsWidth(
+                        codepoints + ltrStart, i - ltrStart, glyphProvider);
+                    this->cursor.x -= ltrWidth;
+                    int16_t savedCursorX = this->cursor.x;
+                    // Render LTR run left-to-right
+                    int savedDir = this->direction;
+                    this->direction = 1;
+                    this->hasLastGlyph = false;
+                    for (size_t j = ltrStart; j < i; j++) {
+                        retVal += this->writeCodepoint(codepoints[j], glyphProvider);
+                    }
+                    // Restore RTL direction and cursor
+                    this->direction = savedDir;
+                    this->cursor.x = savedCursorX;
+                    this->hasLastGlyph = false;
+                } else {
+                    retVal += this->writeCodepoint(codepoints[i], glyphProvider);
+                    i++;
+                }
+            }
         }
         pos += numGlyphsToDraw;
 
