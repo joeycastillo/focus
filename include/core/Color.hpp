@@ -26,22 +26,66 @@
 
 #include <stdint.h>
 
-/// @brief Factory class for named color constants and default color management.
+/// @brief Factory class for 16-bit grayscale color values.
 ///
-/// Color provides static methods that return uint16_t color values by name,
-/// replacing the duplicate getBlackColor()/getWhiteColor()/etc. getters that
-/// previously existed on both CanvasView and Display.
+/// GrayscaleColor provides static methods that return uint16_t color values
+/// using a 16-bit grayscale representation (0x0000 = black, 0xFFFF = white).
+/// This representation has the elegant property that (color & 0x0003) extracts
+/// the equivalent 2-bit value for e-paper displays.
 ///
 /// It also manages the default foreground and background colors used by newly
-/// created Views (previously managed by static members on View).
-struct Color {
-    static constexpr uint16_t Black()     { return 0; }
-    static constexpr uint16_t DarkGray()  { return 1; }
-    static constexpr uint16_t LightGray() { return 2; }
-    static constexpr uint16_t White()     { return 3; }
+/// created Views.
+struct GrayscaleColor {
+    static constexpr uint16_t Black()     { return 0x0000; }  // & 3 = 0
+    static constexpr uint16_t DarkGray()  { return 0x5555; }  // & 3 = 1
+    static constexpr uint16_t LightGray() { return 0xAAAA; }  // & 3 = 2
+    static constexpr uint16_t White()     { return 0xFFFF; }  // & 3 = 3
 
     static uint16_t DefaultForegroundColor();
     static uint16_t DefaultBackgroundColor();
     static void SetDefaultForegroundColor(uint16_t color);
     static void SetDefaultBackgroundColor(uint16_t color);
+};
+
+/// @brief Factory class for RGB565 color values.
+///
+/// RGB565Color provides static methods that return uint16_t color values
+/// in RGB565 format (5 bits red, 6 bits green, 5 bits blue). This is the
+/// native format for most 16-bit TFT displays.
+///
+/// Grayscale values use equal intensity across all channels, accounting for
+/// the different bit depths (R5:G6:B5).
+struct RGB565Color {
+    // Primary colors
+    static constexpr uint16_t Black()   { return 0x0000; }
+    static constexpr uint16_t Red()     { return 0xF800; }
+    static constexpr uint16_t Green()   { return 0x07E0; }
+    static constexpr uint16_t Blue()    { return 0x001F; }
+    static constexpr uint16_t White()   { return 0xFFFF; }
+
+    // Secondary colors
+    static constexpr uint16_t Yellow()  { return 0xFFE0; }  // Red + Green
+    static constexpr uint16_t Cyan()    { return 0x07FF; }  // Green + Blue
+    static constexpr uint16_t Magenta() { return 0xF81F; }  // Red + Blue
+
+    // Grayscale values (equal intensity across R, G, B)
+    static constexpr uint16_t DarkGray()  { return 0x52AA; }  // 85/255 intensity
+    static constexpr uint16_t Gray()      { return 0x8410; }  // 128/255 intensity
+    static constexpr uint16_t LightGray() { return 0xAD55; }  // 170/255 intensity
+
+    /// @brief Create an RGB565 color from 8-bit R, G, B components.
+    /// @param r Red component (0-255)
+    /// @param g Green component (0-255)
+    /// @param b Blue component (0-255)
+    /// @return RGB565-encoded color value
+    static constexpr uint16_t fromRGB(uint8_t r, uint8_t g, uint8_t b) {
+        return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+    }
+
+    /// @brief Create a grayscale RGB565 color from an 8-bit intensity value.
+    /// @param value Grayscale intensity (0-255, where 0=black, 255=white)
+    /// @return RGB565-encoded grayscale color
+    static constexpr uint16_t fromGrayscale(uint8_t value) {
+        return fromRGB(value, value, value);
+    }
 };

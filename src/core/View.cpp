@@ -33,8 +33,8 @@ View::View(Rect rect) {
     this->frame = rect;
     // bounds has origin at (0,0) in the view's local coordinate system
     this->bounds = MakeRect(0, 0, rect.size.width, rect.size.height);
-    this->foregroundColor = Color::DefaultForegroundColor();
-    this->backgroundColor = Color::DefaultBackgroundColor();
+    this->foregroundColor = GrayscaleColor::DefaultForegroundColor();
+    this->backgroundColor = GrayscaleColor::DefaultBackgroundColor();
     this->window.reset();
     this->superview.reset();
 }
@@ -418,11 +418,11 @@ void View::clearTouchChecked() {
 }
 
 void View::SetDefaultBackgroundColor(uint16_t color) {
-    Color::SetDefaultBackgroundColor(color);
+    GrayscaleColor::SetDefaultBackgroundColor(color);
 }
 
 void View::SetDefaultForegroundColor(uint16_t color) {
-    Color::SetDefaultForegroundColor(color);
+    GrayscaleColor::SetDefaultForegroundColor(color);
 }
 
 bool View::wantsKeyboardInput() {

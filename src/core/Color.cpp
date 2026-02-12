@@ -24,10 +24,10 @@
 
 #include "Color.hpp"
 
-static uint16_t defaultFG = Color::Black();
-static uint16_t defaultBG = Color::White();
+static uint16_t defaultFG = GrayscaleColor::Black();
+static uint16_t defaultBG = GrayscaleColor::White();
 
-uint16_t Color::DefaultForegroundColor() { return defaultFG; }
-uint16_t Color::DefaultBackgroundColor() { return defaultBG; }
-void Color::SetDefaultForegroundColor(uint16_t color) { defaultFG = color; }
-void Color::SetDefaultBackgroundColor(uint16_t color) { defaultBG = color; }
+uint16_t GrayscaleColor::DefaultForegroundColor() { return defaultFG; }
+uint16_t GrayscaleColor::DefaultBackgroundColor() { return defaultBG; }
+void GrayscaleColor::SetDefaultForegroundColor(uint16_t color) { defaultFG = color; }
+void GrayscaleColor::SetDefaultBackgroundColor(uint16_t color) { defaultBG = color; }
