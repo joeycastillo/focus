@@ -119,14 +119,6 @@ public:
     virtual void blitMasked(int x, int y, int w, int h, uint16_t color,
                             const uint8_t* mask, int rowBytes) = 0;
 
-    /**
-     * @brief Set the display operating mode.
-     *
-     * Subclasses may override to perform hardware re-initialization
-     * (e.g. loading a grayscale LUT for e-paper displays).
-     */
-    virtual void setDisplayMode(DisplayMode mode) { displayMode = mode; }
-
     /// @brief Get the current display mode.
     DisplayMode getDisplayMode() const { return displayMode; }
 
