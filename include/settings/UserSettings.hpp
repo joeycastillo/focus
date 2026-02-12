@@ -31,7 +31,7 @@
  * NVS (non-volatile storage) key/value store, but the storage backing is
  * plarform agnostic; an XML backend is provided.
  *
- * Instances are accessed by namespace (e.g. "libros") and cached — repeated
+ * Instances are accessed by namespace (e.g. "MyApp") and cached — repeated
  * calls with the same namespace return the same instance. The backend factory
  * must be registered once at startup via setBackendFactory().
  *
@@ -43,8 +43,8 @@
  *   });
  *
  *   // Anywhere in the app
- *   auto settings = UserSettings::withNamespace("libros");
- *   std::string font = settings->getString("user_font");
+ *   auto settings = UserSettings::withNamespace("MyApp");
+ *   std::string font = settings->getString("my_setting");
  * @endcode
  */
 
@@ -81,7 +81,7 @@ public:
      * @brief Get or create a UserSettings instance for the given namespace.
      *
      * Returns the same instance on repeated calls with the same name.
-     * @param name The namespace (e.g. "libros").
+     * @param name The namespace (e.g. "MyApp").
      * @return Pointer to the cached UserSettings instance.
      */
     static UserSettings* withNamespace(const std::string& name);
