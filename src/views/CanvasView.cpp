@@ -165,6 +165,36 @@ void CanvasView::fillRect(int x, int y, int w, int h, uint16_t color) {
     }
 }
 
+void CanvasView::invertRect(int x, int y, int w, int h) {
+    int x0 = std::max(0, x);
+    int y0 = std::max(0, y);
+    int x1 = std::min((int)frame.size.width, x + w);
+    int y1 = std::min((int)frame.size.height, y + h);
+    if (x0 >= x1 || y0 >= y1) return;
+
+    int firstByte = x0 >> 3;
+    int lastByte = (x1 - 1) >> 3;
+    int startBit = x0 & 7;
+    int endBit = (x1 - 1) & 7;
+
+    for (int row = y0; row < y1; row++) {
+        int rowOffset = row * rowBytes;
+        if (firstByte == lastByte) {
+            uint8_t mask = (0xFF >> startBit) & (0xFF << (7 - endBit));
+            buffer[rowOffset + firstByte] ^= mask;
+        } else {
+            if (startBit > 0) {
+                buffer[rowOffset + firstByte] ^= (0xFF >> startBit);
+            }
+            int midStart = firstByte + (startBit > 0 ? 1 : 0);
+            for (int b = midStart; b < lastByte; b++) {
+                buffer[rowOffset + b] ^= 0xFF;
+            }
+            buffer[rowOffset + lastByte] ^= (0xFF << (7 - endBit));
+        }
+    }
+}
+
 void CanvasView::drawCircle(int cx, int cy, int r, uint16_t color) {
     int x = r, y = 0;
     int d = 1 - r;
@@ -220,6 +250,10 @@ void CanvasView::setFont(std::shared_ptr<Font> font) {
     this->font = font;
 }
 
+void CanvasView::setWordMapOutput(std::vector<WordPosition> *output) {
+    this->wordMapOutput = output;
+}
+
 
 int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const char *utf8String,
                          TextAlignment alignment, int initialEmphasisDepth, int initialIndentLevel) {
@@ -254,6 +288,22 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
 
     utf8_parse((char *)utf8String, codepoints);
 
+    // Build byte offset map for word position tracking (before shaping,
+    // so offsets correspond to the original UTF-8 string).
+    if (this->wordMapOutput) {
+        this->wordMapOutput->clear();
+        uint32_t *offsets = (uint32_t *)malloc((len + 1) * sizeof(uint32_t));
+        if (offsets) {
+            uint32_t bytePos = 0;
+            for (size_t i = 0; i < len; i++) {
+                offsets[i] = bytePos;
+                bytePos += TextLayout::bytesForCodepoint(codepoints[i]);
+            }
+            offsets[len] = bytePos;
+        }
+        this->codepointByteOffsets = offsets;
+    }
+
     // Auto-detect Arabic codepoints (U+0621–U+06D2) and shape if present
     bool needsShaping = false;
     for (size_t i = 0; i < len; i++) {
@@ -266,6 +316,11 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
         shapeArabic(codepoints, len);
     }
     size_t retVal = this->writeCodepoints(codepoints, len, glyphProvider);
+
+    if (this->codepointByteOffsets) {
+        free(this->codepointByteOffsets);
+        this->codepointByteOffsets = nullptr;
+    }
     free(codepoints);
 
     return retVal;
@@ -491,6 +546,42 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
                 // L and R are already resolved
             }
 
+            // Word tracking state for this line
+            bool trackingWord = false;
+            int16_t wordMinX = 0, wordMaxX = 0, wordY = 0;
+            uint32_t wordStartOffset = 0, wordEndOffset = 0;
+            int16_t wordLineHeight = TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
+
+            // Renders a codepoint and, when wordMapOutput is set, records word positions.
+            auto emitCodepoint = [&](size_t j) {
+                UNICODE_CODEPOINT cp = codepoints[pos + j];
+                int16_t beforeX = this->cursor.x;
+                retVal += this->writeCodepoint(cp, glyphProvider);
+                if (this->wordMapOutput && this->codepointByteOffsets) {
+                    int16_t afterX = this->cursor.x;
+                    if (cp > 0x20) {
+                        int16_t left = std::min(beforeX, afterX);
+                        int16_t right = std::max(beforeX, afterX);
+                        if (!trackingWord) {
+                            wordMinX = left;
+                            wordMaxX = right;
+                            wordY = this->cursor.y;
+                            wordStartOffset = this->codepointByteOffsets[pos + j];
+                            trackingWord = true;
+                        } else {
+                            wordMinX = std::min(wordMinX, left);
+                            wordMaxX = std::max(wordMaxX, right);
+                        }
+                        wordEndOffset = this->codepointByteOffsets[pos + j + 1];
+                    } else if (cp == 0x20 && trackingWord) {
+                        this->wordMapOutput->push_back({wordMinX, wordY,
+                            (int16_t)(wordMaxX - wordMinX), wordLineHeight,
+                            wordStartOffset, wordEndOffset});
+                        trackingWord = false;
+                    }
+                }
+            };
+
             // Step 4: Build and render directional runs
             //
             // In an LTR paragraph, cursor starts at the left edge and advances right.
@@ -525,7 +616,7 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
                         int16_t rtlCursor = runLeftEdge + runWidth; // right edge of run
                         this->cursor.x = rtlCursor;
                         for (size_t j = runStart; j < runStart + runLen; j++) {
-                            retVal += this->writeCodepoint(codepoints[pos + j], glyphProvider);
+                            emitCodepoint(j);
                         }
                     } else {
                         // LTR island in RTL paragraph: render left-to-right
@@ -533,7 +624,7 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
                         this->hasLastGlyph = false;
                         this->cursor.x = runLeftEdge;
                         for (size_t j = runStart; j < runStart + runLen; j++) {
-                            retVal += this->writeCodepoint(codepoints[pos + j], glyphProvider);
+                            emitCodepoint(j);
                         }
                     }
                     // Restore cursor to left edge of this run for next run's reservation
@@ -549,7 +640,7 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
                         int16_t runRightEdge = this->cursor.x + runWidth;
                         this->cursor.x = runRightEdge;
                         for (size_t j = runStart; j < runStart + runLen; j++) {
-                            retVal += this->writeCodepoint(codepoints[pos + j], glyphProvider);
+                            emitCodepoint(j);
                         }
                         // Advance cursor past this run
                         this->cursor.x = runRightEdge;
@@ -558,10 +649,18 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
                         this->direction = 1;
                         this->hasLastGlyph = false;
                         for (size_t j = runStart; j < runStart + runLen; j++) {
-                            retVal += this->writeCodepoint(codepoints[pos + j], glyphProvider);
+                            emitCodepoint(j);
                         }
                     }
                 }
+            }
+
+            // Close any word still open at end of this line
+            if (trackingWord && this->wordMapOutput) {
+                this->wordMapOutput->push_back({wordMinX, wordY,
+                    (int16_t)(wordMaxX - wordMinX), wordLineHeight,
+                    wordStartOffset, wordEndOffset});
+                trackingWord = false;
             }
         }
         pos += numGlyphsToDraw;

@@ -46,6 +46,15 @@
 #include <vector>
 #include <memory>
 
+/// A word's bounding box and byte range, recorded during text rendering.
+/// Byte offsets are relative to the start of the UTF-8 string passed to drawText().
+struct WordPosition {
+    int16_t x, y;
+    int16_t width, height;
+    uint32_t startOffset;
+    uint32_t endOffset;
+};
+
 /// A view that owns its own 1bpp pixel buffer for programmatic drawing.
 /// Content is drawn to the internal buffer via drawPixel/drawRect/fillRect/drawText,
 /// then blitted to the Display during the normal view draw cycle.
@@ -61,6 +70,7 @@ public:
     void fillRect(int x, int y, int w, int h, uint16_t color);
     void drawCircle(int cx, int cy, int r, uint16_t color);
     void fillCircle(int cx, int cy, int r, uint16_t color);
+    void invertRect(int x, int y, int w, int h);
     void clear(uint16_t color);
 
     // Text rendering — renders text to the canvas buffer using the view's Font.
@@ -71,6 +81,10 @@ public:
 
     // Font property — if null, drawText uses Font::systemFont().
     void setFont(std::shared_ptr<Font> font);
+
+    // Word map — when set, drawText() records each word's bounding box and
+    // byte range into the provided vector (cleared before each drawText call).
+    void setWordMapOutput(std::vector<WordPosition> *output);
 
     int getCanvasWidth() { return frame.size.width; }
     int getCanvasHeight() { return frame.size.height; }
@@ -116,6 +130,10 @@ private:
     bool readingTitle = false;    // true after FS/GS/RS, until next newline
     int savedEmphasisDepth = 0;   // emphasis depth saved when entering title mode
     int initialIndentLevel = 0;   // Block quote indent level for mid-paragraph page starts
+
+    // Word position tracking (set by setWordMapOutput, used during drawText)
+    std::vector<WordPosition> *wordMapOutput = nullptr;
+    uint32_t *codepointByteOffsets = nullptr;
 
     // Text rendering internals (mirror Display's pipeline)
     size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
