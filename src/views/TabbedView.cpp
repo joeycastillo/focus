@@ -83,6 +83,8 @@ void TabbedView::selectTab(size_t index) {
 
     this->canvasValid = false;
 
+    if (this->onTabChanged) this->onTabChanged(index);
+
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);
     }

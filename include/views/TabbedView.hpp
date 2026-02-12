@@ -35,6 +35,7 @@
 
 #include "View.hpp"
 #include <string>
+#include <functional>
 
 class Font;
 class CanvasView;
@@ -65,6 +66,9 @@ public:
 
     /// @brief Get the index of the currently selected tab.
     size_t getSelectedTab() const;
+
+    /// @brief Callback invoked when the selected tab changes.
+    std::function<void(size_t)> onTabChanged;
 
     /// @brief Set the font for tab labels. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
