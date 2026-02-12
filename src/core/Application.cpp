@@ -200,6 +200,12 @@ void Application::dismissViewController() {
     this->window->setNeedsDisplay(true);
 }
 
+void Application::dismissAllViewControllers() {
+    while (!this->modalStack.empty()) {
+        this->dismissViewController();
+    }
+}
+
 void Application::quit() {
     this->running = false;
 }

@@ -133,6 +133,15 @@ public:
     void dismissViewController();
 
     /**
+     * @brief Dismiss all modal view controllers.
+     *
+     * Tears down every modal in the stack (topmost first), removing views
+     * and dimmers. Focus is restored to the view that was focused before
+     * the first modal was presented.
+     */
+    void dismissAllViewControllers();
+
+    /**
      * @brief Request the application to stop its run loop.
      *
      * The run loop will exit after the current iteration completes.
