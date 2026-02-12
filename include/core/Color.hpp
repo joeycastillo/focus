@@ -30,16 +30,26 @@
 ///
 /// GrayscaleColor provides static methods that return uint16_t color values
 /// using a 16-bit grayscale representation (0x0000 = black, 0xFFFF = white).
-/// This representation has the elegant property that (color & 0x0003) extracts
-/// the equivalent 2-bit value for e-paper displays.
 ///
 /// It also manages the default foreground and background colors used by newly
 /// created Views.
+///
+/// **Bit depth conversion:**
+/// - 8-bit: `color >> 8`  (0x00 to 0xFF)
+/// - 4-bit: `color >> 12` (0x0 to 0xF)
+/// - 3-bit: `color >> 13` (0x0 to 0x7)
+/// - 2-bit: `color >> 14` (0x0 to 0x3)
+///                        (for the four factory methods, `color & 3` works
+///                         equivalently due to the static bit pattern)
+///
+/// **IMPORTANT:** GrayscaleColor values are designed for grayscale displays.
+/// Do not use them on RGB displays — they will render incorrectly. Use
+/// RGB565Color for RGB/TFT displays instead.
 struct GrayscaleColor {
-    static constexpr uint16_t Black()     { return 0x0000; }  // & 3 = 0
-    static constexpr uint16_t DarkGray()  { return 0x5555; }  // & 3 = 1
-    static constexpr uint16_t LightGray() { return 0xAAAA; }  // & 3 = 2
-    static constexpr uint16_t White()     { return 0xFFFF; }  // & 3 = 3
+    static constexpr uint16_t Black()     { return 0x0000; }  // 0/255 intensity
+    static constexpr uint16_t DarkGray()  { return 0x5555; }  // 85/255 intensity
+    static constexpr uint16_t LightGray() { return 0xAAAA; }  // 170/255 intensity
+    static constexpr uint16_t White()     { return 0xFFFF; }  // 255/255 intensity
 
     static uint16_t DefaultForegroundColor();
     static uint16_t DefaultBackgroundColor();
@@ -55,6 +65,10 @@ struct GrayscaleColor {
 ///
 /// Grayscale values use equal intensity across all channels, accounting for
 /// the different bit depths (R5:G6:B5).
+///
+/// **IMPORTANT:** RGB565Color values are designed for RGB/TFT displays.
+/// Do not use them on grayscale e-paper displays — they will render incorrectly.
+/// Use GrayscaleColor for grayscale displays instead.
 struct RGB565Color {
     // Primary colors
     static constexpr uint16_t Black()   { return 0x0000; }
@@ -88,4 +102,9 @@ struct RGB565Color {
     static constexpr uint16_t fromGrayscale(uint8_t value) {
         return fromRGB(value, value, value);
     }
+
+    static uint16_t DefaultForegroundColor();
+    static uint16_t DefaultBackgroundColor();
+    static void SetDefaultForegroundColor(uint16_t color);
+    static void SetDefaultBackgroundColor(uint16_t color);
 };
