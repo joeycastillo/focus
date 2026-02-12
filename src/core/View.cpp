@@ -171,6 +171,7 @@ bool View::handleEvent(Event event) {
         if (std::shared_ptr<Application> application = window->application.lock()) {
             this->actions[event.type](event, this->shared_from_this());
         }
+        return true; // consumed — don't bubble
     } else {
         // otherwise, some events are handled internally
         switch (event.type) {
