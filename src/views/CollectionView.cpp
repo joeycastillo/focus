@@ -24,6 +24,7 @@
 
 #include "CollectionView.hpp"
 #include "CollectionViewDataSource.hpp"
+#include "CollectionViewCell.hpp"
 #include "Window.hpp"
 
 CollectionView::CollectionView(Rect rect) : View(rect) {
@@ -121,9 +122,9 @@ void CollectionView::loadPage(size_t page) {
         }
 
         Rect itemFrame = MakeRect(itemX, itemY, this->itemSize.width, this->itemSize.height);
-        auto itemView = this->dataSource->viewForItemAtIndex(i, itemFrame);
-        if (itemView) {
-            this->addSubview(itemView);
+        auto cell = this->dataSource->cellForItemAtIndex(i, itemFrame);
+        if (cell) {
+            this->addSubview(cell);
         }
     }
 }

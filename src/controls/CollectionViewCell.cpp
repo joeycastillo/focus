@@ -22,37 +22,7 @@
  * SOFTWARE.
  */
 
-/**
- * @file CollectionViewDataSource.hpp
- * @brief Data source protocol for CollectionView.
- */
+#include "CollectionViewCell.hpp"
 
-#pragma once
-
-#include "Focus.hpp"
-#include <cstddef>
-
-class CollectionViewCell;
-
-/**
- * @brief Abstract interface providing data to a CollectionView.
- *
- * Implement this interface to supply the number of items and the cell
- * for each item. The CollectionView calls these methods when loading
- * a page of items.
- */
-class CollectionViewDataSource {
-public:
-    /// @brief Return the total number of items in the data source.
-    virtual size_t numberOfItems() = 0;
-
-    /**
-     * @brief Create and return a cell for the item at the given index.
-     * @param index The item index (0-based).
-     * @param frame The frame rectangle to use for the created cell.
-     * @return A shared_ptr to the cell representing this item.
-     */
-    virtual std::shared_ptr<CollectionViewCell> cellForItemAtIndex(size_t index, Rect frame) = 0;
-
-    virtual ~CollectionViewDataSource() {}
-};
+CollectionViewCell::CollectionViewCell(Rect rect) : Control(rect) {
+}

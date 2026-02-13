@@ -23,36 +23,28 @@
  */
 
 /**
- * @file CollectionViewDataSource.hpp
- * @brief Data source protocol for CollectionView.
+ * @file CollectionViewCell.hpp
+ * @brief A focusable container for use as an item in a CollectionView.
+ *
+ * CollectionViewCell is a Control (focusable, enabled/disabled) that starts
+ * empty. Populate it with subviews — Labels, BitmapViews, or any other View —
+ * to create rich collection view items. Register actions on the cell itself
+ * to handle taps and other events.
  */
 
 #pragma once
 
-#include "Focus.hpp"
-#include <cstddef>
-
-class CollectionViewCell;
+#include "Control.hpp"
 
 /**
- * @brief Abstract interface providing data to a CollectionView.
+ * @brief A focusable container view for CollectionView items.
  *
- * Implement this interface to supply the number of items and the cell
- * for each item. The CollectionView calls these methods when loading
- * a page of items.
+ * Unlike Button, which renders its own content to an internal canvas,
+ * CollectionViewCell hosts arbitrary subviews. This makes it suitable
+ * for composite layouts (e.g. an image alongside multiple labels).
  */
-class CollectionViewDataSource {
+class CollectionViewCell : public Control {
 public:
-    /// @brief Return the total number of items in the data source.
-    virtual size_t numberOfItems() = 0;
-
-    /**
-     * @brief Create and return a cell for the item at the given index.
-     * @param index The item index (0-based).
-     * @param frame The frame rectangle to use for the created cell.
-     * @return A shared_ptr to the cell representing this item.
-     */
-    virtual std::shared_ptr<CollectionViewCell> cellForItemAtIndex(size_t index, Rect frame) = 0;
-
-    virtual ~CollectionViewDataSource() {}
+    /// @brief Construct a cell with the given frame rectangle.
+    CollectionViewCell(Rect rect);
 };
