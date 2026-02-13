@@ -30,6 +30,8 @@
 std::map<std::string, std::shared_ptr<Font>> Font::fontCache;
 std::vector<std::string> Font::searchPaths;
 std::shared_ptr<Font> Font::defaultSystemFont = nullptr;
+std::shared_ptr<Font> Font::defaultLargeFont = nullptr;
+std::shared_ptr<Font> Font::defaultSmallFont = nullptr;
 
 Font::Font(std::shared_ptr<GlyphProvider> provider) : provider(provider) {}
 
@@ -105,6 +107,22 @@ const std::vector<std::string>& Font::getSearchPaths() {
 
 void Font::setSystemFont(std::shared_ptr<Font> font) {
     defaultSystemFont = font;
+}
+
+std::shared_ptr<Font> Font::systemLargeFont() {
+    return defaultLargeFont ? defaultLargeFont : systemFont();
+}
+
+void Font::setSystemLargeFont(std::shared_ptr<Font> font) {
+    defaultLargeFont = font;
+}
+
+std::shared_ptr<Font> Font::systemSmallFont() {
+    return defaultSmallFont ? defaultSmallFont : systemFont();
+}
+
+void Font::setSystemSmallFont(std::shared_ptr<Font> font) {
+    defaultSmallFont = font;
 }
 
 void Font::clearCache() {

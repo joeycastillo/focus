@@ -63,6 +63,14 @@ public:
     /// @return The system font, or nullptr if not set.
     static std::shared_ptr<Font> systemFont();
 
+    /// Get the system large font (for titles, alert headings, etc.).
+    /// @return The large font, or systemFont() if not set.
+    static std::shared_ptr<Font> systemLargeFont();
+
+    /// Get the system small font (for fine print, captions, etc.).
+    /// @return The small font, or systemFont() if not set.
+    static std::shared_ptr<Font> systemSmallFont();
+
     /// Set the path where font files are located (clears any existing paths).
     /// @param path Directory path (e.g., "/sdcard/fonts/")
     static void setFontSearchPath(const std::string& path);
@@ -81,6 +89,14 @@ public:
     /// Set the system/default font.
     /// @param font The font to use as the system default.
     static void setSystemFont(std::shared_ptr<Font> font);
+
+    /// Set the system large font (for titles, alert headings, etc.).
+    /// @param font The font to use as the large font.
+    static void setSystemLargeFont(std::shared_ptr<Font> font);
+
+    /// Set the system small font (for fine print, captions, etc.).
+    /// @param font The font to use as the small font.
+    static void setSystemSmallFont(std::shared_ptr<Font> font);
 
     /// Clear the font cache. Useful for testing or memory pressure.
     static void clearCache();
@@ -108,6 +124,8 @@ private:
     static std::map<std::string, std::shared_ptr<Font>> fontCache;
     static std::vector<std::string> searchPaths;
     static std::shared_ptr<Font> defaultSystemFont;
+    static std::shared_ptr<Font> defaultLargeFont;
+    static std::shared_ptr<Font> defaultSmallFont;
 
     // Helper to load a font file
     static std::shared_ptr<GlyphProvider> loadFontFile(const std::string& name);
