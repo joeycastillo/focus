@@ -162,4 +162,6 @@ protected:
         std::weak_ptr<View> previousFocusedView;        ///< Focus to restore on dismiss.
     };
     std::vector<ModalEntry> modalStack; ///< Stack of modally presented view controllers.
+
+    bool longPressFired = false; ///< Set when LONG_PRESS is delivered during a touch; forces UP_OUTSIDE on release.
 };

@@ -84,6 +84,7 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
         switch (event.type) {
             case FOCUS_EVENT_TOUCH_DOWN:
             {
+                longPressFired = false;
                 Point touch = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
                 if (std::shared_ptr<View> touchedView = this->window->getViewForTouch(touch).lock()) {
                     // If a text-input view is focused and the touch landed outside
@@ -114,15 +115,31 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
             case FOCUS_EVENT_TOUCH_UP:
             {
                 if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
-                    Point touchUp = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
-                    bool isInside = capturedView->containsPointInWindowCoordinates(touchUp);
-
                     Event upEvent;
                     upEvent.userInfo = event.userInfo;
-                    upEvent.type = isInside ? FOCUS_EVENT_TOUCH_UP_INSIDE : FOCUS_EVENT_TOUCH_UP_OUTSIDE;
+
+                    if (longPressFired) {
+                        // Long press already handled; suppress normal tap
+                        upEvent.type = FOCUS_EVENT_TOUCH_UP_OUTSIDE;
+                    } else {
+                        Point touchUp = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
+                        bool isInside = capturedView->containsPointInWindowCoordinates(touchUp);
+                        upEvent.type = isInside ? FOCUS_EVENT_TOUCH_UP_INSIDE : FOCUS_EVENT_TOUCH_UP_OUTSIDE;
+                    }
                     capturedView->handleEvent(upEvent);
 
                     this->window->clearCapturedTouchView();
+                    longPressFired = false;
+                    return;
+                }
+            }
+            break;
+
+            case FOCUS_EVENT_LONG_PRESS:
+            {
+                longPressFired = true;
+                if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
+                    capturedView->handleEvent(event);
                     return;
                 }
             }

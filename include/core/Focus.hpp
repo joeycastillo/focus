@@ -75,6 +75,7 @@
 #define FOCUS_EVENT_TOUCH_UP (1002)    ///< Finger lifted from the screen.
 #define FOCUS_EVENT_TOUCH_UP_INSIDE (1003)   ///< Finger lifted inside the captured view's bounds.
 #define FOCUS_EVENT_TOUCH_UP_OUTSIDE (1004)  ///< Finger lifted outside the captured view's bounds.
+#define FOCUS_EVENT_LONG_PRESS (1005)        ///< Finger held in place for ≥500ms without significant movement.
 /// @}
 
 /// @name Hardware Status Events
