@@ -55,11 +55,21 @@ bool PackedFontGlyphProvider::loadBDPFile(const std::string& path) {
     fontDescent = header[6];
     maxSize.width = header[7];
     maxSize.height = header[8];
-    // header[9] is reserved
+    uint8_t titleLength = header[9];
 
     uint16_t numGlyphs;
     memcpy(&numGlyphs, &header[10], 2);
     memcpy(&defaultChar, &header[12], 4);
+
+    // Read title if present
+    if (titleLength > 0) {
+        std::vector<char> titleBuf(titleLength);
+        if (fread(titleBuf.data(), 1, titleLength, f) != titleLength) {
+            fclose(f);
+            return false;
+        }
+        title.assign(titleBuf.data(), titleLength);
+    }
 
     // Read glyph table (9 bytes per entry)
     struct GlyphEntry {
@@ -193,4 +203,35 @@ Rect PackedFontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, c
 
     const BDPGlyph& glyph = it->second;
     return MakeRect(glyph.xOffset, glyph.yOffset, glyph.advance, glyph.height);
+}
+
+std::string PackedFontGlyphProvider::readTitle(const std::string& path) {
+    FILE* f = fopen(path.c_str(), "rb");
+    if (!f) return "";
+
+    uint8_t header[16];
+    if (fread(header, 1, 16, f) != 16) {
+        fclose(f);
+        return "";
+    }
+
+    if (header[0] != 'B' || header[1] != 'D' || header[2] != 'P' || header[3] != 0x01) {
+        fclose(f);
+        return "";
+    }
+
+    uint8_t titleLength = header[9];
+    if (titleLength == 0) {
+        fclose(f);
+        return "";
+    }
+
+    std::vector<char> buf(titleLength);
+    if (fread(buf.data(), 1, titleLength, f) != titleLength) {
+        fclose(f);
+        return "";
+    }
+
+    fclose(f);
+    return std::string(buf.data(), titleLength);
 }

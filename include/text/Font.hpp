@@ -108,6 +108,7 @@ public:
     std::shared_ptr<GlyphProvider> getSharedGlyphProvider() const { return provider; }
 
     // Convenience methods delegating to GlyphProvider
+    std::string getTitle() const;
     uint8_t getGlyphRowCount() const;
     uint8_t getPointSize() const;
     Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint);

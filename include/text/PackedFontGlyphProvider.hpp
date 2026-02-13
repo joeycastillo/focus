@@ -61,13 +61,19 @@ public:
     Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
 
     bool isValid() const override { return valid; }
+    std::string getTitle() const override { return title; }
     size_t getGlyphCount() const { return glyphs.size(); }
+
+    /// Read just the title from a BDP file without loading glyphs.
+    /// Returns an empty string if the file has no title or cannot be read.
+    static std::string readTitle(const std::string& path);
 
 private:
     bool loadBDPFile(const std::string& path);
     void convertGlyphToDisplayFormat(BDPGlyph& glyph);
 
     std::unordered_map<uint32_t, BDPGlyph> glyphs;
+    std::string title;
 
     uint8_t pixelSize = 0;
     uint8_t fontAscent = 0;

@@ -35,6 +35,7 @@
 
 #include "Focus.hpp"
 #include "utf8_decode.hpp"
+#include <string>
 
 /**
  * @brief Abstract base class for glyph bitmap and metric providers.
@@ -75,6 +76,10 @@ public:
 
     /// @brief Check whether the font was loaded successfully.
     virtual bool isValid() const = 0;
+
+    /// @brief Get the human-readable title embedded in the font file (e.g., "Times 12pt").
+    /// Returns an empty string if no title is available.
+    virtual std::string getTitle() const { return ""; }
 
     /**
      * @brief Get the 1bpp bitmap data for a Unicode codepoint.

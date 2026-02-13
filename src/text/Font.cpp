@@ -153,6 +153,10 @@ std::shared_ptr<GlyphProvider> Font::loadFontFile(const std::string& name) {
     return nullptr;
 }
 
+std::string Font::getTitle() const {
+    return provider ? provider->getTitle() : "";
+}
+
 uint8_t Font::getGlyphRowCount() const {
     return provider ? provider->getGlyphRowCount() : 16;
 }
