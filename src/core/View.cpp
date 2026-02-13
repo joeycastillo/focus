@@ -166,13 +166,21 @@ bool View::handleEvent(Event event) {
         window = std::static_pointer_cast<Window, View>(focusedView);
     }
 
-    if (this->actions.count(event.type)) {
-        // if an action has registered for this type of event, pass it along directly
-        if (std::shared_ptr<Application> application = window->application.lock()) {
-            this->actions[event.type](event, this->shared_from_this());
+    auto it = this->actions.find(event.type);
+    if (it != this->actions.end()) {
+        auto &owned = it->second;
+        if (owned.owner.has_value() && owned.owner->expired()) {
+            // Owner was destroyed; remove the orphaned action and fall through.
+            this->actions.erase(it);
+        } else {
+            // Action is live — invoke it.
+            if (std::shared_ptr<Application> application = window->application.lock()) {
+                owned.callback(event, this->shared_from_this());
+            }
+            return true; // consumed — don't bubble
         }
-        return true; // consumed — don't bubble
-    } else {
+    }
+    {
         // otherwise, some events are handled internally
         switch (event.type) {
             case FOCUS_EVENT_DIRECTION_LEFT:
@@ -232,11 +240,15 @@ bool View::handleEvent(Event event) {
 }
 
 void View::setAction(const Action &action, int32_t type) {
-    this->actions[type] = action;
+    this->actions[type] = {action, std::nullopt};
+}
+
+void View::setAction(const Action &action, int32_t type, std::weak_ptr<void> owner) {
+    this->actions[type] = {action, owner};
 }
 
 void View::removeAction(int32_t type) {
-    // TODO: remove the action
+    this->actions.erase(type);
 }
 
 std::weak_ptr<View> View::getSuperview() {

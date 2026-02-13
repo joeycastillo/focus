@@ -207,7 +207,7 @@ bool TextField::handleEvent(Event event) {
     if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
         this->becomeFocused();
         if (this->actions.count(FOCUS_EVENT_TOUCH_DOWN)) {
-            this->actions[FOCUS_EVENT_TOUCH_DOWN](event, this->shared_from_this());
+            this->actions[FOCUS_EVENT_TOUCH_DOWN].callback(event, this->shared_from_this());
         }
         return true;
     }

@@ -146,7 +146,7 @@ bool Slider::handleEvent(Event event) {
             auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
             if (it != this->actions.end()) {
                 Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, (int32_t)(this->value * 8191)};
-                it->second(valueEvent, this->weak_from_this());
+                it->second.callback(valueEvent, this->weak_from_this());
             }
         }
         return true;

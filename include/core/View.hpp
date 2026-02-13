@@ -42,6 +42,7 @@
 #pragma once
 
 #include "Focus.hpp"
+#include <optional>
 
 /**
  * @brief Base class for all visual elements in the Focus view hierarchy.
@@ -181,6 +182,30 @@ public:
     void setAction(const Action &action, int32_t type);
 
     /**
+     * @brief Register an owned callback for a specific event type.
+     *
+     * Like setAction(action, type), but ties the action's lifetime to an
+     * owner object. When the owner is destroyed, the action is automatically
+     * removed on the next event dispatch, and the event falls through to
+     * the default handler or bubbles up the view hierarchy.
+     *
+     * @note Unowned actions (the overload without an owner) are safe when
+     * registered on views you own — buttons in your view hierarchy, subviews
+     * you created. Those views are destroyed alongside your view controller,
+     * and the actions go with them. The danger arises when registering actions
+     * on views that **outlive** you: the status bar, the window, or any shared
+     * persistent view. In that case, always pass an owner so the framework can
+     * clean up the action automatically. An orphaned unowned action on a
+     * long-lived view silently consumes events, preventing them from reaching
+     * the intended handler.
+     *
+     * @param action The callback to invoke.
+     * @param type The event type to match.
+     * @param owner Weak reference to the owning object; action is removed when this expires.
+     */
+    void setAction(const Action &action, int32_t type, std::weak_ptr<void> owner);
+
+    /**
      * @brief Remove a previously registered action for an event type.
      * @param type The event type whose action should be removed.
      */
@@ -308,7 +333,12 @@ protected:
     Rect bounds = {};            ///< View's own coordinate system (origin usually 0,0).
     DirectionalAffinity affinity = DirectionalAffinityVertical; ///< Focus navigation direction.
     std::vector<std::shared_ptr<View>> subviews; ///< Child views, drawn in order (back to front).
-    std::map<int32_t, Action> actions;           ///< Registered event action callbacks.
+    /// @brief An action callback with optional ownership tracking.
+    struct OwnedAction {
+        Action callback;
+        std::optional<std::weak_ptr<void>> owner; ///< nullopt = permanent (unowned).
+    };
+    std::map<int32_t, OwnedAction> actions;       ///< Registered event action callbacks.
     std::weak_ptr<View> superview;               ///< Parent view in the hierarchy.
 
 private:

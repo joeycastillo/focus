@@ -119,7 +119,7 @@ bool Checkbox::handleEvent(Event event) {
         auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
         if (it != this->actions.end()) {
             Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, this->checked ? 1 : 0};
-            it->second(valueEvent, this->weak_from_this());
+            it->second.callback(valueEvent, this->weak_from_this());
         }
         return true;
     }
