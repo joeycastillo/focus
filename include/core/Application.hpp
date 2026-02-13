@@ -113,6 +113,9 @@ public:
      */
     void setRootViewController(std::shared_ptr<ViewController> viewController);
 
+    /// @brief Check whether any modal view controller is currently presented.
+    bool isModalPresented() const;
+
     /**
      * @brief Present a view controller modally on top of the current content.
      *

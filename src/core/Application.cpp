@@ -174,6 +174,10 @@ void Application::setRootViewController(std::shared_ptr<ViewController> viewCont
     this->rootViewController->viewDidAppear();
 }
 
+bool Application::isModalPresented() const {
+    return !this->modalStack.empty();
+}
+
 void Application::presentViewController(std::shared_ptr<ViewController> viewController) {
     ModalEntry entry;
     entry.viewController = viewController;
