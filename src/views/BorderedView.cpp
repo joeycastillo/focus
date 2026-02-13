@@ -41,13 +41,13 @@ void BorderedView::renderCanvas() {
     this->canvasValid = true;
 }
 
-void BorderedView::drawContent(int x, int y) {
+void BorderedView::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
             display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,
-                                this->canvas->getBufferData(), this->canvas->getRowBytes());
+                                this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
         }
     }
 }

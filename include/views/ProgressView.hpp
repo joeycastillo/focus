@@ -49,7 +49,7 @@ class ProgressView : public View {
 public:
     /// @brief Construct a progress view with the given frame.
     ProgressView(Rect rect) : View(rect) {};
-    void drawContent(int x, int y) override;
+    void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
 
     /**
      * @brief Set the progress value.

@@ -51,7 +51,7 @@ public:
      * @param color The color to draw the hatched pixels in.
      */
     HatchedView(Rect rect, uint16_t color);
-    void drawContent(int x, int y) override;
+    void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
 private:
     int maskRowBytes;             ///< Bytes per row in the mask buffer.
     std::vector<uint8_t> mask;    ///< Pre-computed checkerboard mask bitmap.

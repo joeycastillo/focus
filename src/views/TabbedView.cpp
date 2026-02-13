@@ -189,7 +189,7 @@ void TabbedView::renderTabBar() {
     this->canvasValid = true;
 }
 
-void TabbedView::drawContent(int x, int y) {
+void TabbedView::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderTabBar();
 
     if (this->tabBarCanvas) {
@@ -197,7 +197,7 @@ void TabbedView::drawContent(int x, int y) {
             display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->getTabBarHeight(),
                                 this->tabBarCanvas->getBufferData(),
-                                this->tabBarCanvas->getRowBytes());
+                                this->tabBarCanvas->getRowBytes(), clipRect);
         }
     }
 }

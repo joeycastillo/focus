@@ -90,7 +90,12 @@ public:
      * @param x Horizontal offset from the window origin to the superview's content area.
      * @param y Vertical offset from the window origin to the superview's content area.
      */
-    virtual void drawContent(int x, int y);
+    virtual void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}});
+
+    /// @brief Perf counters — reset before draw, read after.
+    static int drawCount;
+    static int cullCount;
+    static int fillCount;
 
     /**
      * @brief Add a child view to this view's hierarchy.

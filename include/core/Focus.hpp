@@ -162,6 +162,13 @@ inline bool RectsIntersect(Rect a, Rect b) {
            a.origin.y < b.origin.y + b.size.height &&
            a.origin.y + a.size.height > b.origin.y;
 }
+/// @brief Test whether `outer` fully contains `inner`.
+inline bool RectContains(Rect outer, Rect inner) {
+    return outer.origin.x <= inner.origin.x &&
+           outer.origin.y <= inner.origin.y &&
+           outer.origin.x + outer.size.width >= inner.origin.x + inner.size.width &&
+           outer.origin.y + outer.size.height >= inner.origin.y + inner.size.height;
+}
 
 /// @brief Controls horizontal text alignment within a layout rect.
 typedef enum {

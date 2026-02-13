@@ -42,10 +42,10 @@ HatchedView::HatchedView(Rect rect, uint16_t color) : View(rect) {
     }
 }
 
-void HatchedView::drawContent(int x, int y) {
+void HatchedView::drawContent(int x, int y, Rect clipRect) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
                             this->frame.size.width, this->frame.size.height,
-                            this->foregroundColor, this->mask.data(), this->maskRowBytes);
+                            this->foregroundColor, this->mask.data(), this->maskRowBytes, clipRect);
     }
 }

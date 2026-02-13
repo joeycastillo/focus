@@ -53,7 +53,7 @@ public:
      * @param text The button's label text.
      */
     Button(Rect rect, std::string text);
-    void drawContent(int x, int y) override;
+    void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
 
     /// @brief Set the background color and invalidate the cached canvas.
     void setBackgroundColor(uint16_t value);

@@ -47,7 +47,7 @@ public:
      * @param bitmap Pointer to 1bpp MSB-first bitmap data. Must remain valid.
      */
     BitmapView(Rect rect, const unsigned char *bitmap);
-    void drawContent(int x, int y) override;
+    void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
 protected:
     const unsigned char *bitmap; ///< Pointer to the external bitmap data.
 };

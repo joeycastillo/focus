@@ -55,7 +55,7 @@ public:
      * @param text The label displayed next to the radio indicator.
      */
     RadioButton(Rect rect, std::string text);
-    void drawContent(int x, int y) override;
+    void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
     /// @brief Handle touch/select events to select this radio button.
     bool handleEvent(Event event) override;
     void didBecomeFocused() override;

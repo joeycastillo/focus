@@ -26,7 +26,20 @@
 #include "Window.hpp"
 #include "Display.hpp"
 #include <algorithm>
+#include <chrono>
 #include <cxxabi.h>
+
+#ifdef ESP_PLATFORM
+#include "esp_log.h"
+static const char *VIEW_TAG = "View";
+#define VIEW_LOGV(fmt, ...) ESP_LOGV(VIEW_TAG, fmt, ##__VA_ARGS__)
+#else
+#define VIEW_LOGV(fmt, ...) printf(fmt "\n", ##__VA_ARGS__)
+#endif
+
+int View::drawCount = 0;
+int View::cullCount = 0;
+int View::fillCount = 0;
 
 View::View(Rect rect) {
     // printf("Creating view %p\n", this);
@@ -45,30 +58,88 @@ View::~View() {
 
 void View::draw(int x, int y, Rect clipRect) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        // Skip this view entirely if it falls outside the clip rect.
+        // Spatial culling: skip if entirely outside clip rect.
         if (clipRect.size.width > 0 && clipRect.size.height > 0) {
             Rect screenRect = MakeRect(x + this->frame.origin.x, y + this->frame.origin.y,
                                         this->frame.size.width, this->frame.size.height);
-            if (!RectsIntersect(screenRect, clipRect)) return;
+            if (!RectsIntersect(screenRect, clipRect)) {
+                cullCount++;
+                return;
+            }
         }
 
-        if (this->opaque) {
-            display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->backgroundColor);
-        }
+        drawCount++;
 
-        this->drawContent(x, y);
-
-        // Subviews are positioned relative to this view's bounds origin.
-        // We pass the accumulated offset so subviews draw at the correct screen position.
+        // Subview coordinates for the occluder scan and draw loop.
         int subviewX = x + this->frame.origin.x - this->bounds.origin.x;
         int subviewY = y + this->frame.origin.y - this->bounds.origin.y;
-        for(std::shared_ptr<View> view : this->subviews) {
-            if (!view->hidden) view->draw(subviewX, subviewY, clipRect);
+
+        // Z-order occlusion culling: if a non-hidden, opaque subview fully
+        // covers the clip rect, nothing behind it (parent fill, parent content,
+        // earlier siblings) can contribute visible pixels. Skip them.
+        int occluderIndex = -1;
+        if (clipRect.size.width > 0 && clipRect.size.height > 0) {
+            for (int i = (int)this->subviews.size() - 1; i >= 0; i--) {
+                auto &child = this->subviews[i];
+                if (child->hidden || !child->opaque) continue;
+                Rect childScreen = MakeRect(
+                    subviewX + child->frame.origin.x,
+                    subviewY + child->frame.origin.y,
+                    child->frame.size.width,
+                    child->frame.size.height);
+                if (RectContains(childScreen, clipRect)) {
+                    occluderIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (occluderIndex < 0) {
+            // No occluder — draw parent content normally.
+            auto fillStart = std::chrono::steady_clock::now();
+            if (this->opaque) {
+                fillCount++;
+                display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->backgroundColor, clipRect);
+            }
+            auto fillEnd = std::chrono::steady_clock::now();
+
+            auto contentStart = std::chrono::steady_clock::now();
+            this->drawContent(x, y, clipRect);
+            auto contentEnd = std::chrono::steady_clock::now();
+
+            auto fillUs = std::chrono::duration_cast<std::chrono::microseconds>(fillEnd - fillStart).count();
+            auto contentUs = std::chrono::duration_cast<std::chrono::microseconds>(contentEnd - contentStart).count();
+
+            int status;
+            char *demangled = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
+            VIEW_LOGV("  [draw] %-28s fill=%4lldus  content=%7lldus  frame=(%d,%d %dx%d)",
+                (status == 0) ? demangled : typeid(*this).name(),
+                (long long)fillUs, (long long)contentUs,
+                x + this->frame.origin.x, y + this->frame.origin.y,
+                this->frame.size.width, this->frame.size.height);
+            if (demangled) free(demangled);
+        } else {
+            int status;
+            char *demangled = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
+            VIEW_LOGV("  [draw] %-28s OCCLUDED (by child %d)  frame=(%d,%d %dx%d)",
+                (status == 0) ? demangled : typeid(*this).name(),
+                occluderIndex,
+                x + this->frame.origin.x, y + this->frame.origin.y,
+                this->frame.size.width, this->frame.size.height);
+            if (demangled) free(demangled);
+        }
+
+        // Draw subviews — start from the occluder if one was found.
+        int startIdx = (occluderIndex >= 0) ? occluderIndex : 0;
+        for (int i = startIdx; i < (int)this->subviews.size(); i++) {
+            if (!this->subviews[i]->hidden) {
+                this->subviews[i]->draw(subviewX, subviewY, clipRect);
+            }
         }
     }
 }
 
-void View::drawContent(int x, int y) {
+void View::drawContent(int x, int y, Rect clipRect) {
     // Base implementation: no custom content.
 }
 

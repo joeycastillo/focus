@@ -55,19 +55,19 @@ void LabelView::renderCanvas() {
     this->canvasValid = true;
 }
 
-void LabelView::drawContent(int x, int y) {
+void LabelView::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
             if (this->opaque) {
                 display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
                                     this->frame.size.width, this->frame.size.height,
-                                    this->canvas->getBufferData(), this->canvas->getRowBytes());
+                                    this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
             } else {
                 display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
                                     this->frame.size.width, this->frame.size.height,
                                     this->foregroundColor,
-                                    this->canvas->getBufferData(), this->canvas->getRowBytes());
+                                    this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
             }
         }
     }

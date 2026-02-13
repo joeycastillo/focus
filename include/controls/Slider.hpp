@@ -59,7 +59,7 @@ public:
      * @param label The label displayed to the left of the track bar.
      */
     Slider(Rect rect, std::string label);
-    void drawContent(int x, int y) override;
+    void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
     /// @brief Handle touch events to set the value from the touch position.
     bool handleEvent(Event event) override;
     void didBecomeFocused() override;

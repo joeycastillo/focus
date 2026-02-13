@@ -37,6 +37,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "Focus.hpp"
 
 /// Display operating mode: 1 bit per pixel (black & white) or 2 bits per pixel
 /// (4-level grayscale). In TwoBpp mode, pixel data is stored as two separate
@@ -66,7 +67,8 @@ public:
      * @param h Height in pixels.
      * @param color Fill color (0 = black, 3 = white; 1/2 for grays in TwoBpp).
      */
-    virtual void fillRect(int x, int y, int w, int h, uint16_t color) = 0;
+    virtual void fillRect(int x, int y, int w, int h, uint16_t color,
+                          Rect clipRect = {{0,0},{0,0}}) = 0;
 
     /**
      * @brief Blit a 1bpp MSB-first bitmap, overwriting all pixels in the region.
@@ -82,7 +84,8 @@ public:
      * @param rowBytes Number of bytes per row in the source data.
      */
     virtual void blitOpaque(int x, int y, int w, int h,
-                            const uint8_t* data, int rowBytes) = 0;
+                            const uint8_t* data, int rowBytes,
+                            Rect clipRect = {{0,0},{0,0}}) = 0;
 
     /**
      * @brief Blit a 2bpp grayscale image stored as two contiguous 1bpp planes.
@@ -100,7 +103,8 @@ public:
      * @param rowBytes Number of bytes per row in each plane.
      */
     virtual void blitOpaque2bpp(int x, int y, int w, int h,
-                                const uint8_t* data, int rowBytes) = 0;
+                                const uint8_t* data, int rowBytes,
+                                Rect clipRect = {{0,0},{0,0}}) = 0;
 
     /**
      * @brief Write a solid color only where mask bits are set.
@@ -117,7 +121,8 @@ public:
      * @param rowBytes Number of bytes per row in the mask data.
      */
     virtual void blitMasked(int x, int y, int w, int h, uint16_t color,
-                            const uint8_t* mask, int rowBytes) = 0;
+                            const uint8_t* mask, int rowBytes,
+                            Rect clipRect = {{0,0},{0,0}}) = 0;
 
     /// @brief Get the current display mode.
     DisplayMode getDisplayMode() const { return displayMode; }

@@ -50,16 +50,16 @@ void CanvasView::setCanvasMode(DisplayMode mode) {
     }
 }
 
-void CanvasView::drawContent(int x, int y) {
+void CanvasView::drawContent(int x, int y, Rect clipRect) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         if (canvasMode == DisplayMode::TwoBpp) {
             display->blitOpaque2bpp(x + this->frame.origin.x, y + this->frame.origin.y,
                                     this->frame.size.width, this->frame.size.height,
-                                    this->buffer.data(), this->rowBytes);
+                                    this->buffer.data(), this->rowBytes, clipRect);
         } else {
             display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,
-                                this->buffer.data(), this->rowBytes);
+                                this->buffer.data(), this->rowBytes, clipRect);
         }
     }
 }

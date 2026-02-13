@@ -30,11 +30,11 @@ BitmapView::BitmapView(Rect rect, const unsigned char *bitmap) : View(rect) {
     this->bitmap = bitmap;
 }
 
-void BitmapView::drawContent(int x, int y) {
+void BitmapView::drawContent(int x, int y, Rect clipRect) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         int bitmapRowBytes = (this->frame.size.width + 7) / 8;
         display->blitMasked(this->frame.origin.x + x, this->frame.origin.y + y,
                             this->frame.size.width, this->frame.size.height,
-                            this->foregroundColor, this->bitmap, bitmapRowBytes);
+                            this->foregroundColor, this->bitmap, bitmapRowBytes, clipRect);
     }
 }

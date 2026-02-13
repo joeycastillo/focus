@@ -63,7 +63,7 @@ void GrayscaleTestView::renderContent() {
     needsRender = false;
 }
 
-void GrayscaleTestView::drawContent(int x, int y) {
+void GrayscaleTestView::drawContent(int x, int y, Rect clipRect) {
     if (needsRender) {
         // Deferred from constructor: addSubview requires shared_from_this()
         if (subviews.empty()) {
