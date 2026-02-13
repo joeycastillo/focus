@@ -55,9 +55,8 @@ void LabelView::renderCanvas() {
     this->canvasValid = true;
 }
 
-void LabelView::draw(int x, int y) {
+void LabelView::drawContent(int x, int y) {
     if (!this->canvasValid) this->renderCanvas();
-    View::draw(x, y);
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
             if (this->opaque) {

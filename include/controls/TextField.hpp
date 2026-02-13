@@ -75,7 +75,7 @@ public:
     /// @brief Set the type of keyboard to present when this field is focused.
     void setKeyboardType(KeyboardType type);
 
-    void draw(int x, int y) override;
+    void drawContent(int x, int y) override;
     /// @brief Handle touch events to request focus (and thereby the keyboard).
     bool handleEvent(Event event) override;
     void didBecomeFocused() override;

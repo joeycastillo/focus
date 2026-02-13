@@ -287,9 +287,8 @@ void KeyboardView::renderCanvas() {
     this->canvasValid = true;
 }
 
-void KeyboardView::draw(int x, int y) {
+void KeyboardView::drawContent(int x, int y) {
     if (!this->canvasValid) this->renderCanvas();
-    View::draw(x, y);
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
             display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,

@@ -53,7 +53,7 @@ public:
      * @param text The label displayed next to the checkbox indicator.
      */
     Checkbox(Rect rect, std::string text);
-    void draw(int x, int y) override;
+    void drawContent(int x, int y) override;
     /// @brief Handle touch/select events to toggle the checked state.
     bool handleEvent(Event event) override;
     void didBecomeFocused() override;

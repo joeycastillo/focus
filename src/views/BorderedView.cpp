@@ -41,7 +41,7 @@ void BorderedView::renderCanvas() {
     this->canvasValid = true;
 }
 
-void BorderedView::draw(int x, int y) {
+void BorderedView::drawContent(int x, int y) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
@@ -49,11 +49,5 @@ void BorderedView::draw(int x, int y) {
                                 this->frame.size.width, this->frame.size.height,
                                 this->canvas->getBufferData(), this->canvas->getRowBytes());
         }
-    }
-    // Draw subviews on top
-    int subviewX = x + this->frame.origin.x - this->bounds.origin.x;
-    int subviewY = y + this->frame.origin.y - this->bounds.origin.y;
-    for (std::shared_ptr<View> view : this->subviews) {
-        if (!view->isHidden()) view->draw(subviewX, subviewY);
     }
 }

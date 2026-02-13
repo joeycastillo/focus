@@ -33,7 +33,7 @@
 class GrayscaleTestView : public View {
 public:
     GrayscaleTestView(Rect rect);
-    void draw(int x, int y) override;
+    void drawContent(int x, int y) override;
 
 private:
     std::shared_ptr<CanvasView> canvas;

@@ -43,20 +43,33 @@ View::~View() {
     // printf("Destroying view %p\n", this);
 }
 
-void View::draw(int x, int y) {
-    // printf("Drawing view %p\n", this);
+void View::draw(int x, int y, Rect clipRect) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
+        // Skip this view entirely if it falls outside the clip rect.
+        if (clipRect.size.width > 0 && clipRect.size.height > 0) {
+            Rect screenRect = MakeRect(x + this->frame.origin.x, y + this->frame.origin.y,
+                                        this->frame.size.width, this->frame.size.height);
+            if (!RectsIntersect(screenRect, clipRect)) return;
+        }
+
         if (this->opaque) {
             display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->backgroundColor);
         }
+
+        this->drawContent(x, y);
+
         // Subviews are positioned relative to this view's bounds origin.
         // We pass the accumulated offset so subviews draw at the correct screen position.
         int subviewX = x + this->frame.origin.x - this->bounds.origin.x;
         int subviewY = y + this->frame.origin.y - this->bounds.origin.y;
         for(std::shared_ptr<View> view : this->subviews) {
-            if (!view->hidden) view->draw(subviewX, subviewY);
+            if (!view->hidden) view->draw(subviewX, subviewY, clipRect);
         }
     }
+}
+
+void View::drawContent(int x, int y) {
+    // Base implementation: no custom content.
 }
 
 void View::addSubview(std::shared_ptr<View> view) {

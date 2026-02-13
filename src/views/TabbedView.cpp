@@ -189,10 +189,9 @@ void TabbedView::renderTabBar() {
     this->canvasValid = true;
 }
 
-void TabbedView::draw(int x, int y) {
+void TabbedView::drawContent(int x, int y) {
     if (!this->canvasValid) this->renderTabBar();
 
-    // Blit the tab bar canvas
     if (this->tabBarCanvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
             display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
@@ -200,13 +199,6 @@ void TabbedView::draw(int x, int y) {
                                 this->tabBarCanvas->getBufferData(),
                                 this->tabBarCanvas->getRowBytes());
         }
-    }
-
-    // Draw subviews (content area below tab bar)
-    int subviewX = x + this->frame.origin.x - this->bounds.origin.x;
-    int subviewY = y + this->frame.origin.y - this->bounds.origin.y;
-    for (std::shared_ptr<View> view : this->subviews) {
-        if (!view->isHidden()) view->draw(subviewX, subviewY);
     }
 }
 

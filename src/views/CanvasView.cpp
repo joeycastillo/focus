@@ -50,7 +50,7 @@ void CanvasView::setCanvasMode(DisplayMode mode) {
     }
 }
 
-void CanvasView::draw(int x, int y) {
+void CanvasView::drawContent(int x, int y) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         if (canvasMode == DisplayMode::TwoBpp) {
             display->blitOpaque2bpp(x + this->frame.origin.x, y + this->frame.origin.y,
@@ -61,13 +61,6 @@ void CanvasView::draw(int x, int y) {
                                 this->frame.size.width, this->frame.size.height,
                                 this->buffer.data(), this->rowBytes);
         }
-    }
-
-    // Draw subviews on top
-    int subviewX = x + this->frame.origin.x - this->bounds.origin.x;
-    int subviewY = y + this->frame.origin.y - this->bounds.origin.y;
-    for (std::shared_ptr<View> view : this->subviews) {
-        if (!view->isHidden()) view->draw(subviewX, subviewY);
     }
 }
 

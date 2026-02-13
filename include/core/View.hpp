@@ -68,13 +68,29 @@ public:
      * parameters are the accumulated offset from the window origin — subclasses
      * should draw at (x + frame.origin.x, y + frame.origin.y).
      *
-     * The base implementation fills the frame with backgroundColor if opaque,
-     * then recursively draws all non-hidden subviews.
+     * The base implementation checks the clipRect, fills the frame with
+     * backgroundColor if opaque, calls drawContent(), then recursively draws
+     * all non-hidden subviews. Subclasses should override drawContent() to
+     * render their own visuals rather than overriding draw().
+     *
+     * @param x Horizontal offset from the window origin to the superview's content area.
+     * @param y Vertical offset from the window origin to the superview's content area.
+     * @param clipRect Region that needs redrawing; views outside it are skipped.
+     *                 A zero-size rect means no clipping (draw everything).
+     */
+    virtual void draw(int x, int y, Rect clipRect = {{0,0},{0,0}});
+
+    /**
+     * @brief Render this view's custom content.
+     *
+     * Override this method to draw view-specific visuals (canvas blits, text,
+     * bitmaps, etc.). Called by draw() after the opaque background fill and
+     * before subview iteration. The base implementation does nothing.
      *
      * @param x Horizontal offset from the window origin to the superview's content area.
      * @param y Vertical offset from the window origin to the superview's content area.
      */
-    virtual void draw(int x, int y);
+    virtual void drawContent(int x, int y);
 
     /**
      * @brief Add a child view to this view's hierarchy.

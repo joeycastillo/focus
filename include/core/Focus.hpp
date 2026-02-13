@@ -155,6 +155,13 @@ inline bool PointsEqual(Point a, Point b) { return (a.x == b.x) && (a.y == b.y);
 inline bool SizesEqual(Size a, Size b) { return (a.width == b.width) && (a.height == b.height); }
 /// @brief Test whether two Rects are equal.
 inline bool RectsEqual(Rect a, Rect b) { return PointsEqual(a.origin, b.origin) && SizesEqual(a.size, b.size); }
+/// @brief Test whether two Rects overlap.
+inline bool RectsIntersect(Rect a, Rect b) {
+    return a.origin.x < b.origin.x + b.size.width &&
+           a.origin.x + a.size.width > b.origin.x &&
+           a.origin.y < b.origin.y + b.size.height &&
+           a.origin.y + a.size.height > b.origin.y;
+}
 
 /// @brief Controls horizontal text alignment within a layout rect.
 typedef enum {

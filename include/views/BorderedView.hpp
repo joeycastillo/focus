@@ -52,7 +52,7 @@ public:
      * @param rect Frame rectangle defining the outer edge of the border.
      */
     BorderedView(Rect rect);
-    void draw(int x, int y) override;
+    void drawContent(int x, int y) override;
 private:
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for the border pixels.
     bool canvasValid = false;           ///< Whether the canvas needs re-rendering.

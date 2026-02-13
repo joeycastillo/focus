@@ -62,7 +62,7 @@ class CanvasView : public View {
 public:
     CanvasView(Rect rect);
 
-    void draw(int x, int y) override;
+    void drawContent(int x, int y) override;
 
     // Drawing API — coordinates are local to the canvas (0,0 = top-left)
     void drawPixel(int x, int y, uint16_t color);
