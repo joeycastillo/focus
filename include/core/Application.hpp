@@ -111,7 +111,7 @@ public:
      *
      * @param viewController The new root view controller.
      */
-    void setRootViewController(std::shared_ptr<ViewController> viewController);
+    virtual void setRootViewController(std::shared_ptr<ViewController> viewController);
 
     /// @brief Check whether any modal view controller is currently presented.
     bool isModalPresented() const;
@@ -125,7 +125,7 @@ public:
      *
      * @param viewController The view controller to present modally.
      */
-    void presentViewController(std::shared_ptr<ViewController> viewController);
+    virtual void presentViewController(std::shared_ptr<ViewController> viewController);
 
     /**
      * @brief Dismiss the topmost modal view controller.
@@ -133,7 +133,7 @@ public:
      * Removes the modal's view and dimmer, restores focus to the previously
      * focused view, and marks the window as needing a full redraw.
      */
-    void dismissViewController();
+    virtual void dismissViewController();
 
     /**
      * @brief Dismiss all modal view controllers.
