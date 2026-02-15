@@ -195,6 +195,7 @@ bool View::canBecomeFocused() {
 
 std::shared_ptr<View> View::firstFocusableDescendant() {
     for (auto& child : this->subviews) {
+        if (child->hidden) continue;
         if (child->canBecomeFocused()) return child;
         auto found = child->firstFocusableDescendant();
         if (found) return found;
@@ -204,6 +205,7 @@ std::shared_ptr<View> View::firstFocusableDescendant() {
 
 std::shared_ptr<View> View::lastFocusableDescendant() {
     for (auto it = this->subviews.rbegin(); it != this->subviews.rend(); ++it) {
+        if ((*it)->hidden) continue;
         if ((*it)->canBecomeFocused()) return *it;
         auto found = (*it)->lastFocusableDescendant();
         if (found) return found;
@@ -223,6 +225,7 @@ int View::indexOfChildContaining(std::shared_ptr<View> view) {
 }
 
 bool View::becomeFocused() {
+    if (this->hidden) return false;
     if (this->canBecomeFocused()) {
         if (std::shared_ptr<Window> window = this->getWindow().lock()) {
             std::shared_ptr<View> oldResponder = window->getFocusedView().lock();
@@ -337,6 +340,7 @@ bool View::handleEvent(Event event) {
 
                 if (isNext) {
                     for (int i = index + 1; i < (int)this->subviews.size(); i++) {
+                        if (this->subviews[i]->hidden) continue;
                         if (this->subviews[i]->canBecomeFocused()) {
                             this->subviews[i]->becomeFocused();
                             return true;
@@ -349,6 +353,7 @@ bool View::handleEvent(Event event) {
                     }
                 } else {
                     for (int i = index - 1; i >= 0; i--) {
+                        if (this->subviews[i]->hidden) continue;
                         if (this->subviews[i]->canBecomeFocused()) {
                             this->subviews[i]->becomeFocused();
                             return true;
