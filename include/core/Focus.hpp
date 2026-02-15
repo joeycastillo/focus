@@ -84,9 +84,6 @@
 #define FOCUS_EVENT_CHARGE_STATE_CHANGED (2001) ///< Battery charge state changed.
 #define FOCUS_EVENT_ORIENTATION_CHANGED (2002)  ///< Device orientation changed (userInfo is FocusOrientation).
 #define FOCUS_EVENT_BATTERY_VOLTAGE_CHANGED (2003) ///< Battery voltage changed (userInfo is millivolts).
-#define FOCUS_EVENT_WIFI_CONNECTED (2004)        ///< WiFi connected (userInfo unused).
-#define FOCUS_EVENT_WIFI_DISCONNECTED (2005)     ///< WiFi disconnected (userInfo unused).
-#define FOCUS_EVENT_WIFI_SIGNAL_CHANGED (2006)   ///< WiFi signal level changed (userInfo = 0-3).
 /// @}
 
 /// @brief Device orientation as detected by accelerometer.
