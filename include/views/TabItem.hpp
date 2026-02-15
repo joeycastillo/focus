@@ -23,31 +23,52 @@
  */
 
 /**
- * @file CollectionViewCell.hpp
- * @brief A focusable container for use as an item in a CollectionView.
+ * @file TabItem.hpp
+ * @brief A focusable tab label for use in a TabbedView's tab bar.
  *
- * CollectionViewCell is a Control (focusable, enabled/disabled) that starts
- * empty. Populate it with subviews — Labels, BitmapViews, or any other View —
- * to create rich collection view items. Register actions on the cell itself
- * to handle taps and other events.
+ * TabItem renders like a Button but has a `selected` state that keeps the
+ * inverted appearance even when the item doesn't have focus. This allows
+ * the active tab to remain visually distinct when focus moves into the
+ * tab's content area below.
  */
 
 #pragma once
 
 #include "Control.hpp"
+#include <functional>
+#include <memory>
+
+class Font;
+class CanvasView;
 
 /**
- * @brief A focusable container view for CollectionView items.
+ * @brief A tab label control that inverts when selected or focused.
  *
- * Unlike Button, which renders its own content to an internal canvas,
- * CollectionViewCell hosts arbitrary subviews. This makes it suitable
- * for composite layouts (e.g. an image alongside multiple labels).
+ * Used internally by TabbedView. When a TabItem receives focus via d-pad
+ * navigation, TabbedView switches to that tab's content immediately.
  */
-class CollectionViewCell : public Control {
+class TabItem : public Control {
 public:
-    /// @brief Construct a cell with the given frame rectangle.
-    CollectionViewCell(Rect rect);
+    TabItem(Rect rect, std::string label);
 
+    void setSelected(bool selected);
+    bool isSelected() const;
+
+    void setFont(std::shared_ptr<Font> font);
+
+    /// @brief Called when this tab item receives focus. TabbedView uses this
+    /// to switch tabs immediately on d-pad navigation (no SELECT needed).
+    std::function<void()> onFocused;
+
+    void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
     void didBecomeFocused() override;
     void didResignFocus() override;
+
+private:
+    std::string label;
+    bool selected = false;
+    std::shared_ptr<Font> font;
+    std::shared_ptr<CanvasView> canvas;
+    bool canvasValid = false;
+    void renderCanvas();
 };

@@ -26,9 +26,10 @@
  * @file TabbedView.hpp
  * @brief A view that organizes content into switchable tabs.
  *
- * TabbedView displays a row of tab labels at the top and shows the content
- * view associated with the selected tab. Tapping a tab label switches to
- * that tab's content. The tab bar is rendered to an internal CanvasView.
+ * TabbedView displays a row of focusable tab items at the top and shows the
+ * content view associated with the selected tab. Navigating LEFT/RIGHT between
+ * tab items switches tabs immediately (no SELECT needed). DOWN from the tab
+ * bar enters the content; UP from the content returns to the tab bar.
  */
 
 #pragma once
@@ -38,13 +39,14 @@
 #include <functional>
 
 class Font;
-class CanvasView;
+class TabItem;
 
 /**
- * @brief A tabbed container view with a touch-navigable tab bar.
+ * @brief A tabbed container view with focusable tab bar items.
  *
  * Add tabs with addTab(label, content). The first tab added is selected by
  * default. Only the selected tab's content view is visible and receives events.
+ * The tab bar supports both d-pad/keyboard and touch navigation.
  */
 class TabbedView : public View {
 public:
@@ -76,21 +78,17 @@ public:
     /// @brief Get the height of the tab bar area in pixels.
     int getTabBarHeight() const;
 
-    void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
-    /// @brief Handle touch events on the tab bar to switch tabs.
-    bool handleEvent(Event event) override;
-
 private:
     /// @brief Internal tab entry.
     struct Tab {
-        std::string label;             ///< Tab label text.
-        std::shared_ptr<View> content; ///< Tab content view.
+        std::string label;                  ///< Tab label text.
+        std::shared_ptr<View> content;      ///< Tab content view.
+        std::shared_ptr<TabItem> tabItem;   ///< Focusable tab bar item.
     };
     std::vector<Tab> tabs;             ///< All tabs in order.
     size_t selectedIndex = 0;          ///< Currently selected tab index.
     std::shared_ptr<Font> font;        ///< Font for tab labels.
-    std::shared_ptr<CanvasView> tabBarCanvas; ///< Canvas for rendering the tab bar.
-    bool canvasValid = false;
+    std::shared_ptr<View> tabBar;      ///< Horizontal container for tab items.
 
-    void renderTabBar();               ///< Render tab labels to the canvas.
+    void rebuildTabBar();              ///< Rebuild tab items from current tabs.
 };

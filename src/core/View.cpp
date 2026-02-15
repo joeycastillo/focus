@@ -153,16 +153,34 @@ void View::addSubview(std::shared_ptr<View> view) {
 }
 
 void View::removeSubview(std::shared_ptr<View> view) {
-    if (view->isFocused()) {
-        view->resignFocus();
+    // Check if the focused view lives inside the subtree being removed.
+    bool removingFocused = false;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        std::shared_ptr<View> focused = window->getFocusedView().lock();
+        if (focused) {
+            std::shared_ptr<View> v = focused;
+            while (v) {
+                if (v == view) {
+                    removingFocused = true;
+                    focused->willResignFocus();
+                    focused->focused = false;
+                    window->focusedView.reset();
+                    focused->didResignFocus();
+                    break;
+                }
+                v = v->superview.lock();
+            }
+        }
     }
+
     view->superview.reset();
     view->window.reset();
     int index = std::distance(this->subviews.begin(), std::find(this->subviews.begin(), this->subviews.end(), view));
-    this->subviews.erase(this->subviews.begin() + index);    
+    this->subviews.erase(this->subviews.begin() + index);
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-        // FIXME: We should only refocus if we know the focused view was removed.
-        window->becomeFocused();
+        if (removingFocused) {
+            window->becomeFocused();
+        }
         window->setNeedsDisplay(true);
     }
 }

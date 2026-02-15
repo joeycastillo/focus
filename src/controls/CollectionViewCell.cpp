@@ -26,3 +26,25 @@
 
 CollectionViewCell::CollectionViewCell(Rect rect) : Control(rect) {
 }
+
+void CollectionViewCell::didBecomeFocused() {
+    Control::didBecomeFocused();
+    std::swap(this->backgroundColor, this->foregroundColor);
+    for (auto& child : this->subviews) {
+        uint16_t bg = child->getBackgroundColor();
+        uint16_t fg = child->getForegroundColor();
+        child->setBackgroundColor(fg);
+        child->setForegroundColor(bg);
+    }
+}
+
+void CollectionViewCell::didResignFocus() {
+    Control::didResignFocus();
+    std::swap(this->backgroundColor, this->foregroundColor);
+    for (auto& child : this->subviews) {
+        uint16_t bg = child->getBackgroundColor();
+        uint16_t fg = child->getForegroundColor();
+        child->setBackgroundColor(fg);
+        child->setForegroundColor(bg);
+    }
+}

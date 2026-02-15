@@ -23,11 +23,9 @@
  */
 
 #include "TabbedView.hpp"
-#include "CanvasView.hpp"
+#include "TabItem.hpp"
 #include "Window.hpp"
-#include "Display.hpp"
 #include "Font.hpp"
-#include "TextLayout.hpp"
 
 TabbedView::TabbedView(Rect rect) : View(rect) {
 }
@@ -47,12 +45,67 @@ void TabbedView::addTab(std::string label, std::shared_ptr<View> content) {
     Tab tab;
     tab.label = label;
     tab.content = content;
+    tab.tabItem = nullptr; // created in rebuildTabBar
     this->tabs.push_back(tab);
-    this->canvasValid = false;
 
-    // If this is the first tab, show it
-    if (this->tabs.size() == 1) {
-        int barHeight = this->getTabBarHeight();
+    rebuildTabBar();
+}
+
+void TabbedView::rebuildTabBar() {
+    // Remove all subviews (old tab bar + any content)
+    while (!this->subviews.empty()) {
+        this->removeSubview(this->subviews.back());
+    }
+
+    if (this->tabs.empty()) return;
+
+    int barHeight = this->getTabBarHeight();
+
+    // Create tab bar container with horizontal affinity for LEFT/RIGHT navigation
+    this->tabBar = std::make_shared<View>(
+        MakeRect(0, 0, this->frame.size.width, barHeight));
+    this->tabBar->setDirectionalAffinity(DirectionalAffinityHorizontal);
+    this->tabBar->setOpaque(false);
+
+    int tabCount = (int)this->tabs.size();
+    int tabWidth = this->frame.size.width / tabCount;
+
+    for (int i = 0; i < tabCount; i++) {
+        int tabX = i * tabWidth;
+        int thisTabWidth = (i == tabCount - 1) ? (this->frame.size.width - tabX) : tabWidth;
+
+        auto item = std::make_shared<TabItem>(
+            MakeRect(tabX, 0, thisTabWidth, barHeight), this->tabs[i].label);
+        if (this->font) item->setFont(this->font);
+        item->setSelected((size_t)i == this->selectedIndex);
+
+        // When a tab item receives focus via d-pad, switch to that tab immediately.
+        size_t tabIndex = (size_t)i;
+        item->onFocused = [this, tabIndex]() {
+            if (tabIndex != this->selectedIndex) {
+                this->selectTab(tabIndex);
+            }
+        };
+
+        // Touch: tapping a tab item also switches to it.
+        item->setAction(
+            [this, tabIndex](Event, std::weak_ptr<View>) {
+                this->selectTab(tabIndex);
+            },
+            FOCUS_EVENT_TOUCH_UP_INSIDE);
+
+        this->tabs[i].tabItem = item;
+        this->tabBar->addSubview(item);
+    }
+
+    // Add tab bar first (index 0), then content (index 1).
+    // With vertical affinity (default), DOWN from tab bar enters content,
+    // UP from content returns to tab bar.
+    this->addSubview(this->tabBar);
+
+    // Show the selected tab's content
+    if (this->selectedIndex < this->tabs.size()) {
+        auto& content = this->tabs[this->selectedIndex].content;
         content->setFrame(MakeRect(0, barHeight,
                                    this->frame.size.width,
                                    this->frame.size.height - barHeight));
@@ -62,17 +115,26 @@ void TabbedView::addTab(std::string label, std::shared_ptr<View> content) {
 
 void TabbedView::selectTab(size_t index) {
     if (index >= this->tabs.size()) return;
-    if (index == this->selectedIndex && !this->tabs.empty()) return;
+    if (index == this->selectedIndex) return;
 
     int barHeight = this->getTabBarHeight();
 
-    // Remove current content
+    // Deselect old tab item
+    if (this->selectedIndex < this->tabs.size() && this->tabs[this->selectedIndex].tabItem) {
+        this->tabs[this->selectedIndex].tabItem->setSelected(false);
+    }
+
+    // Remove old content
     if (this->selectedIndex < this->tabs.size()) {
-        auto& currentContent = this->tabs[this->selectedIndex].content;
-        this->removeSubview(currentContent);
+        this->removeSubview(this->tabs[this->selectedIndex].content);
     }
 
     this->selectedIndex = index;
+
+    // Select new tab item
+    if (this->tabs[index].tabItem) {
+        this->tabs[index].tabItem->setSelected(true);
+    }
 
     // Add new content
     auto& newContent = this->tabs[index].content;
@@ -80,8 +142,6 @@ void TabbedView::selectTab(size_t index) {
                                   this->frame.size.width,
                                   this->frame.size.height - barHeight));
     this->addSubview(newContent);
-
-    this->canvasValid = false;
 
     if (this->onTabChanged) this->onTabChanged(index);
 
@@ -96,130 +156,10 @@ size_t TabbedView::getSelectedTab() const {
 
 void TabbedView::setFont(std::shared_ptr<Font> font) {
     this->font = font;
-    this->canvasValid = false;
+    for (auto& tab : this->tabs) {
+        if (tab.tabItem) tab.tabItem->setFont(font);
+    }
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);
     }
-}
-
-void TabbedView::renderTabBar() {
-    int barHeight = this->getTabBarHeight();
-
-    if (!this->tabBarCanvas) {
-        this->tabBarCanvas = std::make_shared<CanvasView>(
-            MakeRect(0, 0, this->frame.size.width, barHeight));
-    }
-
-    std::shared_ptr<Font> resolvedFont = this->font ? this->font : Font::systemFont();
-    GlyphProvider* providerPtr = nullptr;
-    std::shared_ptr<GlyphProvider> glyphProvider;
-    if (resolvedFont) {
-        glyphProvider = resolvedFont->getSharedGlyphProvider();
-        providerPtr = glyphProvider.get();
-    }
-
-    int lineHeight = providerPtr ? providerPtr->getGlyphRowCount() : 16;
-
-    // Clear tab bar background
-    this->tabBarCanvas->clear(this->backgroundColor);
-
-    if (resolvedFont) {
-        this->tabBarCanvas->setFont(resolvedFont);
-    }
-
-    if (this->tabs.empty()) {
-        this->canvasValid = true;
-        return;
-    }
-
-    // Calculate tab widths — divide evenly
-    int tabCount = (int)this->tabs.size();
-    int tabWidth = this->frame.size.width / tabCount;
-
-    for (int i = 0; i < tabCount; i++) {
-        int tabX = i * tabWidth;
-        int thisTabWidth = (i == tabCount - 1) ? (this->frame.size.width - tabX) : tabWidth;
-
-        bool isSelected = ((size_t)i == this->selectedIndex);
-
-        int bgColor, textColor;
-        if (isSelected) {
-            bgColor = this->foregroundColor;
-            textColor = this->backgroundColor;
-        } else {
-            bgColor = this->backgroundColor;
-            textColor = this->foregroundColor;
-        }
-
-        // Fill tab background
-        int canvasBg = (bgColor == this->foregroundColor) ? 0 : 1;
-        int canvasText = (textColor == this->foregroundColor) ? 0 : 1;
-        this->tabBarCanvas->fillRect(tabX, 0, thisTabWidth, barHeight, canvasBg);
-
-        // Draw tab border (bottom line for unselected, full border for selected)
-        int borderColor = (this->foregroundColor == 0) ? 0 : 1;
-        if (!isSelected) {
-            // Bottom border line
-            this->tabBarCanvas->fillRect(tabX, barHeight - 1, thisTabWidth, 1, borderColor);
-        }
-        // Vertical separator between tabs
-        if (i > 0) {
-            this->tabBarCanvas->fillRect(tabX, 0, 1, barHeight, borderColor);
-        }
-
-        // Draw tab label centered
-        if (providerPtr) {
-            int textWidth = TextLayout::measureTextWidth(
-                this->tabs[i].label.c_str(), 1, providerPtr);
-            int textX = tabX + (thisTabWidth - textWidth) / 2;
-            if (textX < tabX) textX = tabX;
-            int textY = (barHeight - lineHeight) / 2;
-            Rect textRect = MakeRect(textX, textY, thisTabWidth, lineHeight);
-            this->tabBarCanvas->drawText(textRect, canvasText, 1,
-                                         this->tabs[i].label.c_str());
-        }
-    }
-
-    // Draw outer border: top and sides of the tab bar, plus bottom line across full width
-    int borderColor = (this->foregroundColor == 0) ? 0 : 1;
-    this->tabBarCanvas->fillRect(0, 0, this->frame.size.width, 1, borderColor); // top
-    this->tabBarCanvas->fillRect(0, 0, 1, barHeight, borderColor); // left
-    this->tabBarCanvas->fillRect(this->frame.size.width - 1, 0, 1, barHeight, borderColor); // right
-
-    this->canvasValid = true;
-}
-
-void TabbedView::drawContent(int x, int y, Rect clipRect) {
-    if (!this->canvasValid) this->renderTabBar();
-
-    if (this->tabBarCanvas) {
-        if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
-                                this->frame.size.width, this->getTabBarHeight(),
-                                this->tabBarCanvas->getBufferData(),
-                                this->tabBarCanvas->getRowBytes(), clipRect);
-        }
-    }
-}
-
-bool TabbedView::handleEvent(Event event) {
-    if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
-        // Convert window coordinates to local coordinates
-        Point windowPoint = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
-        Point localPoint = this->convertPointFromWindow(windowPoint);
-
-        int barHeight = this->getTabBarHeight();
-        if (localPoint.y >= 0 && localPoint.y < barHeight && !this->tabs.empty()) {
-            // Touch is in the tab bar — determine which tab
-            int tabCount = (int)this->tabs.size();
-            int tabWidth = this->frame.size.width / tabCount;
-            int tabIndex = localPoint.x / tabWidth;
-            if (tabIndex >= tabCount) tabIndex = tabCount - 1;
-            if (tabIndex < 0) tabIndex = 0;
-            this->selectTab((size_t)tabIndex);
-            return true;
-        }
-    }
-
-    return View::handleEvent(event);
 }

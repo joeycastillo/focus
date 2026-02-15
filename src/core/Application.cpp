@@ -204,10 +204,12 @@ void Application::presentViewController(std::shared_ptr<ViewController> viewCont
     this->window->addSubview(viewController->view);
     viewController->viewDidAppear();
 
-    // Move focus into the modal's view hierarchy.
-    auto descendant = viewController->view->firstFocusableDescendant();
-    if (descendant) {
-        descendant->becomeFocused();
+    // Move focus into the modal's view hierarchy (d-pad/keyboard mode only).
+    if (!this->window->isTouchEnabled()) {
+        auto descendant = viewController->view->firstFocusableDescendant();
+        if (descendant) {
+            descendant->becomeFocused();
+        }
     }
 
     this->modalStack.push_back(entry);

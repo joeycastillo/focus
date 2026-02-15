@@ -168,6 +168,7 @@ void PaginatedCollectionView::rebuildLayout() {
             this->footerContainer = std::make_shared<View>(
                 MakeRect(0, footerY, w, kFooterThickness));
             this->footerContainer->setOpaque(false);
+            this->footerContainer->setDirectionalAffinity(DirectionalAffinityHorizontal);
 
             int buttonWidth = 100;
             int labelWidth = w - 2 * buttonWidth - 2 * 8;
