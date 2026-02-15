@@ -66,6 +66,7 @@ public:
     /// @{
     virtual size_t numberOfItems() = 0;
     virtual std::shared_ptr<CollectionViewCell> cellForItemAtIndex(size_t index, Rect frame) = 0;
+    virtual Size sizeForItemAtIndex(size_t index) { return {0, 0}; }
     /// @}
 
     /// @brief Called when the user taps an item. Override to handle selection.
@@ -101,6 +102,9 @@ private:
     }
     void didSelectItemAtIndex(CollectionView*, size_t index) final {
         didSelectItemAtIndex(index);
+    }
+    Size sizeForItemAtIndex(CollectionView*, size_t index) final {
+        return sizeForItemAtIndex(index);
     }
 
     std::shared_ptr<PaginatedCollectionView> paginatedView;

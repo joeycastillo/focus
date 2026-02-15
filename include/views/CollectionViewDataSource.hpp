@@ -58,5 +58,27 @@ public:
      */
     virtual std::shared_ptr<CollectionViewCell> cellForItemAtIndex(CollectionView* collectionView, size_t index, Rect frame) = 0;
 
+    /**
+     * @brief Return the size for the item at the given index.
+     * @param collectionView The collection view requesting this information.
+     * @param index The item index (0-based).
+     * @return The size for the item, or {0, 0} to use the collection view's
+     *         itemSize (the default).
+     *
+     * Override this method to provide per-item sizing in VerticalList or
+     * HorizontalList layouts. Only the dimension along the layout axis is
+     * used: height for VerticalList, width for HorizontalList. The cross-axis
+     * dimension is always filled from the collection view's frame (i.e. cells
+     * span the full width of a vertical list, or the full height of a
+     * horizontal list).
+     *
+     * This method is not called for Grid layouts, which always use itemSize.
+     *
+     * Item sizes must not change between calls to reloadData().
+     */
+    virtual Size sizeForItemAtIndex(CollectionView* collectionView, size_t index) {
+        return {0, 0};
+    }
+
     virtual ~CollectionViewDataSource() {}
 };

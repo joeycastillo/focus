@@ -37,6 +37,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <vector>
 
 class CollectionViewDataSource;
 class CollectionViewDelegate;
@@ -103,7 +104,11 @@ private:
     Size itemSize = {0, 0};
     size_t currentPage = 0;
 
+    bool variableItemSizes = false;
+    std::vector<size_t> pageBoundaries;
+
     size_t calculateItemsPerPage() const;
+    void computePageBoundaries();
     void loadPage(size_t page);
     void removeCurrentPageViews();
 };
