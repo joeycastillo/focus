@@ -38,6 +38,7 @@
 #include <memory>
 
 class CollectionViewDataSource;
+class CollectionViewDelegate;
 class CanvasView;
 class Button;
 class LabelView;
@@ -63,7 +64,9 @@ public:
     PaginatedCollectionView(Rect rect);
 
     /// @brief Set the data source that provides items. Not retained (raw pointer).
-    void setDataSource(CollectionViewDataSource *dataSource);
+    void setDataSource(CollectionViewDataSource *dataSource, std::weak_ptr<void> owner = {});
+    /// @brief Set the delegate for selection events.
+    void setDelegate(CollectionViewDelegate *delegate, std::weak_ptr<void> owner = {});
     /// @brief Set the layout mode (vertical list, horizontal list, or grid).
     void setLayout(CollectionViewLayout layout);
     /// @brief Set the size of each item cell.

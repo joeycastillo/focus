@@ -23,40 +23,34 @@
  */
 
 /**
- * @file CollectionViewDataSource.hpp
- * @brief Data source protocol for CollectionView.
+ * @file CollectionViewDelegate.hpp
+ * @brief Delegate protocol for CollectionView selection events.
+ *
+ * Implement this interface to respond to item selection in a CollectionView.
+ * When a delegate is set on a CollectionView, cells are automatically wired
+ * to call didSelectItemAtIndex on touch-up-inside events.
  */
 
 #pragma once
 
-#include "Focus.hpp"
 #include <cstddef>
 
 class CollectionView;
-class CollectionViewCell;
 
 /**
- * @brief Abstract interface providing data to a CollectionView.
+ * @brief Interface for handling CollectionView item selection.
  *
- * Implement this interface to supply the number of items and the cell
- * for each item. The CollectionView calls these methods when loading
- * a page of items, passing itself as the first argument so that a single
- * data source can serve multiple collection views.
+ * Methods have default empty implementations so that implementers only
+ * need to override the callbacks they care about.
  */
-class CollectionViewDataSource {
+class CollectionViewDelegate {
 public:
-    /// @brief Return the total number of items in the data source.
-    /// @param collectionView The collection view requesting this information.
-    virtual size_t numberOfItems(CollectionView* collectionView) = 0;
-
     /**
-     * @brief Create and return a cell for the item at the given index.
-     * @param collectionView The collection view requesting this cell.
-     * @param index The item index (0-based).
-     * @param frame The frame rectangle to use for the created cell.
-     * @return A shared_ptr to the cell representing this item.
+     * @brief Called when the user selects an item in the collection view.
+     * @param collectionView The collection view where the selection occurred.
+     * @param index The index of the selected item (0-based, global).
      */
-    virtual std::shared_ptr<CollectionViewCell> cellForItemAtIndex(CollectionView* collectionView, size_t index, Rect frame) = 0;
+    virtual void didSelectItemAtIndex(CollectionView* collectionView, size_t index) {}
 
-    virtual ~CollectionViewDataSource() {}
+    virtual ~CollectionViewDelegate() {}
 };

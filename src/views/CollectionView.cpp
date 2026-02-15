@@ -24,14 +24,29 @@
 
 #include "CollectionView.hpp"
 #include "CollectionViewDataSource.hpp"
+#include "CollectionViewDelegate.hpp"
 #include "CollectionViewCell.hpp"
 #include "Window.hpp"
 
 CollectionView::CollectionView(Rect rect) : View(rect) {
 }
 
-void CollectionView::setDataSource(CollectionViewDataSource* dataSource) {
+void CollectionView::setDataSource(CollectionViewDataSource* dataSource, std::weak_ptr<void> owner) {
     this->dataSource = dataSource;
+    if (owner.lock()) {
+        this->dataSourceOwner = owner;
+    } else {
+        this->dataSourceOwner = std::nullopt;
+    }
+}
+
+void CollectionView::setDelegate(CollectionViewDelegate* delegate, std::weak_ptr<void> owner) {
+    this->delegate = delegate;
+    if (owner.lock()) {
+        this->delegateOwner = owner;
+    } else {
+        this->delegateOwner = std::nullopt;
+    }
 }
 
 void CollectionView::setLayout(CollectionViewLayout layout) {
@@ -69,9 +84,10 @@ size_t CollectionView::getCurrentPage() const {
 
 size_t CollectionView::getPageCount() const {
     if (!this->dataSource) return 0;
+    if (this->dataSourceOwner.has_value() && this->dataSourceOwner->expired()) return 0;
     size_t itemsPerPage = this->calculateItemsPerPage();
     if (itemsPerPage == 0) return 0;
-    size_t totalItems = this->dataSource->numberOfItems();
+    size_t totalItems = this->dataSource->numberOfItems(const_cast<CollectionView*>(this));
     return (totalItems + itemsPerPage - 1) / itemsPerPage;
 }
 
@@ -83,11 +99,12 @@ void CollectionView::removeCurrentPageViews() {
 
 void CollectionView::loadPage(size_t page) {
     if (!this->dataSource) return;
+    if (this->dataSourceOwner.has_value() && this->dataSourceOwner->expired()) return;
 
     size_t itemsPerPage = this->calculateItemsPerPage();
     if (itemsPerPage == 0) return;
 
-    size_t totalItems = this->dataSource->numberOfItems();
+    size_t totalItems = this->dataSource->numberOfItems(this);
     size_t startIndex = page * itemsPerPage;
     if (startIndex >= totalItems) return;
 
@@ -98,6 +115,14 @@ void CollectionView::loadPage(size_t page) {
     if (this->layout == CollectionViewLayout::Grid) {
         columns = this->frame.size.width / this->itemSize.width;
         if (columns < 1) columns = 1;
+    }
+
+    // Check if we have a live delegate for automatic cell action wiring
+    CollectionViewDelegate* liveDelegate = nullptr;
+    if (this->delegate) {
+        if (!this->delegateOwner.has_value() || !this->delegateOwner->expired()) {
+            liveDelegate = this->delegate;
+        }
     }
 
     for (size_t i = startIndex; i < endIndex; i++) {
@@ -122,8 +147,17 @@ void CollectionView::loadPage(size_t page) {
         }
 
         Rect itemFrame = MakeRect(itemX, itemY, this->itemSize.width, this->itemSize.height);
-        auto cell = this->dataSource->cellForItemAtIndex(i, itemFrame);
+        auto cell = this->dataSource->cellForItemAtIndex(this, i, itemFrame);
         if (cell) {
+            if (liveDelegate) {
+                size_t globalIndex = i;
+                CollectionView* cv = this;
+                cell->setAction(
+                    [liveDelegate, cv, globalIndex](Event, std::weak_ptr<View>) {
+                        liveDelegate->didSelectItemAtIndex(cv, globalIndex);
+                    },
+                    FOCUS_EVENT_TOUCH_UP_INSIDE);
+            }
             this->addSubview(cell);
         }
     }

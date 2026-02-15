@@ -35,8 +35,11 @@
 
 #include "View.hpp"
 #include <cstddef>
+#include <memory>
+#include <optional>
 
 class CollectionViewDataSource;
+class CollectionViewDelegate;
 
 /// @brief Layout modes for CollectionView item arrangement.
 enum class CollectionViewLayout {
@@ -56,8 +59,22 @@ public:
     /// @brief Construct a collection view with the given frame.
     CollectionView(Rect rect);
 
-    /// @brief Set the data source that provides items. Not retained (raw pointer).
-    void setDataSource(CollectionViewDataSource* dataSource);
+    /**
+     * @brief Set the data source that provides items.
+     * @param dataSource Raw pointer to the data source (not retained).
+     * @param owner Optional weak reference for lifetime tracking. When the
+     *              owner expires, the data source is automatically cleared.
+     */
+    void setDataSource(CollectionViewDataSource* dataSource, std::weak_ptr<void> owner = {});
+
+    /**
+     * @brief Set the delegate for selection events.
+     * @param delegate Raw pointer to the delegate (not retained).
+     * @param owner Optional weak reference for lifetime tracking. When the
+     *              owner expires, the delegate is automatically cleared.
+     */
+    void setDelegate(CollectionViewDelegate* delegate, std::weak_ptr<void> owner = {});
+
     /// @brief Set the layout mode (vertical list, horizontal list, or grid).
     void setLayout(CollectionViewLayout layout);
     /// @brief Set the size of each item cell.
@@ -77,6 +94,9 @@ public:
 
 private:
     CollectionViewDataSource* dataSource = nullptr;
+    std::optional<std::weak_ptr<void>> dataSourceOwner;
+    CollectionViewDelegate* delegate = nullptr;
+    std::optional<std::weak_ptr<void>> delegateOwner;
     CollectionViewLayout layout = CollectionViewLayout::VerticalList;
     Size itemSize = {0, 0};
     size_t currentPage = 0;

@@ -30,6 +30,10 @@
 
 NavigationBar::NavigationBar(int width) : View(MakeRect(0, 0, width, getHeight())) {
     this->opaque = true;
+}
+
+std::shared_ptr<NavigationBar> NavigationBar::create(int width) {
+    auto bar = std::shared_ptr<NavigationBar>(new NavigationBar(width));
 
     int height = getHeight();
     int padding = 8;
@@ -37,31 +41,45 @@ NavigationBar::NavigationBar(int width) : View(MakeRect(0, 0, width, getHeight()
     int backButtonHeight = height - 2 * padding;
 
     // Back button, left-aligned, initially hidden
-    this->backButton = std::make_shared<Button>(
+    bar->backButton = std::make_shared<Button>(
         MakeRect(padding, padding, backButtonWidth, backButtonHeight), "Back");
-    this->backButton->setHidden(true);
-    this->backButton->setAction(
-        [this](Event, std::weak_ptr<View>) {
-            if (this->backAction) this->backAction();
+    bar->backButton->setHidden(true);
+    bar->backButton->setAction(
+        [raw = bar.get()](Event, std::weak_ptr<View>) {
+            if (raw->backAction) raw->backAction();
         },
         FOCUS_EVENT_TOUCH_UP_INSIDE);
-    this->addSubview(this->backButton);
+    bar->addSubview(bar->backButton);
 
     // Title label, centered in the space between the back button area and right edge
     int titleX = padding + backButtonWidth + padding;
     int titleWidth = width - 2 * titleX; // symmetrical margin
     if (titleWidth < 0) titleWidth = 0;
-    this->titleLabel = std::make_shared<LabelView>(
+    bar->titleLabel = std::make_shared<LabelView>(
         MakeRect(titleX, padding, titleWidth, backButtonHeight), "");
-    this->titleLabel->setTextAlignment(TextAlignmentCenter);
-    this->titleLabel->setOpaque(false);
-    this->addSubview(this->titleLabel);
+    bar->titleLabel->setTextAlignment(TextAlignmentCenter);
+    bar->titleLabel->setOpaque(false);
+    bar->addSubview(bar->titleLabel);
+
+    // Right button, right-aligned, initially hidden
+    int rightButtonWidth = 80;
+    bar->rightButton = std::make_shared<Button>(
+        MakeRect(width - padding - rightButtonWidth, padding, rightButtonWidth, backButtonHeight), "");
+    bar->rightButton->setHidden(true);
+    bar->rightButton->setAction(
+        [raw = bar.get()](Event, std::weak_ptr<View>) {
+            if (raw->rightAction) raw->rightAction();
+        },
+        FOCUS_EVENT_TOUCH_UP_INSIDE);
+    bar->addSubview(bar->rightButton);
+
+    return bar;
 }
 
 int NavigationBar::getHeight() {
     auto font = Font::systemFont();
     if (font) {
-        return font->getGlyphRowCount() + 16;
+        return font->getGlyphRowCount() + 32;
     }
     return 48;
 }
@@ -76,6 +94,16 @@ void NavigationBar::setBackButtonVisible(bool visible) {
 
 void NavigationBar::setBackAction(std::function<void()> action) {
     this->backAction = action;
+}
+
+void NavigationBar::setRightButton(const std::string& title, std::function<void()> action) {
+    this->rightAction = action;
+    if (title.empty()) {
+        this->rightButton->setHidden(true);
+    } else {
+        this->rightButton->setText(title);
+        this->rightButton->setHidden(false);
+    }
 }
 
 void NavigationBar::drawContent(int x, int y, Rect clipRect) {

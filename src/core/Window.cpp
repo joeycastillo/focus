@@ -106,6 +106,10 @@ void Window::setWindow(std::shared_ptr<Window> window) {
     // nothing to do here
 }
 
+Rect Window::getContentRect() {
+    return this->getFrame();
+}
+
 std::weak_ptr<View> Window::getCapturedTouchView() {
     return this->capturedTouchView;
 }

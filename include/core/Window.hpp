@@ -131,6 +131,18 @@ public:
     std::weak_ptr<View>getSuperview() override;
     /// @brief Returns a weak_ptr to this window.
     std::weak_ptr<Window> getWindow() override;
+
+    /**
+     * @brief Get the usable content area of the window.
+     *
+     * Subclasses that reserve screen space (e.g. for a status bar) should
+     * override this to return the remaining area. The default returns the
+     * full window frame. View controllers should use this to size their
+     * views so they fit within the available content area.
+     *
+     * @return A Rect whose size is the usable content area.
+     */
+    virtual Rect getContentRect();
     /// @brief No-op (the window does not belong to another window).
     void setWindow(std::shared_ptr<Window> window) override;
 

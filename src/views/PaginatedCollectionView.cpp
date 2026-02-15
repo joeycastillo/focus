@@ -35,8 +35,12 @@ PaginatedCollectionView::PaginatedCollectionView(Rect rect) : View(rect) {
     // addSubview() calls shared_from_this(), which is invalid inside a constructor.
 }
 
-void PaginatedCollectionView::setDataSource(CollectionViewDataSource *dataSource) {
-    this->collectionView->setDataSource(dataSource);
+void PaginatedCollectionView::setDataSource(CollectionViewDataSource *dataSource, std::weak_ptr<void> owner) {
+    this->collectionView->setDataSource(dataSource, owner);
+}
+
+void PaginatedCollectionView::setDelegate(CollectionViewDelegate *delegate, std::weak_ptr<void> owner) {
+    this->collectionView->setDelegate(delegate, owner);
 }
 
 void PaginatedCollectionView::setLayout(CollectionViewLayout layout) {

@@ -50,16 +50,19 @@ void NavigationViewController::createView() {
     auto app = this->application.lock();
     if (!app) return;
 
-    Size windowSize = app->getWindow()->getFrame().size;
+    Size windowSize = app->getWindow()->getContentRect().size;
 
     // Full-screen container
     this->view = std::make_shared<View>(MakeRect(0, 0, windowSize.width, windowSize.height));
 
     // Navigation bar at top
-    this->navigationBar = std::make_shared<NavigationBar>(windowSize.width);
+    this->navigationBar = NavigationBar::create(windowSize.width);
     this->navigationBar->setBackAction([this]() {
         this->popViewController();
     });
+    if (!this->rightButtonTitle.empty()) {
+        this->navigationBar->setRightButton(this->rightButtonTitle, this->rightButtonAction);
+    }
     this->view->addSubview(this->navigationBar);
 
     // Content area below the nav bar
@@ -158,6 +161,14 @@ std::shared_ptr<ViewController> NavigationViewController::topViewController() co
 
 size_t NavigationViewController::stackDepth() const {
     return this->viewControllerStack.size();
+}
+
+void NavigationViewController::setRightButton(const std::string& title, std::function<void()> action) {
+    this->rightButtonTitle = title;
+    this->rightButtonAction = action;
+    if (this->navigationBar) {
+        this->navigationBar->setRightButton(title, action);
+    }
 }
 
 void NavigationViewController::transitionFromViewController(

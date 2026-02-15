@@ -91,6 +91,9 @@ public:
     /// @brief Get the number of view controllers on the stack.
     size_t stackDepth() const;
 
+    /// @brief Set a right button on the navigation bar. Pass empty title to hide.
+    void setRightButton(const std::string& title, std::function<void()> action);
+
     // ViewController lifecycle overrides
     void viewWillAppear() override;
     void viewDidAppear() override;
@@ -106,6 +109,8 @@ private:
     std::vector<std::shared_ptr<ViewController>> viewControllerStack;
     std::shared_ptr<NavigationBar> navigationBar;
     std::shared_ptr<View> contentArea;
+    std::string rightButtonTitle;
+    std::function<void()> rightButtonAction;
 
     /// @brief Transition from one child VC to another, managing lifecycles and views.
     void transitionFromViewController(

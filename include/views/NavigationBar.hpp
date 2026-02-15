@@ -49,9 +49,9 @@ class LabelView;
  */
 class NavigationBar : public View {
 public:
-    /// @brief Construct a navigation bar spanning the given width.
+    /// @brief Create a navigation bar spanning the given width.
     /// @param width The width of the bar (typically the full screen width).
-    NavigationBar(int width);
+    static std::shared_ptr<NavigationBar> create(int width);
 
     /// @brief Set the title text displayed in the bar.
     void setTitle(const std::string& title);
@@ -62,13 +62,20 @@ public:
     /// @brief Register a callback invoked when the back button is tapped.
     void setBackAction(std::function<void()> action);
 
+    /// @brief Set the right button's title and action. The button is hidden when title is empty.
+    void setRightButton(const std::string& title, std::function<void()> action);
+
     /// @brief Get the height of the navigation bar in pixels.
     static int getHeight();
 
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
 
 private:
+    NavigationBar(int width);
+
     std::shared_ptr<Button> backButton;
     std::shared_ptr<LabelView> titleLabel;
+    std::shared_ptr<Button> rightButton;
     std::function<void()> backAction;
+    std::function<void()> rightAction;
 };

@@ -130,6 +130,14 @@ void Button::setForegroundColor(uint16_t value) {
     this->canvasValid = false;
 }
 
+void Button::setText(const std::string& text) {
+    this->text = text;
+    this->canvasValid = false;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
+    }
+}
+
 void Button::setFont(std::shared_ptr<Font> font) {
     this->font = font;
     this->canvasValid = false;
