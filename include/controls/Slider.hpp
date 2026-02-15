@@ -30,9 +30,8 @@
  * right. The filled portion of the track represents the current value (0.0 to
  * 1.0). Touch events on the track area set the value proportionally.
  *
- * Fires FOCUS_EVENT_VALUE_CHANGED with userInfo set to (int32_t)(value * 8191)
- * when the value changes, making it directly compatible with 13-bit PWM duty
- * cycle values used by the frontlight controller.
+ * Fires FOCUS_EVENT_VALUE_CHANGED when the value changes. The userInfo field
+ * contains the float value (0.0–1.0) bit-cast to int32_t via memcpy.
  *
  * @note D-pad LEFT/RIGHT are consumed by the slider to adjust its value.
  * Only UP/DOWN bubble for navigation. Avoid placing sliders side by side

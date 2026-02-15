@@ -28,6 +28,7 @@
 #include "Display.hpp"
 #include "Font.hpp"
 #include "TextLayout.hpp"
+#include <cstring>
 
 Slider::Slider(Rect rect, std::string label) : Control(rect), label(label) {
 }
@@ -144,7 +145,8 @@ bool Slider::handleEvent(Event event) {
             // Fire value changed action
             auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
             if (it != this->actions.end()) {
-                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, (int32_t)(this->value * 8191)};
+                int32_t valueBits; memcpy(&valueBits, &this->value, sizeof(valueBits));
+                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, valueBits};
                 it->second.callback(valueEvent, this->weak_from_this());
             }
         }
@@ -164,7 +166,8 @@ bool Slider::handleEvent(Event event) {
             }
             auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
             if (it != this->actions.end()) {
-                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, (int32_t)(this->value * 8191)};
+                int32_t valueBits; memcpy(&valueBits, &this->value, sizeof(valueBits));
+                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, valueBits};
                 it->second.callback(valueEvent, this->weak_from_this());
             }
         }
