@@ -33,7 +33,7 @@
  *
  * CanvasView is used internally by many Focus views (LabelView, Button,
  * Checkbox, etc.) for off-screen rendering, and can also be used directly
- * for custom drawing (e.g. the EPUB renderer draws to a CanvasView).
+ * for custom drawing (e.g. a charting view or custom visualization).
  */
 
 #pragma once
