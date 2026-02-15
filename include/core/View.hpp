@@ -297,6 +297,11 @@ public:
     /// @brief Set the view's foreground (text/border) color.
     void setForegroundColor(uint16_t value);
 
+    /// @brief Called when a visual property (colors, opaque) changes.
+    /// Subclasses that cache rendering (e.g. LabelView, Button) can override
+    /// this to invalidate their caches.
+    virtual void appearanceDidChange();
+
     /// @brief Get the directional affinity for focus navigation among subviews.
     uint16_t getDirectionalAffinity();
     /// @brief Set the directional affinity (vertical or horizontal) for subview navigation.

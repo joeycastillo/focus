@@ -54,11 +54,7 @@ public:
      */
     Button(Rect rect, std::string text);
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
-
-    /// @brief Set the background color and invalidate the cached canvas.
-    void setBackgroundColor(uint16_t value);
-    /// @brief Set the foreground color and invalidate the cached canvas.
-    void setForegroundColor(uint16_t value);
+    void appearanceDidChange() override;
 
     /// @brief Set the button's label text.
     void setText(const std::string& text);

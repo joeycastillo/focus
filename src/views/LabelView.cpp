@@ -55,6 +55,10 @@ void LabelView::renderCanvas() {
     this->canvasValid = true;
 }
 
+void LabelView::appearanceDidChange() {
+    this->canvasValid = false;
+}
+
 void LabelView::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {

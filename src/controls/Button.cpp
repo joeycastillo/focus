@@ -120,13 +120,7 @@ void Button::didResignFocus() {
     this->canvasValid = false;
 }
 
-void Button::setBackgroundColor(uint16_t value) {
-    View::setBackgroundColor(value);
-    this->canvasValid = false;
-}
-
-void Button::setForegroundColor(uint16_t value) {
-    View::setForegroundColor(value);
+void Button::appearanceDidChange() {
     this->canvasValid = false;
 }
 

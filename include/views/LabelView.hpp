@@ -56,6 +56,7 @@ public:
      */
     LabelView(Rect rect, std::string text);
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
+    void appearanceDidChange() override;
 
     /// @brief Set the displayed text, invalidating the cached rendering.
     void setText(std::string text);

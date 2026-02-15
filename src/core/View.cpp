@@ -469,9 +469,10 @@ bool View::isOpaque() {
 }
 
 void View::setOpaque(bool value) {
-    if (this-> opaque == value) return;
+    if (this->opaque == value) return;
 
     this->opaque = value;
+    this->appearanceDidChange();
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);
     }
@@ -496,6 +497,7 @@ uint16_t View::getBackgroundColor() {
 
 void View::setBackgroundColor(uint16_t value) {
     this->backgroundColor = value;
+    this->appearanceDidChange();
 }
 
 uint16_t View::getForegroundColor() {
@@ -504,6 +506,11 @@ uint16_t View::getForegroundColor() {
 
 void View::setForegroundColor(uint16_t value) {
     this->foregroundColor = value;
+    this->appearanceDidChange();
+}
+
+void View::appearanceDidChange() {
+    // Default: nothing. Subclasses with rendering caches override this.
 }
 
 uint16_t View::getDirectionalAffinity() {
