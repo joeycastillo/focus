@@ -84,7 +84,10 @@ protected:
     std::string text;                     ///< Label text.
     bool selected = false;                ///< Whether this button is selected.
     std::shared_ptr<Font> font;           ///< Custom font, or nullptr for system font.
-    std::weak_ptr<RadioGroup> group;      ///< The RadioGroup this button belongs to.
+    /// The RadioGroup this button belongs to. This is a shared_ptr (not weak)
+    /// so the group stays alive as long as any button in it exists. There is no
+    /// ownership cycle because RadioGroup holds only weak_ptrs back to its buttons.
+    std::shared_ptr<RadioGroup> group;
 
 private:
     std::shared_ptr<CanvasView> canvas;

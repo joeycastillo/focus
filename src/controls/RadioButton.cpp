@@ -118,8 +118,8 @@ bool RadioButton::handleEvent(Event event) {
                 this->setNeedsDisplayInRect(this->frame);
             }
             // Notify group to deselect others
-            if (auto grp = this->group.lock()) {
-                grp->_buttonSelected(this);
+            if (this->group) {
+                this->group->_buttonSelected(this);
             }
             // Fire value changed action if registered
             auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
