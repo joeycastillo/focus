@@ -35,6 +35,7 @@
 #pragma once
 
 #include "Control.hpp"
+#include <functional>
 
 /**
  * @brief A focusable container view for CollectionView items.
@@ -42,6 +43,11 @@
  * Unlike Button, which renders its own content to an internal canvas,
  * CollectionViewCell hosts arbitrary subviews. This makes it suitable
  * for composite layouts (e.g. an image alongside multiple labels).
+ *
+ * Focus appearance is not managed by the cell itself. Set a
+ * CollectionViewDelegate on the owning CollectionView and implement
+ * didFocusItemAtIndex / didUnfocusItemAtIndex to customize the visual
+ * feedback for focused cells.
  */
 class CollectionViewCell : public Control {
 public:
@@ -50,4 +56,9 @@ public:
 
     void didBecomeFocused() override;
     void didResignFocus() override;
+
+private:
+    /// Internal callback set by CollectionView to route focus events to the delegate.
+    std::function<void(CollectionViewCell&, bool)> onFocusChanged;
+    friend class CollectionView;
 };

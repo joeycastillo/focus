@@ -24,11 +24,11 @@
 
 /**
  * @file CollectionViewDelegate.hpp
- * @brief Delegate protocol for CollectionView selection events.
+ * @brief Delegate protocol for CollectionView selection and focus events.
  *
- * Implement this interface to respond to item selection in a CollectionView.
- * When a delegate is set on a CollectionView, cells are automatically wired
- * to call didSelectItemAtIndex on touch-up-inside events.
+ * Implement this interface to respond to item selection and focus changes
+ * in a CollectionView. When a delegate is set on a CollectionView, cells
+ * are automatically wired to call the appropriate delegate methods.
  */
 
 #pragma once
@@ -36,9 +36,10 @@
 #include <cstddef>
 
 class CollectionView;
+class CollectionViewCell;
 
 /**
- * @brief Interface for handling CollectionView item selection.
+ * @brief Interface for handling CollectionView item events.
  *
  * Methods have default empty implementations so that implementers only
  * need to override the callbacks they care about.
@@ -51,6 +52,22 @@ public:
      * @param index The index of the selected item (0-based, global).
      */
     virtual void didSelectItemAtIndex(CollectionView* collectionView, size_t index) {}
+
+    /**
+     * @brief Called when a cell gains focus via d-pad/keyboard navigation.
+     * @param collectionView The collection view containing the cell.
+     * @param index The global index of the focused item.
+     * @param cell The cell that gained focus. Modify its appearance here.
+     */
+    virtual void didFocusItemAtIndex(CollectionView* collectionView, size_t index, CollectionViewCell& cell) {}
+
+    /**
+     * @brief Called when a cell loses focus via d-pad/keyboard navigation.
+     * @param collectionView The collection view containing the cell.
+     * @param index The global index of the unfocused item.
+     * @param cell The cell that lost focus. Restore its appearance here.
+     */
+    virtual void didUnfocusItemAtIndex(CollectionView* collectionView, size_t index, CollectionViewCell& cell) {}
 
     virtual ~CollectionViewDelegate() {}
 };

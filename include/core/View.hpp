@@ -117,6 +117,9 @@ public:
      */
     virtual void removeSubview(std::shared_ptr<View> view);
 
+    /// @brief Get the list of child views.
+    const std::vector<std::shared_ptr<View>>& getSubviews() const { return this->subviews; }
+
     /// @brief Check whether this view currently has focus.
     bool isFocused();
 

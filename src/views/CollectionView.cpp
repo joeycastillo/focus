@@ -157,6 +157,13 @@ void CollectionView::loadPage(size_t page) {
                         liveDelegate->didSelectItemAtIndex(cv, globalIndex);
                     },
                     FOCUS_EVENT_TOUCH_UP_INSIDE);
+                cell->onFocusChanged = [liveDelegate, cv, globalIndex](CollectionViewCell& c, bool focused) {
+                    if (focused) {
+                        liveDelegate->didFocusItemAtIndex(cv, globalIndex, c);
+                    } else {
+                        liveDelegate->didUnfocusItemAtIndex(cv, globalIndex, c);
+                    }
+                };
             }
             this->addSubview(cell);
         }
