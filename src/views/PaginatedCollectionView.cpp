@@ -52,6 +52,10 @@ void PaginatedCollectionView::setItemSize(Size size) {
     this->collectionView->setItemSize(size);
 }
 
+void PaginatedCollectionView::setItemSpacing(int spacing) {
+    this->collectionView->setItemSpacing(spacing);
+}
+
 void PaginatedCollectionView::setPaginationStyle(PaginationStyle style) {
     this->paginationStyle = style;
     rebuildLayout();

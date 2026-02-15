@@ -37,6 +37,13 @@ void CollectionViewController::setItemSize(Size size) {
     }
 }
 
+void CollectionViewController::setItemSpacing(int spacing) {
+    this->configuredItemSpacing = spacing;
+    if (this->paginatedView) {
+        this->paginatedView->setItemSpacing(spacing);
+    }
+}
+
 void CollectionViewController::setLayout(CollectionViewLayout layout) {
     this->configuredLayout = layout;
     if (this->paginatedView) {
@@ -69,6 +76,7 @@ void CollectionViewController::createView() {
     this->paginatedView->setDelegate(this, this->weak_from_this());
     this->paginatedView->setLayout(this->configuredLayout);
     this->paginatedView->setItemSize(this->configuredItemSize);
+    this->paginatedView->setItemSpacing(this->configuredItemSpacing);
     this->paginatedView->setPaginationStyle(this->configuredPaginationStyle);
 
     this->view = this->paginatedView;

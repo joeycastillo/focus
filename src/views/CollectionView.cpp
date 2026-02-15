@@ -64,6 +64,10 @@ void CollectionView::setItemSize(Size size) {
     this->itemSize = size;
 }
 
+void CollectionView::setItemSpacing(int spacing) {
+    this->itemSpacing = spacing;
+}
+
 size_t CollectionView::calculateItemsPerPage() const {
     if (this->variableItemSizes) {
         if (this->pageBoundaries.empty()) return 0;
@@ -81,14 +85,15 @@ size_t CollectionView::calculateItemsPerPage() const {
 
     if (this->itemSize.width <= 0 || this->itemSize.height <= 0) return 0;
 
+    int s = this->itemSpacing;
     switch (this->layout) {
         case CollectionViewLayout::VerticalList:
-            return this->frame.size.height / this->itemSize.height;
+            return (this->frame.size.height + s) / (this->itemSize.height + s);
         case CollectionViewLayout::HorizontalList:
-            return this->frame.size.width / this->itemSize.width;
+            return (this->frame.size.width + s) / (this->itemSize.width + s);
         case CollectionViewLayout::Grid: {
-            int columns = this->frame.size.width / this->itemSize.width;
-            int rows = this->frame.size.height / this->itemSize.height;
+            int columns = (this->frame.size.width + s) / (this->itemSize.width + s);
+            int rows = (this->frame.size.height + s) / (this->itemSize.height + s);
             return columns * rows;
         }
     }
@@ -132,17 +137,21 @@ void CollectionView::computePageBoundaries() {
 
     this->pageBoundaries.push_back(0);
     int accumulated = 0;
+    bool pageEmpty = true;
 
     for (size_t i = 0; i < totalItems; i++) {
         Size size = this->dataSource->sizeForItemAtIndex(this, i);
         int dimension = (this->layout == CollectionViewLayout::VerticalList)
             ? size.height : size.width;
+        int needed = pageEmpty ? dimension : this->itemSpacing + dimension;
 
-        if (accumulated + dimension > capacity && accumulated > 0) {
+        if (accumulated + needed > capacity && !pageEmpty) {
             this->pageBoundaries.push_back(i);
             accumulated = dimension;
+            pageEmpty = false;
         } else {
-            accumulated += dimension;
+            accumulated += needed;
+            pageEmpty = false;
         }
     }
 }
@@ -174,9 +183,10 @@ void CollectionView::loadPage(size_t page) {
         if (endIndex > totalItems) endIndex = totalItems;
     }
 
+    int s = this->itemSpacing;
     int columns = 1;
     if (this->layout == CollectionViewLayout::Grid) {
-        columns = this->frame.size.width / this->itemSize.width;
+        columns = (this->frame.size.width + s) / (this->itemSize.width + s);
         if (columns < 1) columns = 1;
     }
 
@@ -198,10 +208,10 @@ void CollectionView::loadPage(size_t page) {
             Size size = this->dataSource->sizeForItemAtIndex(this, i);
             if (this->layout == CollectionViewLayout::VerticalList) {
                 itemFrame = MakeRect(0, runningOffset, this->frame.size.width, size.height);
-                runningOffset += size.height;
+                runningOffset += size.height + s;
             } else {
                 itemFrame = MakeRect(runningOffset, 0, size.width, this->frame.size.height);
-                runningOffset += size.width;
+                runningOffset += size.width + s;
             }
         } else {
             int itemX = 0;
@@ -211,18 +221,18 @@ void CollectionView::loadPage(size_t page) {
 
             switch (this->layout) {
                 case CollectionViewLayout::VerticalList:
-                    itemY = (int)indexInPage * this->itemSize.height;
+                    itemY = (int)indexInPage * (this->itemSize.height + s);
                     itemW = this->frame.size.width;
                     break;
                 case CollectionViewLayout::HorizontalList:
-                    itemX = (int)indexInPage * this->itemSize.width;
+                    itemX = (int)indexInPage * (this->itemSize.width + s);
                     itemH = this->frame.size.height;
                     break;
                 case CollectionViewLayout::Grid: {
                     int col = (int)(indexInPage % columns);
                     int row = (int)(indexInPage / columns);
-                    itemX = col * this->itemSize.width;
-                    itemY = row * this->itemSize.height;
+                    itemX = col * (this->itemSize.width + s);
+                    itemY = row * (this->itemSize.height + s);
                     break;
                 }
             }
@@ -269,7 +279,7 @@ bool CollectionView::handleEvent(Event event) {
                 int index = this->indexOfChildContaining(focusedView);
                 if (index < 0) return false;
 
-                int columns = this->frame.size.width / this->itemSize.width;
+                int columns = (this->frame.size.width + this->itemSpacing) / (this->itemSize.width + this->itemSpacing);
                 if (columns < 1) columns = 1;
                 int count = (int)this->subviews.size();
                 int target = -1;

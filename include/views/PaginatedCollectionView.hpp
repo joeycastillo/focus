@@ -71,6 +71,8 @@ public:
     void setLayout(CollectionViewLayout layout);
     /// @brief Set the size of each item cell.
     void setItemSize(Size size);
+    /// @brief Set the spacing between items (applied between items, not at edges).
+    void setItemSpacing(int spacing);
 
     /// @brief Set the visual style for pagination controls.
     void setPaginationStyle(PaginationStyle style);

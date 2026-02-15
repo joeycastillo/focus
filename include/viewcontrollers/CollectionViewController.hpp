@@ -76,6 +76,7 @@ public:
     /// Call these before the view appears (e.g. in your constructor).
     /// @{
     void setItemSize(Size size);
+    void setItemSpacing(int spacing);
     void setLayout(CollectionViewLayout layout);
     void setPaginationStyle(PaginationStyle style);
     /// @}
@@ -109,6 +110,7 @@ private:
 
     std::shared_ptr<PaginatedCollectionView> paginatedView;
     Size configuredItemSize = {0, 0};
+    int configuredItemSpacing = 0;
     CollectionViewLayout configuredLayout = CollectionViewLayout::VerticalList;
     PaginationStyle configuredPaginationStyle = PaginationStyle::Arrows;
     size_t savedPageIndex = 0;

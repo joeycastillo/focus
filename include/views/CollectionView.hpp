@@ -80,6 +80,8 @@ public:
     void setLayout(CollectionViewLayout layout);
     /// @brief Set the size of each item cell.
     void setItemSize(Size size);
+    /// @brief Set the spacing between items (applied between items, not at edges).
+    void setItemSpacing(int spacing);
 
     /// @brief Reload all items from the data source, showing the first page.
     void reloadData();
@@ -102,6 +104,7 @@ private:
     std::optional<std::weak_ptr<void>> delegateOwner;
     CollectionViewLayout layout = CollectionViewLayout::VerticalList;
     Size itemSize = {0, 0};
+    int itemSpacing = 0;
     size_t currentPage = 0;
 
     bool variableItemSizes = false;
