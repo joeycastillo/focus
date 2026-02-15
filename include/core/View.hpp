@@ -263,7 +263,7 @@ public:
      * If attached to a window, marks the union of the old and new frame as dirty.
      * @param rect The new frame rectangle.
      */
-    void setFrame(Rect rect);
+    virtual void setFrame(Rect rect);
 
     /// @brief Get the view's bounds (its own coordinate system, used for scrolling).
     Rect getBounds();
