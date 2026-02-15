@@ -53,6 +53,8 @@ void CollectionView::setLayout(CollectionViewLayout layout) {
     this->layout = layout;
     if (layout == CollectionViewLayout::HorizontalList) {
         this->setDirectionalAffinity(DirectionalAffinityHorizontal);
+    } else if (layout == CollectionViewLayout::Grid) {
+        this->setDirectionalAffinity(DirectionalAffinityNone);
     } else {
         this->setDirectionalAffinity(DirectionalAffinityVertical);
     }

@@ -183,6 +183,7 @@ typedef enum {
 /// of its children, it uses the affinity to decide which direction maps to
 /// "previous sibling" vs. "next sibling."
 typedef enum {
+    DirectionalAffinityNone,       ///< View handles its own navigation; no automatic sibling nav.
     DirectionalAffinityVertical,   ///< Up/Down navigate between siblings.
     DirectionalAffinityHorizontal, ///< Left/Right navigate between siblings.
 } DirectionalAffinity;
