@@ -35,9 +35,16 @@ Window::Window(std::shared_ptr<Display> display, Size size) : View(MakeRect(0, 0
 void Window::addSubview(std::shared_ptr<View> view) {
     view->setWindow(std::static_pointer_cast<Window>(this->shared_from_this()));
     View::addSubview(view);
-    // if nothing is focused, make this new view focused
-    if (!this->focusedView.lock() && view->canBecomeFocused()) {
-        view->becomeFocused();
+    // If nothing meaningful is focused, focus the first focusable descendant.
+    std::shared_ptr<View> currentFocus = this->focusedView.lock();
+    bool windowIsFocused = (currentFocus.get() == this);
+    if (!currentFocus || windowIsFocused) {
+        if (!view->becomeFocused()) {
+            std::shared_ptr<View> descendant = view->firstFocusableDescendant();
+            if (descendant) {
+                descendant->becomeFocused();
+            }
+        }
     }
 }
 

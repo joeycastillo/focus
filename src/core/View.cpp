@@ -175,6 +175,35 @@ bool View::canBecomeFocused() {
     return false;
 }
 
+std::shared_ptr<View> View::firstFocusableDescendant() {
+    for (auto& child : this->subviews) {
+        if (child->canBecomeFocused()) return child;
+        auto found = child->firstFocusableDescendant();
+        if (found) return found;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<View> View::lastFocusableDescendant() {
+    for (auto it = this->subviews.rbegin(); it != this->subviews.rend(); ++it) {
+        if ((*it)->canBecomeFocused()) return *it;
+        auto found = (*it)->lastFocusableDescendant();
+        if (found) return found;
+    }
+    return nullptr;
+}
+
+int View::indexOfChildContaining(std::shared_ptr<View> view) {
+    for (int i = 0; i < (int)this->subviews.size(); i++) {
+        std::shared_ptr<View> v = view;
+        while (v) {
+            if (v == this->subviews[i]) return i;
+            v = v->superview.lock();
+        }
+    }
+    return -1;
+}
+
 bool View::becomeFocused() {
     if (this->canBecomeFocused()) {
         if (std::shared_ptr<Window> window = this->getWindow().lock()) {
@@ -272,46 +301,71 @@ bool View::handleEvent(Event event) {
             case FOCUS_EVENT_DIRECTION_UP:
             case FOCUS_EVENT_DIRECTION_RIGHT:
             {
-                uint32_t index = std::distance(this->subviews.begin(), std::find(this->subviews.begin(), this->subviews.end(), focusedView));
+                // Find which direct child contains (or is) the focused view.
+                int index = this->indexOfChildContaining(focusedView);
+                if (index < 0) break; // focused view is not in our subtree; let it bubble
+
+                // Determine if this direction maps to "next" or "previous" for our affinity.
+                bool isNext = false;
+                bool isRelevant = false;
                 if (this->affinity == DirectionalAffinityVertical) {
-                    switch (event.type) {
-                        case FOCUS_EVENT_DIRECTION_UP:
-                            while (index > 0) {
-                                if (this->subviews[index - 1]->canBecomeFocused()) this->subviews[index - 1]->becomeFocused();
-                                else index--;
-                                return true;
-                            }
-                            break;
-                        case FOCUS_EVENT_DIRECTION_DOWN:
-                            while ((index + 1) < this->subviews.size()) {
-                                if (this->subviews[index + 1]->canBecomeFocused()) this->subviews[index + 1]->becomeFocused();
-                                else index--;
-                                return true;
-                            }
-                            break;
-                        default:
-                            break;
-                    }
+                    if (event.type == FOCUS_EVENT_DIRECTION_DOWN) { isNext = true; isRelevant = true; }
+                    else if (event.type == FOCUS_EVENT_DIRECTION_UP) { isNext = false; isRelevant = true; }
                 } else if (this->affinity == DirectionalAffinityHorizontal) {
-                    switch (event.type) {
-                        case FOCUS_EVENT_DIRECTION_LEFT:
-                            while (index > 0) {
-                                if (this->subviews[index - 1]->canBecomeFocused()) this->subviews[index - 1]->becomeFocused();
-                                return true;
-                            }
-                            break;
-                        case FOCUS_EVENT_DIRECTION_RIGHT:
-                            while ((index + 1) < this->subviews.size()) {
-                                if (this->subviews[index + 1]->canBecomeFocused()) this->subviews[index + 1]->becomeFocused();
-                                return true;
-                            }
-                            break;
-                        default:
-                            break;
+                    if (event.type == FOCUS_EVENT_DIRECTION_RIGHT) { isNext = true; isRelevant = true; }
+                    else if (event.type == FOCUS_EVENT_DIRECTION_LEFT) { isNext = false; isRelevant = true; }
+                }
+                if (!isRelevant) break; // cross-axis direction; let it bubble
+
+                if (isNext) {
+                    for (int i = index + 1; i < (int)this->subviews.size(); i++) {
+                        if (this->subviews[i]->canBecomeFocused()) {
+                            this->subviews[i]->becomeFocused();
+                            return true;
+                        }
+                        auto descendant = this->subviews[i]->firstFocusableDescendant();
+                        if (descendant) {
+                            descendant->becomeFocused();
+                            return true;
+                        }
+                    }
+                } else {
+                    for (int i = index - 1; i >= 0; i--) {
+                        if (this->subviews[i]->canBecomeFocused()) {
+                            this->subviews[i]->becomeFocused();
+                            return true;
+                        }
+                        auto descendant = this->subviews[i]->lastFocusableDescendant();
+                        if (descendant) {
+                            descendant->becomeFocused();
+                            return true;
+                        }
                     }
                 }
+                // Ran out of siblings — let it bubble to the parent.
+                break;
             }
-            break;
+            case FOCUS_EVENT_SELECT:
+            {
+                // If no SELECT action was registered (checked above), fall back
+                // to TOUCH_UP_INSIDE. This makes buttons and cells that only
+                // register touch actions work with d-pad/keyboard SELECT.
+                auto fallback = this->actions.find(FOCUS_EVENT_TOUCH_UP_INSIDE);
+                if (fallback != this->actions.end()) {
+                    auto &owned = fallback->second;
+                    if (owned.owner.has_value() && owned.owner->expired()) {
+                        this->actions.erase(fallback);
+                    } else {
+                        if (std::shared_ptr<Application> application = window->application.lock()) {
+                            owned.callback(event, this->shared_from_this());
+                        }
+                        return true;
+                    }
+                }
+                break;
+            }
+            default:
+                break;
         }
     }
 

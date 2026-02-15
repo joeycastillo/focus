@@ -345,6 +345,14 @@ protected:
     bool _contains(Point point);
     bool _touch_checked = false; ///< Internal flag for touch hit-testing.
 
+    /// Find the first focusable descendant in forward (front-to-back) subview order.
+    std::shared_ptr<View> firstFocusableDescendant();
+    /// Find the last focusable descendant in reverse (back-to-front) subview order.
+    std::shared_ptr<View> lastFocusableDescendant();
+    /// Find the index of the direct child that is, or is an ancestor of, the given view.
+    /// Returns -1 if no child contains the view.
+    int indexOfChildContaining(std::shared_ptr<View> view);
+
     bool focused = false;        ///< Whether this view currently has focus.
     bool opaque = true;          ///< Whether to fill the background before drawing.
     bool hidden = false;         ///< Whether this view is hidden from drawing.

@@ -41,7 +41,10 @@ void Application::run() {
     this->setup();
     std::shared_ptr<Application> application = this->shared_from_this();
     this->window->application = application;
-    this->window->becomeFocused();
+    // Only focus the window if nothing was focused during setup().
+    if (!this->window->focusedView.lock()) {
+        this->window->becomeFocused();
+    }
     this->window->setNeedsDisplay(true);
     while(this->running) {
         for (int i = 0; i < (int)this->tasks.size(); i++) {
