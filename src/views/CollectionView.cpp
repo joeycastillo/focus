@@ -175,6 +175,65 @@ void CollectionView::loadPage(size_t page) {
     }
 }
 
+bool CollectionView::handleEvent(Event event) {
+    if (this->layout == CollectionViewLayout::Grid) {
+        switch (event.type) {
+            case FOCUS_EVENT_DIRECTION_LEFT:
+            case FOCUS_EVENT_DIRECTION_RIGHT:
+            case FOCUS_EVENT_DIRECTION_UP:
+            case FOCUS_EVENT_DIRECTION_DOWN:
+            {
+                auto window = this->getWindow().lock();
+                if (!window) return false;
+                auto focusedView = window->getFocusedView().lock();
+                if (!focusedView) return false;
+
+                int index = this->indexOfChildContaining(focusedView);
+                if (index < 0) return false;
+
+                int columns = this->frame.size.width / this->itemSize.width;
+                if (columns < 1) columns = 1;
+                int count = (int)this->subviews.size();
+                int target = -1;
+
+                switch (event.type) {
+                    case FOCUS_EVENT_DIRECTION_LEFT:
+                        if (index % columns != 0)
+                            target = index - 1;
+                        break;
+                    case FOCUS_EVENT_DIRECTION_RIGHT:
+                        if ((index + 1) % columns != 0 && index + 1 < count)
+                            target = index + 1;
+                        break;
+                    case FOCUS_EVENT_DIRECTION_UP:
+                        if (index >= columns)
+                            target = index - columns;
+                        break;
+                    case FOCUS_EVENT_DIRECTION_DOWN:
+                        if (index + columns < count)
+                            target = index + columns;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (target >= 0 && target < count) {
+                    this->subviews[target]->becomeFocused();
+                    return true;
+                }
+                // At edge — bubble to parent for pagination, cross-container nav, etc.
+                if (auto sv = this->superview.lock()) {
+                    return sv->handleEvent(event);
+                }
+                return false;
+            }
+            default:
+                break;
+        }
+    }
+    return View::handleEvent(event);
+}
+
 void CollectionView::reloadData() {
     this->removeCurrentPageViews();
     this->currentPage = 0;

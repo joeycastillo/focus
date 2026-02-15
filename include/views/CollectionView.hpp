@@ -92,6 +92,8 @@ public:
     /// @brief Get how many items fit on one page.
     size_t getItemsPerPage() const;
 
+    bool handleEvent(Event event) override;
+
 private:
     CollectionViewDataSource* dataSource = nullptr;
     std::optional<std::weak_ptr<void>> dataSourceOwner;
