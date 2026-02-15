@@ -51,7 +51,9 @@ class CollectionViewCell;
  * The PaginatedCollectionView serves as the root view. Configuration (item size,
  * layout, pagination style) is stored and applied when the view is created.
  * Subclasses prepare their data in viewWillAppear(); the collection is reloaded
- * automatically in viewDidAppear() after the container has set the frame.
+ * automatically in viewDidLayoutSubviews() after the container has set the frame.
+ * The current page is saved across view destruction so that navigating back
+ * in a NavigationViewController restores the scroll position.
  */
 class CollectionViewController : public ViewController,
                                   public CollectionViewDataSource,
@@ -82,6 +84,7 @@ public:
 
     void viewDidLayoutSubviews() override;
     void viewDidAppear() override;
+    void viewWillDisappear() override;
 
 protected:
     void createView() override;
@@ -104,4 +107,5 @@ private:
     Size configuredItemSize = {0, 0};
     CollectionViewLayout configuredLayout = CollectionViewLayout::VerticalList;
     PaginationStyle configuredPaginationStyle = PaginationStyle::Arrows;
+    size_t savedPageIndex = 0;
 };

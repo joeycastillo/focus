@@ -82,6 +82,7 @@ void CollectionViewController::viewDidLayoutSubviews() {
     if (this->paginatedView) {
         this->paginatedView->setPaginationStyle(this->configuredPaginationStyle);
         this->paginatedView->reloadData();
+        this->paginatedView->goToPage(this->savedPageIndex);
     }
 }
 
@@ -101,6 +102,13 @@ void CollectionViewController::viewDidAppear() {
             }
         }
     }
+}
+
+void CollectionViewController::viewWillDisappear() {
+    if (this->paginatedView) {
+        this->savedPageIndex = this->paginatedView->getCurrentPage();
+    }
+    ViewController::viewWillDisappear();
 }
 
 std::shared_ptr<PaginatedCollectionView> CollectionViewController::getPaginatedView() const {

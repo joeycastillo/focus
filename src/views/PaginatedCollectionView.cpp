@@ -85,6 +85,14 @@ void PaginatedCollectionView::goToPreviousPage() {
     }
 }
 
+void PaginatedCollectionView::goToPage(size_t page) {
+    size_t total = this->collectionView->getPageCount();
+    if (total == 0) return;
+    if (page >= total) page = total - 1;
+    this->collectionView->goToPage(page);
+    updateIndicators();
+}
+
 size_t PaginatedCollectionView::getCurrentPage() const {
     return this->collectionView->getCurrentPage();
 }

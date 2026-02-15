@@ -81,6 +81,8 @@ public:
     void goToNextPage();
     /// @brief Navigate to the previous page (no-op if already on the first page).
     void goToPreviousPage();
+    /// @brief Navigate to a specific page (clamped to valid range).
+    void goToPage(size_t page);
 
     /// @brief Get the current page index (0-based).
     size_t getCurrentPage() const;
