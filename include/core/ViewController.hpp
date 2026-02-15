@@ -48,9 +48,11 @@ class NavigationViewController;
  * The lifecycle follows a predictable sequence:
  * 1. viewWillAppear() — called before the view is added to the window.
  *    The base implementation calls createView() if the view doesn't exist yet.
- * 2. viewDidAppear() — called after the view is added to the window.
- * 3. viewWillDisappear() — called before the view is removed.
- * 4. viewDidDisappear() — called after the view is removed.
+ * 2. viewDidLayoutSubviews() — called after the container has finalized the
+ *    root view's frame. Use this for size-dependent layout work.
+ * 3. viewDidAppear() — called after the view is added to the window.
+ * 4. viewWillDisappear() — called before the view is removed.
+ * 5. viewDidDisappear() — called after the view is removed.
  *    The base implementation calls destroyView() to release the view.
  */
 class ViewController : public std::enable_shared_from_this<ViewController> {
@@ -63,6 +65,10 @@ public:
 
     /// @brief Called before the view is added to the window. Creates the view if needed.
     virtual void viewWillAppear();
+    /// @brief Called after the container has finalized this view controller's root
+    ///        view frame. Override to perform size-dependent layout work (e.g.
+    ///        reloading a collection with the correct page dimensions).
+    virtual void viewDidLayoutSubviews() {};
     /// @brief Called after the view has been added to the window.
     virtual void viewDidAppear() {};
     /// @brief Called before the view is removed from the window.

@@ -80,6 +80,7 @@ public:
     /// @brief Reload all items from the data source.
     void reloadData();
 
+    void viewDidLayoutSubviews() override;
     void viewDidAppear() override;
 
 protected:

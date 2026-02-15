@@ -173,6 +173,7 @@ void Application::setRootViewController(std::shared_ptr<ViewController> viewCont
     // set up new view controller
     this->rootViewController = viewController;
     this->rootViewController->viewWillAppear();
+    this->rootViewController->viewDidLayoutSubviews();
     this->window->addSubview(this->rootViewController->view);
     this->rootViewController->viewDidAppear();
 }
@@ -188,6 +189,7 @@ void Application::presentViewController(std::shared_ptr<ViewController> viewCont
 
     // Create the view so we can inspect it before adding to the window.
     viewController->viewWillAppear();
+    viewController->viewDidLayoutSubviews();
 
     // Add a dimmer overlay unless the modal's view is opaque (full-screen).
     if (!viewController->view->isOpaque()) {

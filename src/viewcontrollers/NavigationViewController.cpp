@@ -94,9 +94,16 @@ void NavigationViewController::viewWillAppear() {
             topVC->view->setFrame(MakeRect(0, 0,
                 this->contentArea->getFrame().size.width,
                 this->contentArea->getFrame().size.height));
+            topVC->viewDidLayoutSubviews();
             this->contentArea->addSubview(topVC->view);
         }
         this->updateNavigationBar();
+    }
+}
+
+void NavigationViewController::viewDidLayoutSubviews() {
+    if (!this->viewControllerStack.empty()) {
+        this->viewControllerStack.back()->viewDidLayoutSubviews();
     }
 }
 
@@ -188,6 +195,7 @@ void NavigationViewController::transitionFromViewController(
         newVC->view->setFrame(MakeRect(0, 0,
             this->contentArea->getFrame().size.width,
             this->contentArea->getFrame().size.height));
+        newVC->viewDidLayoutSubviews();
         this->contentArea->addSubview(newVC->view);
     }
     newVC->viewDidAppear();

@@ -74,15 +74,32 @@ void CollectionViewController::createView() {
     this->view = this->paginatedView;
 }
 
-void CollectionViewController::viewDidAppear() {
-    ViewController::viewDidAppear();
+void CollectionViewController::viewDidLayoutSubviews() {
+    ViewController::viewDidLayoutSubviews();
 
-    // The container (e.g. NavigationViewController) may have resized our root
-    // view after createView(). Rebuild the internal pagination layout with the
-    // actual frame dimensions and reload data.
+    // The container has finalized our root view's frame. Rebuild the internal
+    // pagination layout with the actual dimensions and populate cells.
     if (this->paginatedView) {
         this->paginatedView->setPaginationStyle(this->configuredPaginationStyle);
         this->paginatedView->reloadData();
+    }
+}
+
+void CollectionViewController::viewDidAppear() {
+    ViewController::viewDidAppear();
+
+    // Cells were created by reloadData() in viewDidLayoutSubviews(). For the
+    // initial load, Window::addSubview's focus bootstrapping will have already
+    // focused the first cell. For push transitions (View::addSubview, no
+    // bootstrapping), ensure something is focused.
+    if (this->paginatedView) {
+        if (auto window = this->paginatedView->getWindow().lock()) {
+            auto current = window->getFocusedView().lock();
+            if (!current || current == window) {
+                auto first = this->paginatedView->firstFocusableDescendant();
+                if (first) first->becomeFocused();
+            }
+        }
     }
 }
 

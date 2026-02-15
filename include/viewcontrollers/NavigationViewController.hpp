@@ -96,6 +96,7 @@ public:
 
     // ViewController lifecycle overrides
     void viewWillAppear() override;
+    void viewDidLayoutSubviews() override;
     void viewDidAppear() override;
     void viewWillDisappear() override;
     void viewDidDisappear() override;
