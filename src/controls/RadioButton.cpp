@@ -110,7 +110,7 @@ void RadioButton::drawContent(int x, int y, Rect clipRect) {
 }
 
 bool RadioButton::handleEvent(Event event) {
-    if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
+    if (event.type == FOCUS_EVENT_TOUCH_DOWN || event.type == FOCUS_EVENT_SELECT) {
         if (!this->selected) {
             this->selected = true;
             this->canvasValid = false;

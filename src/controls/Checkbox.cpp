@@ -108,7 +108,7 @@ void Checkbox::drawContent(int x, int y, Rect clipRect) {
 }
 
 bool Checkbox::handleEvent(Event event) {
-    if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
+    if (event.type == FOCUS_EVENT_TOUCH_DOWN || event.type == FOCUS_EVENT_SELECT) {
         this->checked = !this->checked;
         this->canvasValid = false;
         if (std::shared_ptr<Window> window = this->getWindow().lock()) {
