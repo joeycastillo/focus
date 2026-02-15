@@ -174,10 +174,16 @@ void AlertViewController::createView() {
         int totalSpacing = (numButtons - 1) * buttonSpacing;
         int singleButtonWidth = (contentWidth - totalSpacing) / numButtons;
 
+        // Wrap horizontal buttons in a container with horizontal affinity
+        // so LEFT/RIGHT navigates between them via d-pad.
+        auto buttonRow = std::make_shared<View>(
+            MakeRect(padding, yPos, contentWidth, buttonHeight));
+        buttonRow->setDirectionalAffinity(DirectionalAffinityHorizontal);
+
         for (int i = 0; i < numButtons; i++) {
-            int buttonX = padding + i * (singleButtonWidth + buttonSpacing);
+            int buttonX = i * (singleButtonWidth + buttonSpacing);
             auto button = std::make_shared<Button>(
-                MakeRect(buttonX, yPos, singleButtonWidth, buttonHeight),
+                MakeRect(buttonX, 0, singleButtonWidth, buttonHeight),
                 this->buttonLabels[i]);
 
             int buttonIndex = i;
@@ -187,8 +193,9 @@ void AlertViewController::createView() {
                 },
                 FOCUS_EVENT_TOUCH_UP_INSIDE);
 
-            alertBox->addSubview(button);
+            buttonRow->addSubview(button);
         }
+        alertBox->addSubview(buttonRow);
     } else {
         for (int i = 0; i < numButtons; i++) {
             auto button = std::make_shared<Button>(

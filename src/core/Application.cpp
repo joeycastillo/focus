@@ -198,9 +198,17 @@ void Application::presentViewController(std::shared_ptr<ViewController> viewCont
         this->window->addSubview(entry.dimmer);
     }
 
-    // Present the modal VC's view on top
+    // Present the modal VC's view on top. Clip focus so d-pad
+    // navigation cannot escape the modal into the views behind it.
+    viewController->view->setClipsFocus(true);
     this->window->addSubview(viewController->view);
     viewController->viewDidAppear();
+
+    // Move focus into the modal's view hierarchy.
+    auto descendant = viewController->view->firstFocusableDescendant();
+    if (descendant) {
+        descendant->becomeFocused();
+    }
 
     this->modalStack.push_back(entry);
 }

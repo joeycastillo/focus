@@ -369,6 +369,11 @@ bool View::handleEvent(Event event) {
         }
     }
 
+    if (this->clipsFocus) {
+        // This view traps focus — swallow the event so it doesn't escape.
+        return true;
+    }
+
     if (std::shared_ptr<View> superview = this->superview.lock()) {
         // if the event was not handled internally, bubble it up to the next view in the hierarchy.
         superview->handleEvent(event);
@@ -489,6 +494,14 @@ uint16_t View::getDirectionalAffinity() {
 
 void View::setDirectionalAffinity(DirectionalAffinity value) {
     this->affinity = value;
+}
+
+bool View::getClipsFocus() const {
+    return this->clipsFocus;
+}
+
+void View::setClipsFocus(bool value) {
+    this->clipsFocus = value;
 }
 
 std::weak_ptr<View> View::getViewForTouch(Point touch) {

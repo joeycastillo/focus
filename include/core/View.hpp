@@ -148,6 +148,11 @@ public:
      */
     virtual void resignFocus();
 
+    /// @brief Find the first focusable descendant (depth-first, front-to-back).
+    std::shared_ptr<View> firstFocusableDescendant();
+    /// @brief Find the last focusable descendant (depth-first, back-to-front).
+    std::shared_ptr<View> lastFocusableDescendant();
+
     /// @brief Called when this view is added to a window's hierarchy.
     virtual void movedToWindow();
 
@@ -294,6 +299,12 @@ public:
     /// @brief Set the directional affinity (vertical or horizontal) for subview navigation.
     void setDirectionalAffinity(DirectionalAffinity value);
 
+    /// @brief Whether this view prevents focus from leaving its subtree.
+    /// When true, directional navigation events that would bubble past this
+    /// view are silently consumed instead. Used for modal dialogs.
+    bool getClipsFocus() const;
+    void setClipsFocus(bool value);
+
     /**
      * @brief Mark a region as needing redraw.
      *
@@ -345,10 +356,6 @@ protected:
     bool _contains(Point point);
     bool _touch_checked = false; ///< Internal flag for touch hit-testing.
 
-    /// Find the first focusable descendant in forward (front-to-back) subview order.
-    std::shared_ptr<View> firstFocusableDescendant();
-    /// Find the last focusable descendant in reverse (back-to-front) subview order.
-    std::shared_ptr<View> lastFocusableDescendant();
     /// Find the index of the direct child that is, or is an ancestor of, the given view.
     /// Returns -1 if no child contains the view.
     int indexOfChildContaining(std::shared_ptr<View> view);
@@ -356,6 +363,7 @@ protected:
     bool focused = false;        ///< Whether this view currently has focus.
     bool opaque = true;          ///< Whether to fill the background before drawing.
     bool hidden = false;         ///< Whether this view is hidden from drawing.
+    bool clipsFocus = false;     ///< Whether focus is trapped inside this subtree.
     uint16_t backgroundColor;    ///< Background fill color.
     uint16_t foregroundColor;    ///< Foreground drawing color.
     Rect frame = {};             ///< Position and size in superview coordinates.
