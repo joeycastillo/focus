@@ -38,6 +38,9 @@
 #pragma once
 
 #include "Focus.hpp"
+#include <string>
+
+class NavigationViewController;
 
 /**
  * @brief Abstract controller that manages a view and its lifecycle.
@@ -77,6 +80,15 @@ public:
      */
     void generateEvent(int32_t eventType, int32_t userInfo = 0);
 
+    /// @brief Get the title for this view controller (displayed in navigation bars, etc.).
+    std::string getTitle() const;
+
+    /// @brief Set the title for this view controller.
+    void setTitle(const std::string& title);
+
+    /// @brief Get the navigation controller managing this view controller, if any.
+    std::shared_ptr<NavigationViewController> getNavigationController() const;
+
 protected:
     /**
      * @brief Create this controller's view hierarchy.
@@ -92,6 +104,9 @@ protected:
 
     std::shared_ptr<View> view;            ///< The root view managed by this controller.
     std::weak_ptr<Application> application; ///< Weak reference to the owning application.
+    std::string title;                     ///< Title displayed in navigation bars.
+    std::weak_ptr<NavigationViewController> navigationController; ///< Set by NavigationViewController when pushed.
 
     friend class Application;
+    friend class NavigationViewController;
 };

@@ -23,6 +23,7 @@
  */
 
 #include "ViewController.hpp"
+#include "NavigationViewController.hpp"
 #include "Application.hpp"
 #include "Window.hpp"
 
@@ -62,4 +63,16 @@ void ViewController::createView() {
 
 void ViewController::destroyView() {
     this->view.reset();
+}
+
+std::string ViewController::getTitle() const {
+    return this->title;
+}
+
+void ViewController::setTitle(const std::string& title) {
+    this->title = title;
+}
+
+std::shared_ptr<NavigationViewController> ViewController::getNavigationController() const {
+    return this->navigationController.lock();
 }
