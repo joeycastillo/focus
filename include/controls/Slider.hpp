@@ -78,10 +78,13 @@ public:
     void setFont(std::shared_ptr<Font> font);
     /// @brief Get the current font.
     std::shared_ptr<Font> getFont() const;
+    /// @brief Set the step size for d-pad LEFT/RIGHT adjustment (default 0.1).
+    void setStep(float step);
 
 protected:
     std::string label;             ///< Label text displayed left of the track.
     float value = 0.0f;           ///< Current value (0.0 to 1.0).
+    float step = 0.1f;            ///< Step size for d-pad adjustment.
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
 
 private:

@@ -150,6 +150,26 @@ bool Slider::handleEvent(Event event) {
         }
         return true;
     }
+    // LEFT/RIGHT adjust value when focused; UP/DOWN pass through for navigation.
+    if (event.type == FOCUS_EVENT_DIRECTION_LEFT || event.type == FOCUS_EVENT_DIRECTION_RIGHT) {
+        float delta = (event.type == FOCUS_EVENT_DIRECTION_RIGHT) ? this->step : -this->step;
+        float newValue = this->value + delta;
+        if (newValue < 0.0f) newValue = 0.0f;
+        if (newValue > 1.0f) newValue = 1.0f;
+        if (newValue != this->value) {
+            this->value = newValue;
+            this->canvasValid = false;
+            if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+                this->setNeedsDisplayInRect(this->frame);
+            }
+            auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
+            if (it != this->actions.end()) {
+                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, (int32_t)(this->value * 8191)};
+                it->second.callback(valueEvent, this->weak_from_this());
+            }
+        }
+        return true;
+    }
     return View::handleEvent(event);
 }
 
@@ -197,4 +217,8 @@ void Slider::setFont(std::shared_ptr<Font> font) {
 
 std::shared_ptr<Font> Slider::getFont() const {
     return this->font;
+}
+
+void Slider::setStep(float step) {
+    this->step = step;
 }
