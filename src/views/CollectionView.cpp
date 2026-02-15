@@ -51,6 +51,11 @@ void CollectionView::setDelegate(CollectionViewDelegate* delegate, std::weak_ptr
 
 void CollectionView::setLayout(CollectionViewLayout layout) {
     this->layout = layout;
+    if (layout == CollectionViewLayout::HorizontalList) {
+        this->setDirectionalAffinity(DirectionalAffinityHorizontal);
+    } else {
+        this->setDirectionalAffinity(DirectionalAffinityVertical);
+    }
 }
 
 void CollectionView::setItemSize(Size size) {
