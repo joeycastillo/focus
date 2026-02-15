@@ -34,6 +34,7 @@ NavigationBar::NavigationBar(int width) : View(MakeRect(0, 0, width, getHeight()
 
 std::shared_ptr<NavigationBar> NavigationBar::create(int width) {
     auto bar = std::shared_ptr<NavigationBar>(new NavigationBar(width));
+    bar->setDirectionalAffinity(DirectionalAffinityHorizontal);
 
     int height = getHeight();
     int padding = 8;
