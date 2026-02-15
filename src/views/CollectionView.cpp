@@ -224,8 +224,8 @@ bool CollectionView::handleEvent(Event event) {
                     return true;
                 }
                 // At edge — bubble to parent for pagination, cross-container nav, etc.
-                if (auto sv = this->superview.lock()) {
-                    return sv->handleEvent(event);
+                if (this->superview) {
+                    return this->superview->handleEvent(event);
                 }
                 return false;
             }

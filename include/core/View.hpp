@@ -240,8 +240,8 @@ public:
      */
     void removeAction(int32_t type);
 
-    /// @brief Get this view's parent view, or an empty weak_ptr if none.
-    virtual std::weak_ptr<View>getSuperview();
+    /// @brief Get this view's parent view, or nullptr if none.
+    virtual View* getSuperview();
 
     /// @brief Get the window this view belongs to, or an empty weak_ptr if detached.
     virtual std::weak_ptr<Window> getWindow();
@@ -384,7 +384,12 @@ protected:
         std::optional<std::weak_ptr<void>> owner; ///< nullopt = permanent (unowned).
     };
     std::map<int32_t, OwnedAction> actions;       ///< Registered event action callbacks.
-    std::weak_ptr<View> superview;               ///< Parent view in the hierarchy.
+    /// Non-owning back-reference to the parent view. Raw pointer (not weak_ptr)
+    /// because the parent structurally outlives its children: the parent holds
+    /// shared_ptr<View> in its subviews vector, and removeSubview() / ~View()
+    /// null this pointer on removal. Always null-check before use — a view with
+    /// no parent has superview == nullptr.
+    View* superview = nullptr;
 
 private:
     std::weak_ptr<Window> window; ///< The window this view belongs to.

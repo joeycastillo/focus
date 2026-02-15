@@ -49,11 +49,13 @@ View::View(Rect rect) {
     this->foregroundColor = GrayscaleColor::DefaultForegroundColor();
     this->backgroundColor = GrayscaleColor::DefaultBackgroundColor();
     this->window.reset();
-    this->superview.reset();
 }
 
 View::~View() {
     // printf("Destroying view %p\n", this);
+    for (auto& child : this->subviews) {
+        child->superview = nullptr;
+    }
 }
 
 void View::draw(int x, int y, Rect clipRect) {
@@ -144,7 +146,7 @@ void View::drawContent(int x, int y, Rect clipRect) {
 }
 
 void View::addSubview(std::shared_ptr<View> view) {
-    view->superview = this->shared_from_this();
+    view->superview = this;
     this->subviews.push_back(view);
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         view->setWindow(window);
@@ -158,9 +160,9 @@ void View::removeSubview(std::shared_ptr<View> view) {
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         std::shared_ptr<View> focused = window->getFocusedView().lock();
         if (focused) {
-            std::shared_ptr<View> v = focused;
+            View* v = focused.get();
             while (v) {
-                if (v == view) {
+                if (v == view.get()) {
                     removingFocused = true;
                     focused->willResignFocus();
                     focused->focused = false;
@@ -168,12 +170,12 @@ void View::removeSubview(std::shared_ptr<View> view) {
                     focused->didResignFocus();
                     break;
                 }
-                v = v->superview.lock();
+                v = v->superview;
             }
         }
     }
 
-    view->superview.reset();
+    view->superview = nullptr;
     view->window.reset();
     int index = std::distance(this->subviews.begin(), std::find(this->subviews.begin(), this->subviews.end(), view));
     this->subviews.erase(this->subviews.begin() + index);
@@ -215,10 +217,10 @@ std::shared_ptr<View> View::lastFocusableDescendant() {
 
 int View::indexOfChildContaining(std::shared_ptr<View> view) {
     for (int i = 0; i < (int)this->subviews.size(); i++) {
-        std::shared_ptr<View> v = view;
+        View* v = view.get();
         while (v) {
-            if (v == this->subviews[i]) return i;
-            v = v->superview.lock();
+            if (v == this->subviews[i].get()) return i;
+            v = v->superview;
         }
     }
     return -1;
@@ -252,9 +254,9 @@ bool View::becomeFocused() {
 
 void View::resignFocus() {
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-        if (std::shared_ptr<View> superview = this->superview.lock()) {
-            // when resigining focus (due to being removed from a superview), pass focus to the superview.
-            superview->becomeFocused();
+        if (this->superview) {
+            // when resigning focus (due to being removed from a superview), pass focus to the superview.
+            this->superview->becomeFocused();
         }
     }
 }
@@ -268,10 +270,9 @@ void View::willBecomeFocused() {
 }
 
 void View::didBecomeFocused() {
-    if (this->superview.lock()) {
+    if (this->superview) {
         if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-            std::shared_ptr<View> shared_this = this->shared_from_this();
-            shared_this->setNeedsDisplayInRect(this->frame);
+            this->setNeedsDisplayInRect(this->frame);
         }
     }
 }
@@ -281,10 +282,9 @@ void View::willResignFocus() {
 }
 
 void View::didResignFocus() {
-    if (this->superview.lock()) {
+    if (this->superview) {
         if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-            std::shared_ptr<View> shared_this = this->shared_from_this();
-            shared_this->setNeedsDisplayInRect(this->frame);
+            this->setNeedsDisplayInRect(this->frame);
         }
     }
 }
@@ -397,9 +397,9 @@ bool View::handleEvent(Event event) {
         return true;
     }
 
-    if (std::shared_ptr<View> superview = this->superview.lock()) {
+    if (this->superview) {
         // if the event was not handled internally, bubble it up to the next view in the hierarchy.
-        superview->handleEvent(event);
+        this->superview->handleEvent(event);
     }
 
     return false;
@@ -417,7 +417,7 @@ void View::removeAction(int32_t type) {
     this->actions.erase(type);
 }
 
-std::weak_ptr<View> View::getSuperview() {
+View* View::getSuperview() {
     return this->superview;
 }
 
@@ -566,11 +566,11 @@ Point View::convertPointFromWindow(Point windowPoint) {
     int offsetX = frame.origin.x - bounds.origin.x;
     int offsetY = frame.origin.y - bounds.origin.y;
 
-    std::shared_ptr<View> ancestor = superview.lock();
+    View* ancestor = superview;
     while (ancestor) {
         offsetX += ancestor->frame.origin.x - ancestor->bounds.origin.x;
         offsetY += ancestor->frame.origin.y - ancestor->bounds.origin.y;
-        ancestor = ancestor->superview.lock();
+        ancestor = ancestor->superview;
     }
 
     return MakePoint(windowPoint.x - offsetX, windowPoint.y - offsetY);
@@ -583,11 +583,11 @@ bool View::containsPointInWindowCoordinates(Point windowPoint) {
 }
 
 void View::setNeedsDisplayInRect(Rect rect) {
-    std::shared_ptr<View> shared_this = this->shared_from_this();
-    std::shared_ptr<View> superview(shared_this);
-    while((superview = superview->superview.lock())) {
-        rect.origin.x += superview->frame.origin.x;
-        rect.origin.y += superview->frame.origin.y;
+    View* sv = this->superview;
+    while (sv) {
+        rect.origin.x += sv->frame.origin.x;
+        rect.origin.y += sv->frame.origin.y;
+        sv = sv->superview;
     }
 
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {

@@ -127,8 +127,6 @@ public:
     /// @brief Check whether a view is the keyboard or a descendant of it.
     bool isKeyboardView(std::shared_ptr<View> view);
 
-    /// @brief Returns an empty weak_ptr (the window has no superview).
-    std::weak_ptr<View>getSuperview() override;
     /// @brief Returns a weak_ptr to this window.
     std::weak_ptr<Window> getWindow() override;
 

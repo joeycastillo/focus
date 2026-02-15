@@ -103,10 +103,6 @@ std::weak_ptr<View> Window::getFocusedView() {
     return this->focusedView;
 }
 
-std::weak_ptr<View> Window::getSuperview() {
-    return std::weak_ptr<View>();
-}
-
 std::weak_ptr<Window> Window::getWindow() {
     return std::static_pointer_cast<Window, View>(this->shared_from_this());
 }
@@ -197,10 +193,10 @@ void Window::onKeyPressed(std::string key) {
 bool Window::isKeyboardView(std::shared_ptr<View> view) {
     if (!this->keyboard) return false;
 
-    std::shared_ptr<View> v = view;
+    View* v = view.get();
     while (v) {
-        if (v == this->keyboard) return true;
-        v = v->getSuperview().lock();
+        if (v == this->keyboard.get()) return true;
+        v = v->superview;
     }
     return false;
 }
