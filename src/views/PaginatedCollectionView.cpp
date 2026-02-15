@@ -97,6 +97,46 @@ size_t PaginatedCollectionView::getItemsPerPage() const {
     return this->collectionView->getItemsPerPage();
 }
 
+bool PaginatedCollectionView::handleEvent(Event event) {
+    if (this->paginationStyle == PaginationStyle::Arrows) {
+        bool isVertical = (this->currentLayout != CollectionViewLayout::HorizontalList);
+        bool isNext = false;
+        bool isRelevant = false;
+
+        if (isVertical) {
+            if (event.type == FOCUS_EVENT_DIRECTION_DOWN) { isNext = true; isRelevant = true; }
+            else if (event.type == FOCUS_EVENT_DIRECTION_UP) { isNext = false; isRelevant = true; }
+        } else {
+            if (event.type == FOCUS_EVENT_DIRECTION_RIGHT) { isNext = true; isRelevant = true; }
+            else if (event.type == FOCUS_EVENT_DIRECTION_LEFT) { isNext = false; isRelevant = true; }
+        }
+
+        if (isRelevant) {
+            // Check if the focused view is inside our collection view.
+            if (auto window = this->getWindow().lock()) {
+                auto focused = window->getFocusedView().lock();
+                if (focused) {
+                    int childIndex = this->indexOfChildContaining(focused);
+                    if (childIndex >= 0 && this->subviews[childIndex] == this->collectionView) {
+                        if (isNext && this->collectionView->getCurrentPage() + 1 < this->collectionView->getPageCount()) {
+                            this->goToNextPage();
+                            auto first = this->collectionView->firstFocusableDescendant();
+                            if (first) first->becomeFocused();
+                            return true;
+                        } else if (!isNext && this->collectionView->getCurrentPage() > 0) {
+                            this->goToPreviousPage();
+                            auto last = this->collectionView->lastFocusableDescendant();
+                            if (last) last->becomeFocused();
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return View::handleEvent(event);
+}
+
 void PaginatedCollectionView::rebuildLayout() {
     // Remove all existing subviews
     while (!this->subviews.empty()) {

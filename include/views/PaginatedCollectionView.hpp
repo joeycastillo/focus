@@ -89,6 +89,8 @@ public:
     /// @brief Get how many items fit on one page.
     size_t getItemsPerPage() const;
 
+    bool handleEvent(Event event) override;
+
 private:
     std::shared_ptr<CollectionView> collectionView;
 
