@@ -33,6 +33,10 @@
  * Fires FOCUS_EVENT_VALUE_CHANGED with userInfo set to (int32_t)(value * 8191)
  * when the value changes, making it directly compatible with 13-bit PWM duty
  * cycle values used by the frontlight controller.
+ *
+ * @note D-pad LEFT/RIGHT are consumed by the slider to adjust its value.
+ * Only UP/DOWN bubble for navigation. Avoid placing sliders side by side
+ * in a horizontal layout when using non-touch input.
  */
 
 #pragma once
