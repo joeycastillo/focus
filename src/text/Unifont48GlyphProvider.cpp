@@ -51,7 +51,7 @@ Size Unifont48GlyphProvider::getMaxSize() {
 }
 
 Point Unifont48GlyphProvider::getOffset() {
-    return MakePoint(0, 0);
+    return PointZero;
 }
 
 uint8_t Unifont48GlyphProvider::getGlyphRowCount() {

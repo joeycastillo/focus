@@ -166,7 +166,7 @@ uint8_t Font::getPointSize() const {
 }
 
 Rect Font::metricsForCodepoint(UNICODE_CODEPOINT codepoint) {
-    return provider ? provider->metricsForCodepoint(codepoint) : MakeRect(0, 0, 0, 0);
+    return provider ? provider->metricsForCodepoint(codepoint) : RectZero;
 }
 
 uint8_t* Font::glyphForCodepoint(UNICODE_CODEPOINT codepoint) {

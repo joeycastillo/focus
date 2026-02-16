@@ -196,7 +196,7 @@ Rect PackedFontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, c
         if (it == glyphs.end()) {
             it = glyphs.find(32);
             if (it == glyphs.end()) {
-                return MakeRect(0, 0, 0, 0);
+                return RectZero;
             }
         }
     }

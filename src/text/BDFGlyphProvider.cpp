@@ -243,7 +243,7 @@ Rect BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, const ch
             // Try space
             it = glyphs.find(32);
             if (it == glyphs.end()) {
-                return MakeRect(0, 0, 0, 0);
+                return RectZero;
             }
         }
     }

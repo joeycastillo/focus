@@ -145,6 +145,13 @@ inline Size MakeSize(int width, int height) { return {width, height}; }
 /// @brief Construct a Rect from origin (x, y) and size (width, height).
 inline Rect MakeRect(int x, int y, int width, int height) { return {{x, y}, {width, height}}; }
 
+/// @brief A point at the origin (0, 0).
+inline constexpr Point PointZero = {0, 0};
+/// @brief A zero-sized size (0, 0).
+inline constexpr Size SizeZero = {0, 0};
+/// @brief A zero rect at the origin with no size.
+inline constexpr Rect RectZero = {{0, 0}, {0, 0}};
+
 /// @brief Test whether two Points are equal.
 inline bool PointsEqual(Point a, Point b) { return (a.x == b.x) && (a.y == b.y); }
 /// @brief Test whether two Sizes are equal.

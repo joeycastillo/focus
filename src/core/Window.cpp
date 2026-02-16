@@ -126,7 +126,7 @@ void Window::setCapturedTouchView(std::weak_ptr<View> view, Point touchDownPoint
 
 void Window::clearCapturedTouchView() {
     this->capturedTouchView.reset();
-    this->touchDownPoint = MakePoint(0, 0);
+    this->touchDownPoint = PointZero;
 }
 
 Point Window::getTouchDownPoint() {
