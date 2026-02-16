@@ -249,7 +249,7 @@ void CanvasView::setWordMapOutput(std::vector<WordPosition> *output) {
 
 
 int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const char *utf8String,
-                         TextAlignment alignment, int initialEmphasisDepth, int initialIndentLevel) {
+                         TextAlignment alignment) {
     GlyphProvider *glyphProvider = nullptr;
     if (this->font) {
         glyphProvider = this->font->getGlyphProvider();
@@ -271,10 +271,8 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
     this->textAlignment = alignment;
     this->direction = 1;
     this->hasLastGlyph = false;
-    this->emphasisDepth = initialEmphasisDepth;
-    this->readingTitle = false;
+    this->emphasisDepth = 0;
     this->lastWasNewline = false;
-    this->initialIndentLevel = initialIndentLevel;
 
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
     if (!codepoints) return 0;
@@ -317,6 +315,323 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
     free(codepoints);
 
     return retVal;
+}
+
+void CanvasView::drawStyledFrame(Rect layoutRect, const FrameResult& frame, const char *utf8Text,
+                                 uint32_t textFileOffset, uint16_t color, int textSize,
+                                 TextAlignment alignment) {
+    GlyphProvider *glyphProvider = nullptr;
+    if (this->font) {
+        glyphProvider = this->font->getGlyphProvider();
+    } else {
+        auto sys = Font::systemFont();
+        if (sys) glyphProvider = sys->getGlyphProvider();
+    }
+    if (glyphProvider == nullptr || frame.lines.empty()) return;
+
+    size_t textLen = strlen(utf8Text);
+    if (textLen == 0) return;
+
+    size_t codepointLen = utf8_codepoint_length((char *)utf8Text);
+    if (codepointLen == 0) return;
+
+    this->textSize = textSize;
+    this->textColor = color;
+    this->glyphRowCount = glyphProvider->getGlyphRowCount();
+    this->lineSpacing = TextLayout::calculateLineSpacing(glyphProvider);
+    this->paragraphSpacing = TextLayout::calculateParagraphSpacing(glyphProvider);
+    this->textLayoutRect = layoutRect;
+    this->textAlignment = alignment;
+    this->direction = 1;
+    this->hasLastGlyph = false;
+    this->emphasisDepth = 0;
+    this->lastWasNewline = false;
+
+    UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(codepointLen * sizeof(UNICODE_CODEPOINT));
+    if (!codepoints) return;
+    utf8_parse((char *)utf8Text, codepoints);
+
+    // Build byte offset map (before shaping, so offsets match original UTF-8)
+    uint32_t *offsets = (uint32_t *)malloc((codepointLen + 1) * sizeof(uint32_t));
+    if (offsets) {
+        uint32_t bytePos = 0;
+        for (size_t i = 0; i < codepointLen; i++) {
+            offsets[i] = bytePos;
+            bytePos += TextLayout::bytesForCodepoint(codepoints[i]);
+        }
+        offsets[codepointLen] = bytePos;
+    }
+
+    if (this->wordMapOutput) {
+        this->wordMapOutput->clear();
+        this->codepointByteOffsets = offsets;
+    }
+
+    // Arabic shaping
+    bool needsShaping = false;
+    for (size_t i = 0; i < codepointLen; i++) {
+        if (codepoints[i] >= 0x0621 && codepoints[i] <= 0x06D2) {
+            needsShaping = true;
+            break;
+        }
+    }
+    if (needsShaping) {
+        shapeArabic(codepoints, codepointLen);
+    }
+
+    // Pre-detect paragraph direction
+    int paragraphDir = 1;
+    for (size_t i = 0; i < codepointLen; i++) {
+        uint8_t bc = getTraitsForCodepoint(codepoints[i]).is.bidi_class;
+        if (bidiIsRTL(bc)) { paragraphDir = -1; break; }
+        else if (bidiIsLTR(bc)) break;
+    }
+
+    // Render each TextLine from the FrameResult
+    size_t cpIndex = 0;
+    for (const auto& line : frame.lines) {
+        // Convert file byte offsets to buffer-relative offsets
+        uint32_t lineStartBuf = line.startByteOffset - textFileOffset;
+        uint32_t lineEndBuf = line.endByteOffset - textFileOffset;
+
+        // Find codepoint range for this line using the byte offset map
+        while (cpIndex < codepointLen && offsets[cpIndex] < lineStartBuf) {
+            cpIndex++;
+        }
+        size_t cpStart = cpIndex;
+        size_t cpEnd = cpStart;
+        while (cpEnd < codepointLen && offsets[cpEnd] < lineEndBuf) {
+            cpEnd++;
+        }
+        size_t lineLen = cpEnd - cpStart;
+        if (lineLen == 0) continue;
+
+        // Set vertical position and emphasis for this line
+        this->cursor.y = layoutRect.origin.y + line.y;
+        this->emphasisDepth = line.isTitleLine ? 2 : (int)line.emphasisDepthAtStart;
+        this->lastWasNewline = false;
+
+        // Compute horizontal layout from the line's indent
+        int16_t effectiveWidth = layoutRect.size.width - 2 * line.indent;
+        int16_t indentedOriginX = layoutRect.origin.x + line.indent;
+
+        renderBidiLine(codepoints, cpStart, lineLen, paragraphDir,
+                       effectiveWidth, indentedOriginX, glyphProvider);
+    }
+
+    if (offsets) {
+        free(offsets);
+    }
+    this->codepointByteOffsets = nullptr;
+    free(codepoints);
+}
+
+void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart, size_t lineLen,
+                                int paragraphDir, int16_t effectiveWidth, int16_t indentedOriginX,
+                                GlyphProvider *glyphProvider) {
+    if (lineLen == 0) return;
+
+    // Set initial cursor.x based on paragraph direction
+    if (paragraphDir == 1) {
+        this->cursor.x = indentedOriginX;
+    } else {
+        this->cursor.x = indentedOriginX + effectiveWidth;
+    }
+
+    // Apply text alignment offset for this line
+    if (this->textAlignment != TextAlignmentLeft) {
+        int16_t lineWidth = measureCodepointsWidth(codepoints + lineStart, lineLen, glyphProvider);
+        int16_t slack = effectiveWidth - lineWidth;
+        if (slack > 0) {
+            if (this->textAlignment == TextAlignmentCenter) {
+                if (paragraphDir == 1) {
+                    this->cursor.x = indentedOriginX + slack / 2;
+                } else {
+                    this->cursor.x = indentedOriginX + effectiveWidth - slack / 2;
+                }
+            } else if (this->textAlignment == TextAlignmentRight) {
+                if (paragraphDir == 1) {
+                    this->cursor.x = indentedOriginX + slack;
+                }
+                // RTL right-align is the default (cursor at right edge)
+            }
+        }
+    }
+
+    // Simplified UAX#9 bidi algorithm: resolve each codepoint in this line
+    // to a directional run (L or R), then render runs in visual order.
+    uint8_t resolved[lineLen];
+    for (size_t i = 0; i < lineLen; i++) {
+        resolved[i] = getTraitsForCodepoint(codepoints[lineStart + i]).is.bidi_class;
+    }
+
+    // Step 2: Resolve weak types (simplified W rules)
+    for (size_t i = 0; i < lineLen; i++) {
+        uint8_t bc = resolved[i];
+        if (bc == BIDI_NSM) {
+            resolved[i] = (i > 0) ? resolved[i - 1] : (paragraphDir == -1 ? BIDI_R : BIDI_L);
+        }
+    }
+    for (size_t i = 0; i < lineLen; i++) {
+        if (resolved[i] == BIDI_AL) resolved[i] = BIDI_R;
+    }
+    for (size_t i = 1; i + 1 < lineLen; i++) {
+        if (resolved[i] == BIDI_ES && resolved[i-1] == BIDI_EN && resolved[i+1] == BIDI_EN) {
+            resolved[i] = BIDI_EN;
+        } else if (resolved[i] == BIDI_CS) {
+            if (resolved[i-1] == BIDI_EN && resolved[i+1] == BIDI_EN) resolved[i] = BIDI_EN;
+            else if (resolved[i-1] == BIDI_AN && resolved[i+1] == BIDI_AN) resolved[i] = BIDI_AN;
+        }
+    }
+    for (size_t i = 0; i < lineLen; i++) {
+        if (resolved[i] == BIDI_ET) {
+            bool adjacentEN = false;
+            if (i > 0 && resolved[i-1] == BIDI_EN) adjacentEN = true;
+            if (i + 1 < lineLen && resolved[i+1] == BIDI_EN) adjacentEN = true;
+            if (adjacentEN) resolved[i] = BIDI_EN;
+        }
+    }
+    for (size_t i = 0; i < lineLen; i++) {
+        if (resolved[i] == BIDI_ES || resolved[i] == BIDI_ET || resolved[i] == BIDI_CS) {
+            resolved[i] = BIDI_ON;
+        }
+    }
+    for (size_t i = 0; i < lineLen; i++) {
+        if (resolved[i] == BIDI_EN) {
+            for (int j = (int)i - 1; j >= 0; j--) {
+                if (resolved[j] == BIDI_L) { resolved[i] = BIDI_L; break; }
+                if (resolved[j] == BIDI_R) break;
+            }
+            if (resolved[i] == BIDI_EN && paragraphDir == 1) resolved[i] = BIDI_L;
+        }
+    }
+
+    // Step 3: Resolve neutrals (simplified N rules)
+    for (size_t i = 0; i < lineLen; i++) {
+        uint8_t bc = resolved[i];
+        if (bc == BIDI_ON || bc == BIDI_WS || bc == BIDI_BN ||
+            bc == BIDI_B || bc == BIDI_S) {
+            uint8_t prevStrong = paragraphDir == -1 ? BIDI_R : BIDI_L;
+            for (int j = (int)i - 1; j >= 0; j--) {
+                if (resolved[j] == BIDI_L || resolved[j] == BIDI_R ||
+                    resolved[j] == BIDI_AN || resolved[j] == BIDI_EN) {
+                    prevStrong = (resolved[j] == BIDI_L) ? BIDI_L : BIDI_R;
+                    break;
+                }
+            }
+            uint8_t nextStrong = paragraphDir == -1 ? BIDI_R : BIDI_L;
+            for (size_t j = i + 1; j < lineLen; j++) {
+                if (resolved[j] == BIDI_L || resolved[j] == BIDI_R ||
+                    resolved[j] == BIDI_AN || resolved[j] == BIDI_EN) {
+                    nextStrong = (resolved[j] == BIDI_L) ? BIDI_L : BIDI_R;
+                    break;
+                }
+            }
+            if (prevStrong == nextStrong) {
+                resolved[i] = prevStrong;
+            } else {
+                resolved[i] = paragraphDir == -1 ? BIDI_R : BIDI_L;
+            }
+        } else if (bc == BIDI_EN || bc == BIDI_AN) {
+            resolved[i] = (bc == BIDI_AN) ? BIDI_R : BIDI_L;
+        }
+    }
+
+    // Word tracking state for this line
+    bool trackingWord = false;
+    int16_t wordMinX = 0, wordMaxX = 0, wordY = 0;
+    uint32_t wordStartOffset = 0, wordEndOffset = 0;
+    int16_t wordLineHeight = TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
+
+    auto emitCodepoint = [&](size_t j) {
+        UNICODE_CODEPOINT cp = codepoints[lineStart + j];
+        int16_t beforeX = this->cursor.x;
+        this->writeCodepoint(cp, glyphProvider);
+        if (this->wordMapOutput && this->codepointByteOffsets) {
+            int16_t afterX = this->cursor.x;
+            if (cp > 0x20) {
+                int16_t left = std::min(beforeX, afterX);
+                int16_t right = std::max(beforeX, afterX);
+                if (!trackingWord) {
+                    wordMinX = left;
+                    wordMaxX = right;
+                    wordY = this->cursor.y;
+                    wordStartOffset = this->codepointByteOffsets[lineStart + j];
+                    trackingWord = true;
+                } else {
+                    wordMinX = std::min(wordMinX, left);
+                    wordMaxX = std::max(wordMaxX, right);
+                }
+                wordEndOffset = this->codepointByteOffsets[lineStart + j + 1];
+            } else if (cp == 0x20 && trackingWord) {
+                this->wordMapOutput->push_back({wordMinX, wordY,
+                    (int16_t)(wordMaxX - wordMinX), wordLineHeight,
+                    wordStartOffset, wordEndOffset});
+                trackingWord = false;
+            }
+        }
+    };
+
+    // Step 4: Build and render directional runs
+    size_t i = 0;
+    while (i < lineLen) {
+        bool runIsRTL = (resolved[i] == BIDI_R);
+        size_t runStart = i;
+        while (i < lineLen && (resolved[i] == BIDI_R) == runIsRTL) {
+            i++;
+        }
+        size_t runLen = i - runStart;
+        int16_t runWidth = measureCodepointsWidth(
+            codepoints + lineStart + runStart, runLen, glyphProvider);
+
+        if (paragraphDir == -1) {
+            this->cursor.x -= runWidth;
+            int16_t runLeftEdge = this->cursor.x;
+
+            if (runIsRTL) {
+                this->direction = -1;
+                this->hasLastGlyph = false;
+                int16_t rtlCursor = runLeftEdge + runWidth;
+                this->cursor.x = rtlCursor;
+                for (size_t j = runStart; j < runStart + runLen; j++) {
+                    emitCodepoint(j);
+                }
+            } else {
+                this->direction = 1;
+                this->hasLastGlyph = false;
+                this->cursor.x = runLeftEdge;
+                for (size_t j = runStart; j < runStart + runLen; j++) {
+                    emitCodepoint(j);
+                }
+            }
+            this->cursor.x = runLeftEdge;
+            this->hasLastGlyph = false;
+        } else {
+            if (runIsRTL) {
+                this->direction = -1;
+                this->hasLastGlyph = false;
+                int16_t runRightEdge = this->cursor.x + runWidth;
+                this->cursor.x = runRightEdge;
+                for (size_t j = runStart; j < runStart + runLen; j++) {
+                    emitCodepoint(j);
+                }
+                this->cursor.x = runRightEdge;
+            } else {
+                this->direction = 1;
+                this->hasLastGlyph = false;
+                for (size_t j = runStart; j < runStart + runLen; j++) {
+                    emitCodepoint(j);
+                }
+            }
+        }
+    }
+
+    // Close any word still open at end of this line
+    if (trackingWord && this->wordMapOutput) {
+        this->wordMapOutput->push_back({wordMinX, wordY,
+            (int16_t)(wordMaxX - wordMinX), wordLineHeight,
+            wordStartOffset, wordEndOffset});
+    }
 }
 
 int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider) {
@@ -369,41 +684,9 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
         }
     }
 
-    // Block quote indentation state
-    bool atLineStart = true;
-    int16_t currentIndent = 0;
-    Rect spaceMetrics = glyphProvider->metricsForCodepoint(' ');
-    int16_t indentPerLevel = spaceMetrics.size.width * this->textSize * 3;
-
-    // Apply initial indent from page break record (for mid-paragraph starts)
-    if (this->initialIndentLevel > 0) {
-        currentIndent = this->initialIndentLevel * indentPerLevel;
-        atLineStart = false;
-    }
-
     while (pos < len) {
-        // Scan for DLE+> prefix at the start of a logical line
-        if (atLineStart) {
-            int indentLevel = 0;
-            while (pos + 1 < len &&
-                   codepoints[pos] == 0x10 &&
-                   codepoints[pos + 1] == '>') {
-                indentLevel++;
-                pos += 2;
-                retVal += 2;
-            }
-            currentIndent = indentLevel * indentPerLevel;
-        }
-
-        int16_t effectiveWidth = this->textLayoutRect.size.width - 2 * currentIndent;
-        int16_t indentedOriginX = this->textLayoutRect.origin.x + currentIndent;
-
-        // Set cursor to indented position for this line
-        if (this->direction == 1) {
-            this->cursor.x = indentedOriginX;
-        } else {
-            this->cursor.x = indentedOriginX + effectiveWidth;
-        }
+        int16_t effectiveWidth = this->textLayoutRect.size.width;
+        int16_t indentedOriginX = this->textLayoutRect.origin.x;
 
         WordWrapResult result = TextLayout::measureLineWrap(
             codepoints + pos,
@@ -420,242 +703,8 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             numGlyphsToDraw = result.codepointsConsumed;
         }
 
-        // Apply text alignment offset for this line
-        if (this->textAlignment != TextAlignmentLeft) {
-            int16_t lineWidth = measureCodepointsWidth(codepoints + pos, numGlyphsToDraw, glyphProvider);
-            int16_t slack = effectiveWidth - lineWidth;
-            if (slack > 0) {
-                if (this->textAlignment == TextAlignmentCenter) {
-                    if (this->direction == 1) {
-                        this->cursor.x = indentedOriginX + slack / 2;
-                    } else {
-                        this->cursor.x = indentedOriginX + effectiveWidth - slack / 2;
-                    }
-                } else if (this->textAlignment == TextAlignmentRight) {
-                    if (this->direction == 1) {
-                        this->cursor.x = indentedOriginX + slack;
-                    }
-                    // RTL right-align is the default (cursor at right edge)
-                }
-            }
-        }
-
-        // Simplified UAX#9 bidi algorithm: resolve each codepoint in this line
-        // to a directional run (L or R), then render runs in visual order.
-        {
-            size_t lineLen = (size_t)numGlyphsToDraw;
-            // Step 1: Get bidi class for each codepoint
-            uint8_t resolved[lineLen];
-            for (size_t i = 0; i < lineLen; i++) {
-                resolved[i] = getTraitsForCodepoint(codepoints[pos + i]).is.bidi_class;
-            }
-
-            // Step 2: Resolve weak types (simplified W rules)
-            for (size_t i = 0; i < lineLen; i++) {
-                uint8_t bc = resolved[i];
-                if (bc == BIDI_NSM) {
-                    // W1: NSM inherits preceding character's resolved type
-                    resolved[i] = (i > 0) ? resolved[i - 1] : (paragraphDir == -1 ? BIDI_R : BIDI_L);
-                }
-            }
-            // W2 (EN after AL → AN) deliberately skipped: modern Arabic text
-            // commonly uses European digits, so we keep EN as-is.
-            for (size_t i = 0; i < lineLen; i++) {
-                if (resolved[i] == BIDI_AL) resolved[i] = BIDI_R; // W3: AL → R
-            }
-            for (size_t i = 1; i + 1 < lineLen; i++) {
-                // W4: ES between EN+EN → EN; CS between EN+EN → EN; CS between AN+AN → AN
-                if (resolved[i] == BIDI_ES && resolved[i-1] == BIDI_EN && resolved[i+1] == BIDI_EN) {
-                    resolved[i] = BIDI_EN;
-                } else if (resolved[i] == BIDI_CS) {
-                    if (resolved[i-1] == BIDI_EN && resolved[i+1] == BIDI_EN) resolved[i] = BIDI_EN;
-                    else if (resolved[i-1] == BIDI_AN && resolved[i+1] == BIDI_AN) resolved[i] = BIDI_AN;
-                }
-            }
-            for (size_t i = 0; i < lineLen; i++) {
-                // W5: ET adjacent to EN → EN
-                if (resolved[i] == BIDI_ET) {
-                    bool adjacentEN = false;
-                    if (i > 0 && resolved[i-1] == BIDI_EN) adjacentEN = true;
-                    if (i + 1 < lineLen && resolved[i+1] == BIDI_EN) adjacentEN = true;
-                    if (adjacentEN) resolved[i] = BIDI_EN;
-                }
-            }
-            for (size_t i = 0; i < lineLen; i++) {
-                // W6: Remaining ES, ET, CS → ON
-                if (resolved[i] == BIDI_ES || resolved[i] == BIDI_ET || resolved[i] == BIDI_CS) {
-                    resolved[i] = BIDI_ON;
-                }
-            }
-            for (size_t i = 0; i < lineLen; i++) {
-                // W7: EN preceded by L (searching back past neutrals) → L
-                if (resolved[i] == BIDI_EN) {
-                    for (int j = (int)i - 1; j >= 0; j--) {
-                        if (resolved[j] == BIDI_L) { resolved[i] = BIDI_L; break; }
-                        if (resolved[j] == BIDI_R) break;
-                    }
-                    // If no strong type found, check paragraph direction
-                    if (resolved[i] == BIDI_EN && paragraphDir == 1) resolved[i] = BIDI_L;
-                }
-            }
-
-            // Step 3: Resolve neutrals (simplified N rules)
-            // Map everything to L or R based on context
-            for (size_t i = 0; i < lineLen; i++) {
-                uint8_t bc = resolved[i];
-                if (bc == BIDI_ON || bc == BIDI_WS || bc == BIDI_BN ||
-                    bc == BIDI_B || bc == BIDI_S) {
-                    // Find preceding strong type
-                    uint8_t prevStrong = paragraphDir == -1 ? BIDI_R : BIDI_L;
-                    for (int j = (int)i - 1; j >= 0; j--) {
-                        if (resolved[j] == BIDI_L || resolved[j] == BIDI_R ||
-                            resolved[j] == BIDI_AN || resolved[j] == BIDI_EN) {
-                            prevStrong = (resolved[j] == BIDI_L) ? BIDI_L : BIDI_R;
-                            break;
-                        }
-                    }
-                    // Find following strong type
-                    uint8_t nextStrong = paragraphDir == -1 ? BIDI_R : BIDI_L;
-                    for (size_t j = i + 1; j < lineLen; j++) {
-                        if (resolved[j] == BIDI_L || resolved[j] == BIDI_R ||
-                            resolved[j] == BIDI_AN || resolved[j] == BIDI_EN) {
-                            nextStrong = (resolved[j] == BIDI_L) ? BIDI_L : BIDI_R;
-                            break;
-                        }
-                    }
-                    // N1: If both sides agree, use that direction
-                    // N2: Otherwise, use paragraph direction
-                    if (prevStrong == nextStrong) {
-                        resolved[i] = prevStrong;
-                    } else {
-                        resolved[i] = paragraphDir == -1 ? BIDI_R : BIDI_L;
-                    }
-                } else if (bc == BIDI_EN || bc == BIDI_AN) {
-                    // I1/I2: Numbers in RTL context get rendered LTR but positioned RTL
-                    // EN stays as L (already converted by W7 if preceded by L),
-                    // AN stays as R for positioning purposes
-                    resolved[i] = (bc == BIDI_AN) ? BIDI_R : BIDI_L;
-                }
-                // L and R are already resolved
-            }
-
-            // Word tracking state for this line
-            bool trackingWord = false;
-            int16_t wordMinX = 0, wordMaxX = 0, wordY = 0;
-            uint32_t wordStartOffset = 0, wordEndOffset = 0;
-            int16_t wordLineHeight = TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
-
-            // Renders a codepoint and, when wordMapOutput is set, records word positions.
-            auto emitCodepoint = [&](size_t j) {
-                UNICODE_CODEPOINT cp = codepoints[pos + j];
-                int16_t beforeX = this->cursor.x;
-                retVal += this->writeCodepoint(cp, glyphProvider);
-                if (this->wordMapOutput && this->codepointByteOffsets) {
-                    int16_t afterX = this->cursor.x;
-                    if (cp > 0x20) {
-                        int16_t left = std::min(beforeX, afterX);
-                        int16_t right = std::max(beforeX, afterX);
-                        if (!trackingWord) {
-                            wordMinX = left;
-                            wordMaxX = right;
-                            wordY = this->cursor.y;
-                            wordStartOffset = this->codepointByteOffsets[pos + j];
-                            trackingWord = true;
-                        } else {
-                            wordMinX = std::min(wordMinX, left);
-                            wordMaxX = std::max(wordMaxX, right);
-                        }
-                        wordEndOffset = this->codepointByteOffsets[pos + j + 1];
-                    } else if (cp == 0x20 && trackingWord) {
-                        this->wordMapOutput->push_back({wordMinX, wordY,
-                            (int16_t)(wordMaxX - wordMinX), wordLineHeight,
-                            wordStartOffset, wordEndOffset});
-                        trackingWord = false;
-                    }
-                }
-            };
-
-            // Step 4: Build and render directional runs
-            //
-            // In an LTR paragraph, cursor starts at the left edge and advances right.
-            // Each run is rendered in sequence. LTR runs advance cursor right normally;
-            // RTL runs need to be rendered right-to-left within a reserved space.
-            //
-            // In an RTL paragraph, cursor starts at the right edge and advances left.
-            // Each run reserves its width leftward. RTL runs render right-to-left
-            // within their space; LTR runs render left-to-right within their space.
-            size_t i = 0;
-            while (i < lineLen) {
-                bool runIsRTL = (resolved[i] == BIDI_R);
-                size_t runStart = i;
-                while (i < lineLen && (resolved[i] == BIDI_R) == runIsRTL) {
-                    i++;
-                }
-                size_t runLen = i - runStart;
-                int16_t runWidth = measureCodepointsWidth(
-                    codepoints + pos + runStart, runLen, glyphProvider);
-
-                if (paragraphDir == -1) {
-                    // RTL paragraph: cursor.x is the right edge of remaining space
-                    // Reserve space for this run by moving cursor left
-                    this->cursor.x -= runWidth;
-                    int16_t runLeftEdge = this->cursor.x;
-
-                    if (runIsRTL) {
-                        // RTL run: writeCodepoint in dir=-1 expects cursor.x at
-                        // right edge and subtracts glyph width before drawing
-                        this->direction = -1;
-                        this->hasLastGlyph = false;
-                        int16_t rtlCursor = runLeftEdge + runWidth; // right edge of run
-                        this->cursor.x = rtlCursor;
-                        for (size_t j = runStart; j < runStart + runLen; j++) {
-                            emitCodepoint(j);
-                        }
-                    } else {
-                        // LTR island in RTL paragraph: render left-to-right
-                        this->direction = 1;
-                        this->hasLastGlyph = false;
-                        this->cursor.x = runLeftEdge;
-                        for (size_t j = runStart; j < runStart + runLen; j++) {
-                            emitCodepoint(j);
-                        }
-                    }
-                    // Restore cursor to left edge of this run for next run's reservation
-                    this->cursor.x = runLeftEdge;
-                    this->hasLastGlyph = false;
-                } else {
-                    // LTR paragraph: cursor.x is the left edge of remaining space
-                    if (runIsRTL) {
-                        // RTL island in LTR paragraph: render right-to-left
-                        // writeCodepoint in dir=-1 expects cursor at right edge
-                        this->direction = -1;
-                        this->hasLastGlyph = false;
-                        int16_t runRightEdge = this->cursor.x + runWidth;
-                        this->cursor.x = runRightEdge;
-                        for (size_t j = runStart; j < runStart + runLen; j++) {
-                            emitCodepoint(j);
-                        }
-                        // Advance cursor past this run
-                        this->cursor.x = runRightEdge;
-                    } else {
-                        // LTR run in LTR paragraph: simple left-to-right
-                        this->direction = 1;
-                        this->hasLastGlyph = false;
-                        for (size_t j = runStart; j < runStart + runLen; j++) {
-                            emitCodepoint(j);
-                        }
-                    }
-                }
-            }
-
-            // Close any word still open at end of this line
-            if (trackingWord && this->wordMapOutput) {
-                this->wordMapOutput->push_back({wordMinX, wordY,
-                    (int16_t)(wordMaxX - wordMinX), wordLineHeight,
-                    wordStartOffset, wordEndOffset});
-                trackingWord = false;
-            }
-        }
+        renderBidiLine(codepoints, pos, numGlyphsToDraw, paragraphDir,
+                       effectiveWidth, indentedOriginX, glyphProvider);
         pos += numGlyphsToDraw;
 
         if (result.wrapped) {
@@ -663,9 +712,8 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             if (this->direction == 1) {
                 this->cursor.x = indentedOriginX;
             } else {
-                this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width - currentIndent;
+                this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
             }
-            atLineStart = false; // Word-wrap continuation inherits indent
         }
 
         // Also handle paragraph breaks (newlines)
@@ -675,7 +723,6 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             } else {
                 this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
             }
-            atLineStart = true; // Next line will scan for its own DLE+> prefix
         }
 
         if (this->cursor.y >= (this->textLayoutRect.origin.y + this->textLayoutRect.size.height)) break;
@@ -688,12 +735,7 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
     if (codepoint == '\r') return 1; // Ignore CR; LF handles line breaks
 
     if (codepoint == '\n') {
-        if (this->readingTitle) {
-            this->readingTitle = false;
-            this->emphasisDepth = this->savedEmphasisDepth;
-            // Extra spacing after title line
-            this->cursor.y += TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing) + this->paragraphSpacing;
-        } else if (this->lastWasNewline) {
+        if (this->lastWasNewline) {
             // Consecutive newline = paragraph break, just add paragraph spacing
             this->cursor.y += this->paragraphSpacing;
         } else {
@@ -709,44 +751,21 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
         return 1;
     }
 
-    // .text format: SO (Shift Out) increases emphasis depth
+    // SO (Shift Out) increases emphasis depth
     if (codepoint == 0x0E) {
         this->emphasisDepth = std::min(this->emphasisDepth + 1, 3);
         return 1;
     }
-    // .text format: SI (Shift In) decreases emphasis depth
+    // SI (Shift In) decreases emphasis depth
     if (codepoint == 0x0F) {
         this->emphasisDepth = std::max(this->emphasisDepth - 1, 0);
         return 1;
     }
-    // .text format: BS (0x08) — backspace for typewriter overprinting
+    // BS (0x08) — backspace for typewriter overprinting
     // Move cursor back to the last glyph position so the next character overprints
     if (codepoint == 0x08) {
         if (this->hasLastGlyph) {
             this->cursor.x = this->lastGlyphPosition.x;
-        }
-        return 1;
-    }
-    // .text format: FS/GS/RS (0x1C–0x1E) — chapter separator, enter title mode
-    if (codepoint >= 0x1C && codepoint <= 0x1E) {
-        this->readingTitle = true;
-        this->savedEmphasisDepth = this->emphasisDepth;
-        this->emphasisDepth = 2; // render title bold
-        return 1;
-    }
-    // .text format: FF (0x0C) — forced page break
-    // Paginator places page breaks here; push cursor past layout to end rendering
-    if (codepoint == 0x0C) {
-        this->cursor.y = this->textLayoutRect.origin.y + this->textLayoutRect.size.height;
-        return 1;
-    }
-    // .text format: US (0x1F) — scene break, add vertical whitespace
-    if (codepoint == 0x1F) {
-        this->cursor.y += TextLayout::getParagraphHeight(glyphProvider, this->textSize, this->paragraphSpacing);
-        if (this->direction == 1) {
-            this->cursor.x = this->textLayoutRect.origin.x;
-        } else {
-            this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
         }
         return 1;
     }

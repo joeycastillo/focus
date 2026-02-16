@@ -88,25 +88,6 @@ WordWrapResult TextLayout::measureLineWrap(
             return result;
         }
 
-        // Handle FF (form feed) — forced page break
-        if (cp == 0x0C) {
-            result.codepointsConsumed = position + 1;
-            result.wrapped = false;
-            result.isParagraphBreak = true;
-            result.endCursorX = 0;
-            return result;
-        }
-
-        // Handle .text format information separators (FS, GS, RS, US)
-        // These act as line terminators, similar to newlines
-        if (cp >= 0x1C && cp <= 0x1F) {
-            result.codepointsConsumed = position + 1;
-            result.wrapped = false;
-            result.isParagraphBreak = true;
-            result.endCursorX = 0;
-            return result;
-        }
-
         // Handle BS (backspace) — move cursor back for typewriter overprinting
         if (cp == 0x08) {
             cursorX -= lastAdvance;

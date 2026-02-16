@@ -42,6 +42,7 @@
 #include "Display.hpp"
 #include "Font.hpp"
 #include "GlyphProvider.hpp"
+#include "TextFrameEngine.hpp"
 #include "UnicodeTraits.hpp"
 #include <vector>
 #include <memory>
@@ -76,8 +77,14 @@ public:
     // Text rendering — renders text to the canvas buffer using the view's Font.
     // layoutRect is in canvas-local coordinates.
     int drawText(Rect layoutRect, uint16_t color, int textSize, const char *utf8String,
-                 TextAlignment alignment = TextAlignmentLeft,
-                 int initialEmphasisDepth = 0, int initialIndentLevel = 0);
+                 TextAlignment alignment = TextAlignmentLeft);
+
+    // Styled frame rendering — renders pre-laid-out text lines from a FrameResult.
+    // Uses TextLine positions, emphasis state, and title mode from the frame.
+    // utf8Text is the raw text buffer; textFileOffset is the file byte offset of utf8Text[0].
+    void drawStyledFrame(Rect layoutRect, const FrameResult& frame, const char *utf8Text,
+                         uint32_t textFileOffset, uint16_t color, int textSize,
+                         TextAlignment alignment = TextAlignmentLeft);
 
     // Font property — if null, drawText uses Font::systemFont().
     void setFont(std::shared_ptr<Font> font);
@@ -125,11 +132,8 @@ private:
     bool lastWasNewline = false;  // Tracks consecutive newlines for paragraph detection
     TextAlignment textAlignment = TextAlignmentLeft;
 
-    // .text format emphasis state (SO/SI control codes)
+    // Emphasis state (SO/SI control codes)
     int emphasisDepth = 0;        // 0=normal, 1=italic, 2=bold, 3=bold+italic
-    bool readingTitle = false;    // true after FS/GS/RS, until next newline
-    int savedEmphasisDepth = 0;   // emphasis depth saved when entering title mode
-    int initialIndentLevel = 0;   // Block quote indent level for mid-paragraph page starts
 
     // Word position tracking (set by setWordMapOutput, used during drawText)
     std::vector<WordPosition> *wordMapOutput = nullptr;
@@ -140,4 +144,11 @@ private:
     int16_t measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
     size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
     int drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph);
+
+    // Shared line renderer: resolves bidi, applies alignment, and draws glyphs.
+    // codepoints[lineStart..lineStart+lineLen) are the codepoints for one visual line.
+    // Caller must set cursor.y before calling.
+    void renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart, size_t lineLen,
+                        int paragraphDir, int16_t effectiveWidth, int16_t indentedOriginX,
+                        GlyphProvider *glyphProvider);
 };

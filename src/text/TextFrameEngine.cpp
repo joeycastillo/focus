@@ -148,6 +148,8 @@ FrameResult TextFrameEngine::layoutFrame(
             if (state.cursorY > 0) {
                 result.complete = false;
                 result.visibleByteEnd = state.lineStartByteOffset;
+                result.pageBreakEmphasisDepth = state.emphasisDepth;
+                result.pageBreakIndentLevel = state.indentLevel;
                 // Don't update state.cursorY — caller will see it's non-zero
                 // and know content was present before the break
             }
@@ -195,6 +197,8 @@ FrameResult TextFrameEngine::layoutFrame(
             if (state.cursorY > config.layoutRect.size.height) {
                 result.complete = false;
                 result.visibleByteEnd = state.lineStartByteOffset;
+                result.pageBreakEmphasisDepth = state.emphasisDepth;
+                result.pageBreakIndentLevel = state.indentLevel;
                 result.bytesConsumed = totalBytesConsumed;
                 state.cursorY = 0;
                 return result;
@@ -387,9 +391,15 @@ FrameResult TextFrameEngine::layoutFrame(
             result.complete = false;
             result.visibleByteEnd = state.lineStartByteOffset;
 
+            // Capture emphasis/indent at the page break boundary BEFORE consuming
+            // the overflowing line. The page record needs this pre-overflow state
+            // so the renderer can initialize correctly (the overflowing line is
+            // re-laid-out when rendering the next page).
+            result.pageBreakEmphasisDepth = state.emphasisDepth;
+            result.pageBreakIndentLevel = state.indentLevel;
+
             if (!isEmptyLine) {
-                // Consume the overflowing line on the new page (like the old
-                // TextPaginator which falls through and processes the line at
+                // Consume the overflowing line on the new page (place it at
                 // cursorY=0). This is critical for cross-chunk pagination:
                 // when a partial line spans a chunk boundary, the line must be
                 // consumed here so the caller advances past it correctly.
@@ -407,7 +417,8 @@ FrameResult TextFrameEngine::layoutFrame(
             return result;
         }
 
-        // Track emphasis
+        // Record emphasis at the start of this line, then advance through it
+        uint8_t emphasisAtLineStart = state.emphasisDepth;
         scanEmphasis(codepoints.data(), pos, pos + wrapResult.codepointsConsumed, state.emphasisDepth);
 
         // Emit the line (skip empty lines — they're just paragraph spacing)
@@ -418,7 +429,7 @@ FrameResult TextFrameEngine::layoutFrame(
                 state.cursorY,
                 state.currentIndentPixels,
                 lineHeight,
-                state.emphasisDepth,
+                emphasisAtLineStart,
                 titleMode
             });
         }

@@ -66,6 +66,14 @@ struct FrameResult {
     uint32_t visibleByteEnd;        ///< File byte offset where visible content ends (page boundary).
     size_t bytesConsumed = 0;       ///< Bytes consumed from the input (may exceed visibleByteEnd at overflow).
     bool complete;                  ///< True if all input text was laid out without overflow.
+
+    /// Emphasis and indent at the page break boundary.
+    /// When the engine overflows, it consumes the overflowing line and advances
+    /// continuation state past it. But the page record needs the state at the
+    /// START of the overflowing line (since the renderer re-lays-out from there).
+    /// These fields capture that pre-overflow state. Only meaningful when !complete.
+    uint8_t pageBreakEmphasisDepth = 0;
+    uint8_t pageBreakIndentLevel = 0;
 };
 
 /// Continuation state carried across frames (pages) or chunks.

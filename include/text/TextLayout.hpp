@@ -49,7 +49,7 @@ struct WordWrapResult {
 };
 
 /// Shared text layout engine for consistent text measurement and pagination.
-/// Used by both Display (for rendering) and TextPaginator (for page calculation).
+/// Used by Display, CanvasView, and TextFrameEngine for consistent text measurement.
 class TextLayout {
 public:
     /// Calculate the UTF-8 byte count for a Unicode codepoint
