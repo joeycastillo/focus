@@ -74,6 +74,8 @@ struct FrameResult {
     /// These fields capture that pre-overflow state. Only meaningful when !complete.
     uint8_t pageBreakEmphasisDepth = 0;
     uint8_t pageBreakIndentLevel = 0;
+    bool pageBreakLastWasNewline = false;
+    bool pageBreakAtLineStart = true;
 };
 
 /// Continuation state carried across frames (pages) or chunks.

@@ -397,6 +397,8 @@ FrameResult TextFrameEngine::layoutFrame(
             // re-laid-out when rendering the next page).
             result.pageBreakEmphasisDepth = state.emphasisDepth;
             result.pageBreakIndentLevel = state.indentLevel;
+            result.pageBreakLastWasNewline = state.lastWasNewline;
+            result.pageBreakAtLineStart = state.atLineStart;
 
             if (!isEmptyLine) {
                 // Consume the overflowing line on the new page (place it at
