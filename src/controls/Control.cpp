@@ -38,3 +38,8 @@ void Control::setEnabled(bool value) {
 bool Control::canBecomeFocused() {
     return this->enabled;
 }
+
+bool Control::handleEvent(Event event) {
+    if (!this->enabled) return false;
+    return View::handleEvent(event);
+}
