@@ -62,7 +62,7 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
     event.userInfo = userInfo;
 
     // For touch events, transform native panel coordinates to logical coordinates.
-    // Each case is the inverse of the rendering rotation in EPaperDisplay.
+    // Each case is the inverse of the Display's rendering rotation.
     if (eventType == FOCUS_EVENT_TOUCH_DOWN ||
         eventType == FOCUS_EVENT_TOUCH_MOVED ||
         eventType == FOCUS_EVENT_TOUCH_UP) {
