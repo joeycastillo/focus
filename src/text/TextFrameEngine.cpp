@@ -247,6 +247,16 @@ FrameResult TextFrameEngine::layoutFrame(
 
         if (wrapResult.codepointsConsumed < 0) {
             // No wrap needed — consumed rest of input (partial line)
+
+            if (!isLastChunk) {
+                // Don't consume the partial line. The caller will carry these
+                // bytes as leftover into the next chunk, where the full line
+                // can be measured in a single measureLineWrap call. This avoids
+                // cursorX carrying across chunk boundaries, which would cause
+                // word-wrap disagreement between paginator and renderer.
+                break;
+            }
+
             state.cursorX = wrapResult.endCursorX;
 
             size_t remainingBytes = 0;
@@ -254,7 +264,7 @@ FrameResult TextFrameEngine::layoutFrame(
                 remainingBytes += byteLengths[i];
             }
 
-            if (isLastChunk && remainingBytes > 0) {
+            if (remainingBytes > 0) {
                 int16_t lineHeight = TextLayout::getLineHeight(
                     glyphProvider, config.textSize, config.lineSpacing);
 
