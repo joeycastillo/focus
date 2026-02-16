@@ -78,6 +78,9 @@ public:
     /// @brief Get the height of the tab bar area in pixels.
     int getTabBarHeight() const;
 
+    void setFrame(Rect rect) override;
+    void layoutSubviews();
+
 private:
     /// @brief Internal tab entry.
     struct Tab {

@@ -113,6 +113,37 @@ void TabbedView::rebuildTabBar() {
     }
 }
 
+void TabbedView::setFrame(Rect rect) {
+    View::setFrame(rect);
+    this->layoutSubviews();
+}
+
+void TabbedView::layoutSubviews() {
+    if (this->tabs.empty()) return;
+
+    int barHeight = this->getTabBarHeight();
+
+    // Resize tab bar
+    if (this->tabBar) {
+        this->tabBar->setFrame(MakeRect(0, 0, this->frame.size.width, barHeight));
+
+        int tabCount = (int)this->tabs.size();
+        int tabWidth = this->frame.size.width / tabCount;
+        for (int i = 0; i < tabCount; i++) {
+            if (!this->tabs[i].tabItem) continue;
+            int tabX = i * tabWidth;
+            int w = (i == tabCount - 1) ? (this->frame.size.width - tabX) : tabWidth;
+            this->tabs[i].tabItem->setFrame(MakeRect(tabX, 0, w, barHeight));
+        }
+    }
+
+    // Resize selected content
+    if (this->selectedIndex < this->tabs.size() && this->tabs[this->selectedIndex].content) {
+        this->tabs[this->selectedIndex].content->setFrame(
+            MakeRect(0, barHeight, this->frame.size.width, this->frame.size.height - barHeight));
+    }
+}
+
 void TabbedView::selectTab(size_t index) {
     if (index >= this->tabs.size()) return;
     if (index == this->selectedIndex) return;
