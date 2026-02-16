@@ -27,6 +27,7 @@
 #include "LabelView.hpp"
 #include "Display.hpp"
 #include "Font.hpp"
+#include "Locale.hpp"
 
 NavigationBar::NavigationBar(int width) : View(MakeRect(0, 0, width, getHeight())) {
     this->opaque = true;
@@ -43,7 +44,7 @@ std::shared_ptr<NavigationBar> NavigationBar::create(int width) {
 
     // Back button, left-aligned, initially hidden
     bar->backButton = std::make_shared<Button>(
-        MakeRect(padding, padding, backButtonWidth, backButtonHeight), "Back");
+        MakeRect(padding, padding, backButtonWidth, backButtonHeight), _LS("nav.back", "Back"));
     bar->backButton->setHidden(true);
     bar->backButton->setAction(
         [raw = bar.get()](Event, std::weak_ptr<View>) {

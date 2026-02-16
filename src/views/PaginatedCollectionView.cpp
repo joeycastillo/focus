@@ -27,6 +27,7 @@
 #include "CanvasView.hpp"
 #include "Button.hpp"
 #include "LabelView.hpp"
+#include "Locale.hpp"
 #include "Window.hpp"
 
 PaginatedCollectionView::PaginatedCollectionView(Rect rect) : View(rect) {
@@ -226,7 +227,7 @@ void PaginatedCollectionView::rebuildLayout() {
             int labelWidth = w - 2 * buttonWidth - 2 * 8;
 
             this->prevButton = std::make_shared<Button>(
-                MakeRect(0, 0, buttonWidth, kFooterThickness), "< Prev");
+                MakeRect(0, 0, buttonWidth, kFooterThickness), _LS("pagination.prev", "< Prev"));
             this->prevButton->setAction(
                 [this](Event, std::weak_ptr<View>) { this->goToPreviousPage(); },
                 FOCUS_EVENT_TOUCH_UP_INSIDE);
@@ -236,7 +237,7 @@ void PaginatedCollectionView::rebuildLayout() {
             this->pageLabel->setTextAlignment(TextAlignmentCenter);
 
             this->nextButton = std::make_shared<Button>(
-                MakeRect(w - buttonWidth, 0, buttonWidth, kFooterThickness), "Next >");
+                MakeRect(w - buttonWidth, 0, buttonWidth, kFooterThickness), _LS("pagination.next", "Next >"));
             this->nextButton->setAction(
                 [this](Event, std::weak_ptr<View>) { this->goToNextPage(); },
                 FOCUS_EVENT_TOUCH_UP_INSIDE);
@@ -341,8 +342,6 @@ void PaginatedCollectionView::updateFooterLabel() {
     size_t current = this->collectionView->getCurrentPage() + 1;
     size_t total = this->collectionView->getPageCount();
     if (total > 0) {
-        char buf[32];
-        snprintf(buf, sizeof(buf), "Page %zu of %zu", current, total);
-        this->pageLabel->setText(buf);
+        this->pageLabel->setText(_LF("pagination.page_of", "Page {0} of {1}", current, total));
     }
 }

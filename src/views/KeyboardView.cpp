@@ -27,6 +27,7 @@
 #include "Window.hpp"
 #include "Display.hpp"
 #include "Font.hpp"
+#include "Locale.hpp"
 #include "TextLayout.hpp"
 #include <cstring>
 
@@ -90,7 +91,7 @@ void KeyboardView::buildKeyLayout(std::vector<KeyRect>& keys) const {
         KeyRect doneKey;
         doneKey.rect = MakeRect(2 * keyWidth + keyPadding, 3 * rowHeight + keyPadding,
                                 keyWidth - 2 * keyPadding, rowHeight - 2 * keyPadding);
-        doneKey.label = "Done";
+        doneKey.label = _LS("keyboard.done", "Done");
         doneKey.value = "\n";
         keys.push_back(doneKey);
 
@@ -220,7 +221,7 @@ void KeyboardView::buildKeyLayout(std::vector<KeyRect>& keys) const {
         KeyRect kr;
         kr.rect = MakeRect(symbolKeyWidth + keyPadding, 3 * rowHeight + keyPadding,
                            spaceWidth - 2 * keyPadding, rowHeight - 2 * keyPadding);
-        kr.label = "Space";
+        kr.label = _LS("keyboard.space", "Space");
         kr.value = " ";
         keys.push_back(kr);
     }
@@ -230,7 +231,7 @@ void KeyboardView::buildKeyLayout(std::vector<KeyRect>& keys) const {
         KeyRect kr;
         kr.rect = MakeRect(symbolKeyWidth + spaceWidth + keyPadding, 3 * rowHeight + keyPadding,
                            doneKeyWidth - 2 * keyPadding, rowHeight - 2 * keyPadding);
-        kr.label = "Done";
+        kr.label = _LS("keyboard.done", "Done");
         kr.value = "\n";
         keys.push_back(kr);
     }
