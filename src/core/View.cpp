@@ -29,13 +29,8 @@
 #include <chrono>
 #include <cxxabi.h>
 
-#ifdef ESP_PLATFORM
 #include "esp_log.h"
 static const char *VIEW_TAG = "View";
-#define VIEW_LOGV(fmt, ...) ESP_LOGV(VIEW_TAG, fmt, ##__VA_ARGS__)
-#else
-#define VIEW_LOGV(fmt, ...) printf(fmt "\n", ##__VA_ARGS__)
-#endif
 
 int View::drawCount = 0;
 int View::cullCount = 0;
@@ -114,7 +109,7 @@ void View::draw(int x, int y, Rect clipRect) {
 
             int status;
             char *demangled = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
-            VIEW_LOGV("  [draw] %-28s fill=%4lldus  content=%7lldus  frame=(%d,%d %dx%d)",
+            ESP_LOGV(VIEW_TAG,"  [draw] %-28s fill=%4lldus  content=%7lldus  frame=(%d,%d %dx%d)",
                 (status == 0) ? demangled : typeid(*this).name(),
                 (long long)fillUs, (long long)contentUs,
                 x + this->frame.origin.x, y + this->frame.origin.y,
@@ -123,7 +118,7 @@ void View::draw(int x, int y, Rect clipRect) {
         } else {
             int status;
             char *demangled = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
-            VIEW_LOGV("  [draw] %-28s OCCLUDED (by child %d)  frame=(%d,%d %dx%d)",
+            ESP_LOGV(VIEW_TAG,"  [draw] %-28s OCCLUDED (by child %d)  frame=(%d,%d %dx%d)",
                 (status == 0) ? demangled : typeid(*this).name(),
                 occluderIndex,
                 x + this->frame.origin.x, y + this->frame.origin.y,
