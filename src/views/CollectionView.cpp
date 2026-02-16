@@ -250,6 +250,11 @@ void CollectionView::loadPage(size_t page) {
                         liveDelegate->didSelectItemAtIndex(cv, globalIndex);
                     },
                     FOCUS_EVENT_TOUCH_UP_INSIDE);
+                cell->setAction(
+                    [liveDelegate, cv, globalIndex](Event, std::weak_ptr<View>) {
+                        liveDelegate->didLongPressItemAtIndex(cv, globalIndex);
+                    },
+                    FOCUS_EVENT_LONG_PRESS);
                 cell->onFocusChanged = [liveDelegate, cv, globalIndex](CollectionViewCell& c, bool focused) {
                     if (focused) {
                         liveDelegate->didFocusItemAtIndex(cv, globalIndex, c);

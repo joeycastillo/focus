@@ -72,6 +72,9 @@ public:
     /// @brief Called when the user taps an item. Override to handle selection.
     virtual void didSelectItemAtIndex(size_t index) {}
 
+    /// @brief Called when the user long-presses an item. Override to handle.
+    virtual void didLongPressItemAtIndex(size_t index) {}
+
     /// @name Configuration
     /// Call these before the view appears (e.g. in your constructor).
     /// @{
@@ -103,6 +106,9 @@ private:
     }
     void didSelectItemAtIndex(CollectionView*, size_t index) final {
         didSelectItemAtIndex(index);
+    }
+    void didLongPressItemAtIndex(CollectionView*, size_t index) final {
+        didLongPressItemAtIndex(index);
     }
     Size sizeForItemAtIndex(CollectionView*, size_t index) final {
         return sizeForItemAtIndex(index);

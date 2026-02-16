@@ -54,6 +54,13 @@ public:
     virtual void didSelectItemAtIndex(CollectionView* collectionView, size_t index) {}
 
     /**
+     * @brief Called when the user long-presses an item in the collection view.
+     * @param collectionView The collection view where the long press occurred.
+     * @param index The index of the long-pressed item (0-based, global).
+     */
+    virtual void didLongPressItemAtIndex(CollectionView* collectionView, size_t index) {}
+
+    /**
      * @brief Called when a cell gains focus via d-pad/keyboard navigation.
      * @param collectionView The collection view containing the cell.
      * @param index The global index of the focused item.
