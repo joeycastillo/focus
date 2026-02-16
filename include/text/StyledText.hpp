@@ -31,6 +31,20 @@
  * The text itself is not modified — control codes remain in-band and style
  * runs annotate positions where the layout engine should adjust behavior.
  *
+ * @par Design intent
+ * StyleRun is the bridge between format-specific parsers and the format-agnostic
+ * TextFrameEngine. A parser scans its native format (e.g. Markdown, EPUB, a
+ * custom control-code scheme) and emits StyleRuns; the framing engine consumes
+ * them without knowing anything about the source format. To add support for a
+ * new text format, write a parser that produces StyleRuns — no changes to the
+ * layout engine are needed.
+ *
+ * @par Byte offset convention
+ * StyleRun byte offsets refer to positions in the original file, not in any
+ * intermediate buffer. This allows downstream systems (page-break databases,
+ * bookmark stores, highlight ranges) to work directly with file offsets
+ * without translation layers.
+ *
  * This is a data-only header with no dependencies beyond the standard library.
  */
 
@@ -48,9 +62,12 @@ enum class TextStyle : uint8_t {
 };
 
 /// A layout instruction at a specific byte position in the text stream.
+///
+/// StyleRuns must be sorted by byteOffset before passing to TextFrameEngine.
+/// Multiple runs at the same offset are processed in order.
 struct StyleRun {
-    uint32_t byteOffset;   ///< Byte offset in the text where this style takes effect.
+    uint32_t byteOffset;   ///< File byte offset where this style takes effect.
     TextStyle style;       ///< The layout instruction type.
     uint8_t value;         ///< Meaning depends on style (e.g. indent level, or 1 for boolean styles).
-    uint16_t consumeBytes = 0; ///< Bytes to skip past at this position (e.g. DLE+'>' prefix bytes).
+    uint16_t consumeBytes = 0; ///< Bytes to skip past at this position (e.g. control code prefix bytes).
 };

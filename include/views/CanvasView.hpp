@@ -74,17 +74,43 @@ public:
     void invertRect(int x, int y, int w, int h);
     void clear(uint16_t color);
 
-    // Text rendering — renders text to the canvas buffer using the view's Font.
-    // layoutRect is in canvas-local coordinates.
+    /// @name Text rendering
+    /// Two methods for drawing text to the canvas. Use drawText for self-contained
+    /// text (labels, buttons, single paragraphs). Use drawStyledFrame for paginated
+    /// content where layout has already been computed by TextFrameEngine.
+    /// @{
+
+    /// Draw text with automatic word-wrapping and layout.
+    /// Handles the full pipeline internally: UTF-8 decoding, word-wrapping,
+    /// bidi reordering, paragraph spacing, and glyph rendering. Suitable for
+    /// UI text (labels, buttons) where layout and rendering happen together.
+    /// layoutRect is in canvas-local coordinates.
+    /// @return The Y position after the last line (for stacking content below).
     int drawText(Rect layoutRect, uint16_t color, int textSize, const char *utf8String,
                  TextAlignment alignment = TextAlignmentLeft);
 
-    // Styled frame rendering — renders pre-laid-out text lines from a FrameResult.
-    // Uses TextLine positions, emphasis state, and title mode from the frame.
-    // utf8Text is the raw text buffer; textFileOffset is the file byte offset of utf8Text[0].
+    /// Render pre-laid-out text lines from a TextFrameEngine FrameResult.
+    /// The caller has already run TextFrameEngine::layoutFrame to determine
+    /// line positions, emphasis state, and title mode. This method handles
+    /// only the rendering half: UTF-8 decoding, bidi reordering, and glyph
+    /// drawing at the positions specified by each TextLine.
+    ///
+    /// Use this for paginated content where the same layout must be computed
+    /// once (during pagination) and rendered faithfully later. The FrameResult
+    /// carries all the layout decisions; this method just draws them.
+    ///
+    /// @param layoutRect Canvas-local rectangle (origin used for coordinate mapping).
+    /// @param frame The layout result from TextFrameEngine::layoutFrame.
+    /// @param utf8Text Raw text buffer (same bytes passed to layoutFrame).
+    /// @param textFileOffset File byte offset of utf8Text[0] (for resolving TextLine byte ranges).
+    /// @param color Foreground color.
+    /// @param textSize Text scaling factor.
+    /// @param alignment Text alignment within the layout width.
     void drawStyledFrame(Rect layoutRect, const FrameResult& frame, const char *utf8Text,
                          uint32_t textFileOffset, uint16_t color, int textSize,
                          TextAlignment alignment = TextAlignmentLeft);
+
+    /// @}
 
     // Font property — if null, drawText uses Font::systemFont().
     void setFont(std::shared_ptr<Font> font);

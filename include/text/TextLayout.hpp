@@ -24,12 +24,17 @@
 
 /**
  * @file TextLayout.hpp
- * @brief Shared text measurement and word-wrapping engine.
+ * @brief Shared text measurement and word-wrapping primitives.
  *
  * TextLayout provides static methods for measuring text width, calculating
- * line heights, and determining word-wrap break points. It is used by the
- * display rendering system (for drawing wrapped text) but is also available
- * to applications that need to do their own measurement of text runs.
+ * line heights, and determining word-wrap break points. It is the measurement
+ * layer underneath TextFrameEngine — the framing engine calls measureLineWrap
+ * in a loop to determine where each line breaks, then stacks the results
+ * vertically to fill a page.
+ *
+ * These primitives are also available directly for simpler use cases that
+ * don't need full page layout (e.g. measuring a label's width, or checking
+ * whether a string fits in a given area).
  */
 
 #pragma once
@@ -40,16 +45,25 @@
 #include <cstdint>
 #include <cstddef>
 
-/// Result of a word wrap measurement
+/// Result of a word wrap measurement.
 struct WordWrapResult {
-    int32_t codepointsConsumed;  ///< Number of codepoints on this line (-1 if no wrap needed)
-    bool wrapped;                ///< True if line was wrapped (false if ended at newline or end of text)
-    bool isParagraphBreak;       ///< True if line ended with a newline character
-    int16_t endCursorX;          ///< Horizontal position after processing (for continuing partial lines)
+    /// Number of codepoints that fit on this line, or negative if no wrap was
+    /// needed (all remaining codepoints were consumed without exceeding the
+    /// layout width). A negative value means the input ended mid-line — either
+    /// the text genuinely ended, or the buffer ran out. TextFrameEngine uses
+    /// the sign to distinguish complete lines from partial lines at chunk
+    /// boundaries.
+    int32_t codepointsConsumed;
+
+    bool wrapped;                ///< True if line was wrapped (false if ended at newline or end of text).
+    bool isParagraphBreak;       ///< True if line ended with a newline character.
+    int16_t endCursorX;          ///< Horizontal cursor position after processing.
 };
 
-/// Shared text layout engine for consistent text measurement and pagination.
-/// Used by Display, CanvasView, and TextFrameEngine for consistent text measurement.
+/// Low-level text measurement shared across the Focus text subsystem.
+/// Used by Display, CanvasView, and TextFrameEngine. All word-wrapping in
+/// Focus flows through measureLineWrap, ensuring that measurement during
+/// pagination and measurement during rendering always agree.
 class TextLayout {
 public:
     /// Calculate the UTF-8 byte count for a Unicode codepoint
