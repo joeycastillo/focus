@@ -46,7 +46,7 @@
 
 /// @brief A named notification with an optional payload.
 struct Notification {
-    std::string name;        ///< The notification name (e.g. "bookLoaded").
+    std::string name;        ///< The notification name (e.g. "dataLoaded").
     /// @brief Optional payload data.
     ///
     /// Prefer small types (integers, pointers) for best performance.

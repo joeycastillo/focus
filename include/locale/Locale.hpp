@@ -69,7 +69,7 @@ public:
 
     /// Add an additional search path for locale files.
     /// Paths are searched in the order they are added.
-    /// @param path Directory path (e.g., "/sdcard/locale/")
+    /// @param path Directory path (e.g., "/system/locale/")
     static void addLocaleSearchPath(const std::string& path);
 
     /// Clear all locale search paths.
@@ -181,8 +181,8 @@ inline std::string _LF(const std::string& key, const std::string& comment, Args&
 /// Look up a plural form based on count.
 /// Looks for key.zero (count==0), key.one (count==1), or key.other.
 /// The comment is the fallback format string (use {0} for the count).
-/// @param key The base key (e.g., "books")
-/// @param comment The English fallback (e.g., "{0} books")
+/// @param key The base key (e.g., "items")
+/// @param comment The English fallback (e.g., "{0} items")
 /// @param count The count that determines which plural form to use
 inline std::string _LP(const std::string& key, const std::string& comment, int count) {
     std::string subkey;

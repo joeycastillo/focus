@@ -67,7 +67,7 @@ class BDFGlyphProvider : public GlyphProvider {
 public:
     /**
      * @brief Load a BDF font file and parse all glyphs.
-     * @param bdfFilePath Path to the BDF font file (e.g., "/sdcard/fonts/timR12.bdf").
+     * @param bdfFilePath Path to the BDF font file (e.g., "/system/fonts/timR12.bdf").
      */
     BDFGlyphProvider(const std::string& bdfFilePath);
 

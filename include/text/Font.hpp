@@ -37,7 +37,7 @@
 ///
 /// Usage:
 ///   // At app startup
-///   Font::setFontSearchPath("/sdcard/fonts/");
+///   Font::setFontSearchPath("/system/fonts/");
 ///   Font::setSystemFont(Font::withName("spleen-12x24"));
 ///
 ///   // In views
@@ -72,7 +72,7 @@ public:
     static std::shared_ptr<Font> systemSmallFont();
 
     /// Set the path where font files are located (clears any existing paths).
-    /// @param path Directory path (e.g., "/sdcard/fonts/")
+    /// @param path Directory path (e.g., "/system/fonts/")
     static void setFontSearchPath(const std::string& path);
 
     /// Add an additional search path for font files.
