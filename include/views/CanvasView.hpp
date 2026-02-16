@@ -42,7 +42,6 @@
 #include "Display.hpp"
 #include "Font.hpp"
 #include "GlyphProvider.hpp"
-#include "TextFrameEngine.hpp"
 #include "UnicodeTraits.hpp"
 #include <vector>
 #include <memory>
@@ -74,12 +73,6 @@ public:
     void invertRect(int x, int y, int w, int h);
     void clear(uint16_t color);
 
-    /// @name Text rendering
-    /// Two methods for drawing text to the canvas. Use drawText for self-contained
-    /// text (labels, buttons, single paragraphs). Use drawStyledFrame for paginated
-    /// content where layout has already been computed by TextFrameEngine.
-    /// @{
-
     /// Draw text with automatic word-wrapping and layout.
     /// Handles the full pipeline internally: UTF-8 decoding, word-wrapping,
     /// bidi reordering, paragraph spacing, and glyph rendering. Suitable for
@@ -88,29 +81,6 @@ public:
     /// @return The Y position after the last line (for stacking content below).
     int drawText(Rect layoutRect, uint16_t color, int textSize, const char *utf8String,
                  TextAlignment alignment = TextAlignmentLeft);
-
-    /// Render pre-laid-out text lines from a TextFrameEngine FrameResult.
-    /// The caller has already run TextFrameEngine::layoutFrame to determine
-    /// line positions, emphasis state, and title mode. This method handles
-    /// only the rendering half: UTF-8 decoding, bidi reordering, and glyph
-    /// drawing at the positions specified by each TextLine.
-    ///
-    /// Use this for paginated content where the same layout must be computed
-    /// once (during pagination) and rendered faithfully later. The FrameResult
-    /// carries all the layout decisions; this method just draws them.
-    ///
-    /// @param layoutRect Canvas-local rectangle (origin used for coordinate mapping).
-    /// @param frame The layout result from TextFrameEngine::layoutFrame.
-    /// @param utf8Text Raw text buffer (same bytes passed to layoutFrame).
-    /// @param textFileOffset File byte offset of utf8Text[0] (for resolving TextLine byte ranges).
-    /// @param color Foreground color.
-    /// @param textSize Text scaling factor.
-    /// @param alignment Text alignment within the layout width.
-    void drawStyledFrame(Rect layoutRect, const FrameResult& frame, const char *utf8Text,
-                         uint32_t textFileOffset, uint16_t color, int textSize,
-                         TextAlignment alignment = TextAlignmentLeft);
-
-    /// @}
 
     // Font property — if null, drawText uses Font::systemFont().
     void setFont(std::shared_ptr<Font> font);
@@ -130,21 +100,18 @@ public:
     const uint8_t* getBufferData() const { return buffer.data(); }
     int getRowBytes() const { return rowBytes; }
 
-private:
-    int rowBytes;                 // bytes per row = (width + 7) / 8
-    // 2bpp support — some displays use a two-plane buffer for 4-level grayscale.
-    // In TwoBpp mode, plane 1 occupies the second half of buffer (offset planeSize).
-    int planeSize;                // bytes per plane = rowBytes * height
-    std::vector<uint8_t> buffer;  // OneBpp: planeSize bytes; TwoBpp: 2*planeSize (plane0 then plane1)
-    const uint8_t* getPlane1Data() const { return buffer.data() + planeSize; }
-    DisplayMode canvasMode = DisplayMode::OneBpp;
-
-    // Private helper for fillRect — fills a single plane buffer
-    void _fillPlane(uint8_t* plane, int x0, int y0, int x1, int y1, uint8_t fillByte);
+protected:
+    /// @name Subclass text rendering API
+    /// These members are protected so that subclasses can implement custom text
+    /// rendering strategies (e.g. rendering pre-laid-out paginated content).
+    /// The contract: set the state variables below, then call renderBidiLine()
+    /// once per visual line. The base class handles bidi reordering, alignment,
+    /// emphasis rendering, and glyph drawing internally.
+    /// @{
 
     std::shared_ptr<Font> font;
 
-    // Text rendering state (used during drawText)
+    // Text rendering state — set these before calling renderBidiLine.
     Point cursor = {};
     Rect textLayoutRect = {};
     int textSize = 1;
@@ -158,23 +125,39 @@ private:
     bool lastWasNewline = false;  // Tracks consecutive newlines for paragraph detection
     TextAlignment textAlignment = TextAlignmentLeft;
 
-    // Emphasis state (SO/SI control codes)
-    int emphasisDepth = 0;        // 0=normal, 1=italic, 2=bold, 3=bold+italic
+    // Emphasis state (SO/SI control codes): 0=normal, 1=italic, 2=bold, 3=bold+italic
+    int emphasisDepth = 0;
 
-    // Word position tracking (set by setWordMapOutput, used during drawText)
+    // Word position tracking (set by setWordMapOutput, used during text rendering)
     std::vector<WordPosition> *wordMapOutput = nullptr;
     uint32_t *codepointByteOffsets = nullptr;
 
-    // Text rendering internals (mirror Display's pipeline)
-    size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
+    /// Measure the pixel width of a codepoint array (for text alignment).
     int16_t measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
-    size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
-    int drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph);
 
-    // Shared line renderer: resolves bidi, applies alignment, and draws glyphs.
-    // codepoints[lineStart..lineStart+lineLen) are the codepoints for one visual line.
-    // Caller must set cursor.y before calling.
+    /// Render one visual line with bidi reordering, alignment, and glyph drawing.
+    /// Set cursor.y and emphasisDepth before calling. The method handles LTR/RTL
+    /// reordering, text alignment, word position tracking, and glyph rendering.
     void renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart, size_t lineLen,
                         int paragraphDir, int16_t effectiveWidth, int16_t indentedOriginX,
                         GlyphProvider *glyphProvider);
+
+    /// @}
+
+private:
+    int rowBytes;                 // bytes per row = (width + 7) / 8
+    // 2bpp support — some displays use a two-plane buffer for 4-level grayscale.
+    // In TwoBpp mode, plane 1 occupies the second half of buffer (offset planeSize).
+    int planeSize;                // bytes per plane = rowBytes * height
+    std::vector<uint8_t> buffer;  // OneBpp: planeSize bytes; TwoBpp: 2*planeSize (plane0 then plane1)
+    const uint8_t* getPlane1Data() const { return buffer.data() + planeSize; }
+    DisplayMode canvasMode = DisplayMode::OneBpp;
+
+    // Private helper for fillRect — fills a single plane buffer
+    void _fillPlane(uint8_t* plane, int x0, int y0, int x1, int y1, uint8_t fillByte);
+
+    // Text rendering internals (mirror Display's pipeline)
+    size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
+    size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
+    int drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph);
 };

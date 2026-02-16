@@ -30,11 +30,11 @@
  * data to the text rendering system. Implementations include BasicGlyphProvider
  * (a built-in fixed-width fallback) and BDFGlyphProvider (BDF font files).
  *
- * This interface is consumed by the entire text stack: TextLayout uses it for
- * measurement and word-wrapping, TextFrameEngine passes it through to
- * TextLayout during page layout, and CanvasView uses it for glyph rendering.
- * All three layers share the same GlyphProvider instance to ensure that
- * measurement and rendering always use identical metrics.
+ * This interface is consumed by the text rendering stack: TextLayout uses it
+ * for measurement and word-wrapping, and CanvasView uses it for glyph
+ * rendering. Application-level code (e.g. pagination engines) also passes
+ * it through to TextLayout. All layers share the same GlyphProvider instance
+ * to ensure that measurement and rendering always use identical metrics.
  */
 
 #pragma once

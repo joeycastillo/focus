@@ -28,9 +28,9 @@
  *
  * TextLayout provides static methods for measuring text width, calculating
  * line heights, and determining word-wrap break points. It is the measurement
- * layer underneath TextFrameEngine — the framing engine calls measureLineWrap
- * in a loop to determine where each line breaks, then stacks the results
- * vertically to fill a page.
+ * layer used by Focus's text rendering and by application-level pagination
+ * engines. A framing engine calls measureLineWrap in a loop to determine
+ * where each line breaks, then stacks the results vertically to fill a page.
  *
  * These primitives are also available directly for simpler use cases that
  * don't need full page layout (e.g. measuring a label's width, or checking
@@ -50,9 +50,9 @@ struct WordWrapResult {
     /// Number of codepoints that fit on this line, or negative if no wrap was
     /// needed (all remaining codepoints were consumed without exceeding the
     /// layout width). A negative value means the input ended mid-line — either
-    /// the text genuinely ended, or the buffer ran out. TextFrameEngine uses
-    /// the sign to distinguish complete lines from partial lines at chunk
-    /// boundaries.
+    /// the text genuinely ended, or the buffer ran out. A framing engine
+    /// uses the sign to distinguish complete lines from partial lines at
+    /// chunk boundaries.
     int32_t codepointsConsumed;
 
     bool wrapped;                ///< True if line was wrapped (false if ended at newline or end of text).
@@ -61,9 +61,9 @@ struct WordWrapResult {
 };
 
 /// Low-level text measurement shared across the Focus text subsystem.
-/// Used by Display, CanvasView, and TextFrameEngine. All word-wrapping in
-/// Focus flows through measureLineWrap, ensuring that measurement during
-/// pagination and measurement during rendering always agree.
+/// Used by Display, CanvasView, and application-level pagination engines.
+/// All word-wrapping flows through measureLineWrap, ensuring that measurement
+/// during pagination and measurement during rendering always agree.
 class TextLayout {
 public:
     /// Calculate the UTF-8 byte count for a Unicode codepoint
