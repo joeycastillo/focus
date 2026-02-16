@@ -73,6 +73,12 @@ public:
     void invertRect(int x, int y, int w, int h);
     void clear(uint16_t color);
 
+    /// Apply a 1px checkerboard mask, setting every other pixel to the given color.
+    /// Used to render a "disabled" appearance. The pattern alternates per pixel in
+    /// both axes: even rows mask with 0xAA, odd rows with 0x55 (MSB-first).
+    /// In TwoBpp mode, both planes are updated.
+    void applyCheckerboardMask(uint16_t color);
+
     /// Draw text with automatic word-wrapping and layout.
     /// Handles the full pipeline internally: UTF-8 decoding, word-wrapping,
     /// bidi reordering, paragraph spacing, and glyph rendering. Suitable for

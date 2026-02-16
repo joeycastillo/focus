@@ -237,6 +237,28 @@ void CanvasView::clear(uint16_t color) {
     }
 }
 
+void CanvasView::applyCheckerboardMask(uint16_t color) {
+    auto applyToPlane = [&](uint8_t* plane, bool setBits) {
+        for (int y = 0; y < frame.size.height; y++) {
+            uint8_t pattern = (y & 1) ? 0x55 : 0xAA;
+            for (int b = 0; b < rowBytes; b++) {
+                if (setBits) {
+                    plane[y * rowBytes + b] |= pattern;
+                } else {
+                    plane[y * rowBytes + b] &= ~pattern;
+                }
+            }
+        }
+    };
+
+    if (canvasMode == DisplayMode::TwoBpp) {
+        applyToPlane(buffer.data(), (color & 0x02) != 0);
+        applyToPlane(buffer.data() + planeSize, (color & 0x01) != 0);
+    } else {
+        applyToPlane(buffer.data(), color != 0);
+    }
+}
+
 // --- Font and text rendering ---
 
 void CanvasView::setFont(std::shared_ptr<Font> font) {

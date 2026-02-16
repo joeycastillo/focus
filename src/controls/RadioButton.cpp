@@ -95,6 +95,10 @@ void RadioButton::renderCanvas() {
         this->canvas->drawText(textRect, fgColor, 1, this->text.c_str());
     }
 
+    if (!this->enabled) {
+        this->canvas->applyCheckerboardMask(bgColor);
+    }
+
     this->canvasValid = true;
 }
 
@@ -107,6 +111,10 @@ void RadioButton::drawContent(int x, int y, Rect clipRect) {
                                 this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
         }
     }
+}
+
+void RadioButton::appearanceDidChange() {
+    this->canvasValid = false;
 }
 
 bool RadioButton::handleEvent(Event event) {

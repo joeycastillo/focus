@@ -23,6 +23,7 @@
  */
 
 #include "Control.hpp"
+#include "Window.hpp"
 
 Control::Control(Rect rect) : View(rect) {
 }
@@ -32,7 +33,13 @@ bool Control::isEnabled() {
 }
 
 void Control::setEnabled(bool value) {
-    this->enabled = value;
+    if (this->enabled != value) {
+        this->enabled = value;
+        this->appearanceDidChange();
+        if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+            this->setNeedsDisplayInRect(this->frame);
+        }
+    }
 }
 
 bool Control::canBecomeFocused() {

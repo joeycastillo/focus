@@ -56,6 +56,7 @@ public:
      */
     RadioButton(Rect rect, std::string text);
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
+    void appearanceDidChange() override;
     /// @brief Handle touch/select events to select this radio button.
     bool handleEvent(Event event) override;
     void didBecomeFocused() override;

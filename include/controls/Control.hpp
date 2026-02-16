@@ -52,6 +52,8 @@ public:
     void setEnabled(bool value);
     /// @brief Controls can become focused when enabled (returns true).
     bool canBecomeFocused() override;
+    /// @brief Disabled controls ignore all events.
+    bool handleEvent(Event event) override;
 protected:
     bool enabled = true; ///< Whether this control accepts input.
 };
