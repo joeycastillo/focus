@@ -38,6 +38,7 @@
 
 #pragma once
 
+#include <atomic>
 #include "Focus.hpp"
 #include "Window.hpp"
 
@@ -145,6 +146,16 @@ public:
     void dismissAllViewControllers();
 
     /**
+     * @brief Get the number of completed run-loop iterations.
+     *
+     * Incremented once per full pass through all registered tasks.
+     * Useful for external monitoring (e.g. a heartbeat watchdog) to
+     * detect whether the cooperative loop is still making progress.
+     * Safe to read from any thread.
+     */
+    uint32_t loopCount() const { return loopCounter_.load(std::memory_order_relaxed); }
+
+    /**
      * @brief Request the application to stop its run loop.
      *
      * The run loop will exit after the current iteration completes.
@@ -167,4 +178,6 @@ protected:
     std::vector<ModalEntry> modalStack; ///< Stack of modally presented view controllers.
 
     bool longPressFired = false; ///< Set when LONG_PRESS is delivered during a touch; forces UP_OUTSIDE on release.
+
+    std::atomic<uint32_t> loopCounter_{0}; ///< Completed run-loop iterations (readable from any thread).
 };

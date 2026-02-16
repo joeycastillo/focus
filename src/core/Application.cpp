@@ -53,6 +53,7 @@ void Application::run() {
                 i--;
             }
         }
+        this->loopCounter_.fetch_add(1, std::memory_order_relaxed);
     }
 }
 
