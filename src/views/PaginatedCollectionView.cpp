@@ -73,9 +73,7 @@ void PaginatedCollectionView::goToNextPage() {
     if (current + 1 < total) {
         this->collectionView->goToPage(current + 1);
         updateIndicators();
-        if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-            window->setNeedsDisplay(true);
-        }
+        this->setNeedsDisplayInRect(this->frame);
     }
 }
 
@@ -84,9 +82,7 @@ void PaginatedCollectionView::goToPreviousPage() {
     if (current > 0) {
         this->collectionView->goToPage(current - 1);
         updateIndicators();
-        if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-            window->setNeedsDisplay(true);
-        }
+        this->setNeedsDisplayInRect(this->frame);
     }
 }
 
