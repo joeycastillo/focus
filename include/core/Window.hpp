@@ -95,11 +95,12 @@ public:
     bool needsDisplay();
 
     /**
-     * @brief Mark the entire window as needing (or not needing) a redraw.
-     * @param needsDisplay If true, the entire window is marked dirty.
-     *                     If false, the dirty flag is cleared.
+     * @brief Clear the dirty flag after the display has been updated.
+     *
+     * Called by the refresh task after drawing the dirty region to the display.
+     * To mark a region as needing redraw, use setNeedsDisplayInRect() instead.
      */
-    void setNeedsDisplay(bool needsDisplay);
+    void clearNeedsDisplay();
 
     /// @brief Get the region that needs to be redrawn, or a zero-size rect if clean.
     Rect getDirtyRect();

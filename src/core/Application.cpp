@@ -49,7 +49,7 @@ void Application::run() {
     if (!this->window->focusedView.lock()) {
         this->window->becomeFocused();
     }
-    this->window->setNeedsDisplay(true);
+    this->window->setNeedsDisplayInRect(this->window->getFrame());
     while(this->running) {
         for (int i = 0; i < (int)this->tasks.size(); i++) {
             if (this->tasks[i]->run(application)) {
@@ -247,7 +247,7 @@ void Application::dismissViewController() {
     }
 
     // Mark full window as needing display
-    this->window->setNeedsDisplay(true);
+    this->window->setNeedsDisplayInRect(this->window->getFrame());
 }
 
 void Application::dismissAllViewControllers() {

@@ -29,7 +29,7 @@
 
 Window::Window(std::shared_ptr<Display> display, Size size) : View(MakeRect(0, 0, size.width, size.height)) {
     this->display = display;
-    this->setNeedsDisplay(true);
+    this->setNeedsDisplayInRect(this->frame);
 }
 
 void Window::addSubview(std::shared_ptr<View> view) {
@@ -67,13 +67,8 @@ bool Window::needsDisplay() {
     return this->dirty;
 }
 
-void Window::setNeedsDisplay(bool needsDisplay) {
-    if (needsDisplay) {
-        this->dirtyRect = MakeRect(0, 0, this->frame.size.width, this->frame.size.height);
-        this->dirty = true;
-    } else {
-        this->dirty = false;
-    }
+void Window::clearNeedsDisplay() {
+    this->dirty = false;
 }
 
 void Window::setNeedsDisplayInRect(Rect rect) {
