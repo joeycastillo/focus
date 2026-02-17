@@ -145,7 +145,7 @@ void View::addSubview(std::shared_ptr<View> view) {
     this->subviews.push_back(view);
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         view->setWindow(window);
-        window->setNeedsDisplay(true);
+        this->setNeedsDisplayInRect(view->frame);
     }
 }
 
@@ -178,7 +178,7 @@ void View::removeSubview(std::shared_ptr<View> view) {
         if (removingFocused) {
             window->becomeFocused();
         }
-        window->setNeedsDisplay(true);
+        this->setNeedsDisplayInRect(view->frame);
     }
 }
 
