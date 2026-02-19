@@ -26,9 +26,9 @@
  * @file BasicGlyphProvider.hpp
  * @brief Built-in fixed-width glyph provider used as a fallback font.
  *
- * BasicGlyphProvider supplies a minimal 8x8 pixel fixed-width font that is
- * compiled into the binary. It covers basic ASCII glyphs and is used as a
- * fallback when no external font files are available.
+ * BasicGlyphProvider supplies a minimal 5x8 pixel fixed-width ASCII font
+ * that is compiled into the binary. It covers printable ASCII (0x20-0x7E)
+ * and is used as a fallback when no external font files are available.
  */
 
 #pragma once
@@ -37,7 +37,7 @@
 #include "GlyphProvider.hpp"
 
 /**
- * @brief A minimal built-in 8x8 fixed-width glyph provider.
+ * @brief A minimal built-in 5x8 fixed-width glyph provider.
  *
  * Always reports isValid() as true since the font data is compiled in.
  * Used as a fallback when BDF font files cannot be loaded.
