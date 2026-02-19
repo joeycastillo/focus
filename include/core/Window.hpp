@@ -149,9 +149,9 @@ protected:
     std::shared_ptr<Display> display;          ///< The display backend.
     std::weak_ptr<Application> application;    ///< Owning application (set by Application::run()).
     std::weak_ptr<View> focusedView;           ///< The currently focused view.
-    bool dirty;                                ///< Whether any region needs redrawing.
-    Rect dirtyRect;                            ///< Accumulated region that needs redrawing.
-    bool touchEnabled;                         ///< Whether touch input mode is active.
+    bool dirty = false;                        ///< Whether any region needs redrawing.
+    Rect dirtyRect = {{0,0},{0,0}};            ///< Accumulated region that needs redrawing.
+    bool touchEnabled = false;                 ///< Whether touch input mode is active.
     std::weak_ptr<View> capturedTouchView;     ///< View capturing current touch sequence.
     Point touchDownPoint;                      ///< Initial touch-down point in window coordinates.
     std::shared_ptr<KeyboardView> keyboard;    ///< Window-managed on-screen keyboard, or nullptr.
