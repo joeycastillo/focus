@@ -24,6 +24,7 @@
 
 #include "TabbedView.hpp"
 #include "TabItem.hpp"
+#include "StackView.hpp"
 #include "Window.hpp"
 #include "Font.hpp"
 
@@ -61,21 +62,13 @@ void TabbedView::rebuildTabBar() {
 
     int barHeight = this->getTabBarHeight();
 
-    // Create tab bar container with horizontal affinity for LEFT/RIGHT navigation
-    this->tabBar = std::make_shared<View>(
+    // HStack gives equal-width tab items and horizontal d-pad navigation
+    this->tabBar = std::make_shared<HStack>(
         MakeRect(0, 0, this->frame.size.width, barHeight));
-    this->tabBar->setDirectionalAffinity(DirectionalAffinityHorizontal);
     this->tabBar->setOpaque(false);
 
-    int tabCount = (int)this->tabs.size();
-    int tabWidth = this->frame.size.width / tabCount;
-
-    for (int i = 0; i < tabCount; i++) {
-        int tabX = i * tabWidth;
-        int thisTabWidth = (i == tabCount - 1) ? (this->frame.size.width - tabX) : tabWidth;
-
-        auto item = std::make_shared<TabItem>(
-            MakeRect(tabX, 0, thisTabWidth, barHeight), this->tabs[i].label);
+    for (int i = 0; i < (int)this->tabs.size(); i++) {
+        auto item = std::make_shared<TabItem>(RectZero, this->tabs[i].label);
         if (this->font) item->setFont(this->font);
         item->setSelected((size_t)i == this->selectedIndex);
 
@@ -123,18 +116,9 @@ void TabbedView::layoutSubviews() {
 
     int barHeight = this->getTabBarHeight();
 
-    // Resize tab bar
+    // Resize tab bar — HStack re-layouts its children automatically
     if (this->tabBar) {
         this->tabBar->setFrame(MakeRect(0, 0, this->frame.size.width, barHeight));
-
-        int tabCount = (int)this->tabs.size();
-        int tabWidth = this->frame.size.width / tabCount;
-        for (int i = 0; i < tabCount; i++) {
-            if (!this->tabs[i].tabItem) continue;
-            int tabX = i * tabWidth;
-            int w = (i == tabCount - 1) ? (this->frame.size.width - tabX) : tabWidth;
-            this->tabs[i].tabItem->setFrame(MakeRect(tabX, 0, w, barHeight));
-        }
     }
 
     // Resize selected content
