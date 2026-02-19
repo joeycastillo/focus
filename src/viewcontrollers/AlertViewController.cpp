@@ -39,9 +39,9 @@ std::shared_ptr<AlertViewController> AlertViewController::create(
     std::vector<std::string> buttonLabels,
     CompletionHandler completion)
 {
-    auto vc = std::shared_ptr<AlertViewController>(
+    auto viewController = std::shared_ptr<AlertViewController>(
         new AlertViewController(app, title, message, buttonLabels, completion));
-    return vc;
+    return viewController;
 }
 
 AlertViewController::AlertViewController(

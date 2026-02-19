@@ -73,17 +73,17 @@ bool BDFGlyphProvider::parseBDFFile(const std::string& path) {
         if (!inChar) {
             // Header parsing
             if (keyword == "PIXEL_SIZE") {
-                int val;
-                iss >> val;
-                pixelSize = static_cast<uint8_t>(val);
+                int value;
+                iss >> value;
+                pixelSize = static_cast<uint8_t>(value);
             } else if (keyword == "FONT_ASCENT") {
-                int val;
-                iss >> val;
-                fontAscent = static_cast<uint8_t>(val);
+                int value;
+                iss >> value;
+                fontAscent = static_cast<uint8_t>(value);
             } else if (keyword == "FONT_DESCENT") {
-                int val;
-                iss >> val;
-                fontDescent = static_cast<uint8_t>(val);
+                int value;
+                iss >> value;
+                fontDescent = static_cast<uint8_t>(value);
             } else if (keyword == "FONTBOUNDINGBOX") {
                 int w, h, xoff, yoff;
                 iss >> w >> h >> xoff >> yoff;

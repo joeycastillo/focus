@@ -35,8 +35,8 @@ void InMemorySettingsBackend::eraseKey(const std::string& key) {
 std::string InMemorySettingsBackend::getString(const std::string& key) {
     auto it = store.find(key);
     if (it == store.end()) return "";
-    auto* val = std::get_if<std::string>(&it->second);
-    return val ? *val : "";
+    auto* value = std::get_if<std::string>(&it->second);
+    return value ? *value : "";
 }
 
 void InMemorySettingsBackend::setString(const std::string& key, const std::string& value) {
@@ -46,8 +46,8 @@ void InMemorySettingsBackend::setString(const std::string& key, const std::strin
 int32_t InMemorySettingsBackend::getInt(const std::string& key) {
     auto it = store.find(key);
     if (it == store.end()) return 0;
-    auto* val = std::get_if<int32_t>(&it->second);
-    return val ? *val : 0;
+    auto* value = std::get_if<int32_t>(&it->second);
+    return value ? *value : 0;
 }
 
 void InMemorySettingsBackend::setInt(const std::string& key, int32_t value) {
@@ -57,8 +57,8 @@ void InMemorySettingsBackend::setInt(const std::string& key, int32_t value) {
 bool InMemorySettingsBackend::getBool(const std::string& key) {
     auto it = store.find(key);
     if (it == store.end()) return false;
-    auto* val = std::get_if<bool>(&it->second);
-    return val ? *val : false;
+    auto* value = std::get_if<bool>(&it->second);
+    return value ? *value : false;
 }
 
 void InMemorySettingsBackend::setBool(const std::string& key, bool value) {
