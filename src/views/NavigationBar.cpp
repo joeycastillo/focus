@@ -25,6 +25,7 @@
 #include "NavigationBar.hpp"
 #include "Button.hpp"
 #include "LabelView.hpp"
+#include "StackView.hpp"
 #include "Display.hpp"
 #include "Font.hpp"
 #include "Locale.hpp"
@@ -35,45 +36,46 @@ NavigationBar::NavigationBar(int width) : View(MakeRect(0, 0, width, getHeight()
 
 std::shared_ptr<NavigationBar> NavigationBar::create(int width) {
     auto bar = std::shared_ptr<NavigationBar>(new NavigationBar(width));
-    bar->setDirectionalAffinity(DirectionalAffinityHorizontal);
 
     int height = getHeight();
     int padding = 8;
-    int backButtonWidth = 80;
-    int backButtonHeight = height - 2 * padding;
+    int buttonWidth = 80;
+
+    // HStack handles horizontal layout and d-pad navigation
+    auto layout = std::make_shared<HStack>(
+        MakeRect(padding, padding, width - 2 * padding, height - 2 * padding));
+    layout->setSpacing(padding);
+    layout->setOpaque(false);
 
     // Back button, left-aligned, initially hidden
     bar->backButton = std::make_shared<Button>(
-        MakeRect(padding, padding, backButtonWidth, backButtonHeight), _LS("nav.back", "Back"));
+        MakeRect(0, 0, buttonWidth, 0), _LS("nav.back", "Back"));
     bar->backButton->setHidden(true);
     bar->backButton->setAction(
         [raw = bar.get()](Event, std::weak_ptr<View>) {
             if (raw->backAction) raw->backAction();
         },
         FOCUS_EVENT_TOUCH_UP_INSIDE);
-    bar->addSubview(bar->backButton);
+    layout->addSubview(bar->backButton);
 
-    // Title label, centered in the space between the back button area and right edge
-    int titleX = padding + backButtonWidth + padding;
-    int titleWidth = width - 2 * titleX; // symmetrical margin
-    if (titleWidth < 0) titleWidth = 0;
-    bar->titleLabel = std::make_shared<LabelView>(
-        MakeRect(titleX, padding, titleWidth, backButtonHeight), "");
+    // Title label, flexible width, centered
+    bar->titleLabel = std::make_shared<LabelView>(RectZero, "");
     bar->titleLabel->setTextAlignment(TextAlignmentCenter);
     bar->titleLabel->setOpaque(false);
-    bar->addSubview(bar->titleLabel);
+    layout->addSubview(bar->titleLabel);
 
     // Right button, right-aligned, initially hidden
-    int rightButtonWidth = 80;
     bar->rightButton = std::make_shared<Button>(
-        MakeRect(width - padding - rightButtonWidth, padding, rightButtonWidth, backButtonHeight), "");
+        MakeRect(0, 0, buttonWidth, 0), "");
     bar->rightButton->setHidden(true);
     bar->rightButton->setAction(
         [raw = bar.get()](Event, std::weak_ptr<View>) {
             if (raw->rightAction) raw->rightAction();
         },
         FOCUS_EVENT_TOUCH_UP_INSIDE);
-    bar->addSubview(bar->rightButton);
+    layout->addSubview(bar->rightButton);
+
+    bar->addSubview(layout);
 
     return bar;
 }
