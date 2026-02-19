@@ -93,6 +93,7 @@ public:
     /// @brief Get how many items fit on one page.
     size_t getItemsPerPage() const;
 
+    void setFrame(Rect rect) override;
     bool handleEvent(Event event) override;
 
 private:
