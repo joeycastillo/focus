@@ -117,7 +117,13 @@ typedef struct {
 /// @brief Callback type for event actions registered on views.
 ///
 /// When a view receives an event matching a registered action type, it invokes
-/// the corresponding Action with the event and a weak reference to the sender.
+/// the corresponding Action with two arguments:
+///
+/// - **event** — the Event that triggered the action (type + userInfo).
+/// - **sender** — a weak pointer to the view that fired the action. Lock it
+///   to obtain a shared_ptr if you need to inspect or modify the sender
+///   (e.g. read a control's value, disable a button after a tap). The pointer
+///   is weak to avoid retain cycles between a view and its own closure.
 typedef std::function<void(Event, std::weak_ptr<View>)> Action;
 
 /// @brief A point in 2D space.

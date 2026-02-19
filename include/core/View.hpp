@@ -205,7 +205,9 @@ public:
      * When this view receives an event with a matching type, the action is
      * called instead of the default event handling.
      *
-     * @param action The callback to invoke.
+     * @param action The callback to invoke. It receives the triggering Event
+     *   and a weak pointer to this view (the sender). See the Action typedef
+     *   in Focus.hpp for details.
      * @param type The event type to match (e.g. FOCUS_EVENT_SELECT).
      */
     void setAction(const Action &action, int32_t type);
@@ -228,7 +230,9 @@ public:
      * long-lived view silently consumes events, preventing them from reaching
      * the intended handler.
      *
-     * @param action The callback to invoke.
+     * @param action The callback to invoke. It receives the triggering Event
+     *   and a weak pointer to this view (the sender). See the Action typedef
+     *   in Focus.hpp for details.
      * @param type The event type to match.
      * @param owner Weak reference to the owning object; action is removed when this expires.
      */
