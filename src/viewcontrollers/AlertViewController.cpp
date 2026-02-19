@@ -28,6 +28,7 @@
 #include "BorderedView.hpp"
 #include "LabelView.hpp"
 #include "Button.hpp"
+#include "StackView.hpp"
 #include "Font.hpp"
 #include "TextLayout.hpp"
 
@@ -72,17 +73,26 @@ void AlertViewController::createView() {
 
     Size windowSize = app->getWindow()->getFrame().size;
 
-    // Layout constants
-    int alertWidth = 400;
-    int padding = 20;
+    // Derive layout constants from screen size
+    int padding = std::max(8, std::min(20, windowSize.width / 24));
+    int alertWidth = std::min((int)(windowSize.width * 85 / 100), 400);
     int contentWidth = alertWidth - 2 * padding;
-    int buttonHeight = 48;
-    int buttonSpacing = 8;
-    int sectionSpacing = 16;
+    int buttonSpacing = std::max(4, padding / 3);
+    int sectionSpacing = std::max(8, padding * 3 / 4);
 
     // Resolve fonts
     auto titleFont = Font::systemLargeFont();
     auto messageFont = Font::systemFont();
+
+    // Derive button height from font metrics
+    int messageLineHeight = 18;
+    if (messageFont && messageFont->isValid()) {
+        auto provider = messageFont->getSharedGlyphProvider();
+        if (provider) {
+            messageLineHeight = provider->getGlyphRowCount();
+        }
+    }
+    int buttonHeight = std::max(24, messageLineHeight + 2 * padding);
 
     // Measure title height
     int titleLineHeight = 24;
@@ -102,12 +112,10 @@ void AlertViewController::createView() {
     int titleHeight = titleLines * titleLineHeight;
 
     // Measure message height
-    int messageLineHeight = 18;
     int messageTextWidth = 0;
     if (messageFont && messageFont->isValid()) {
         auto provider = messageFont->getSharedGlyphProvider();
         if (provider) {
-            messageLineHeight = provider->getGlyphRowCount();
             messageTextWidth = TextLayout::measureTextWidth(
                 this->alertMessage.c_str(), 1, provider.get());
         }
@@ -118,31 +126,77 @@ void AlertViewController::createView() {
     }
     int messageHeight = messageLines * messageLineHeight;
 
-    // Calculate button layout
+    // Build content stack (title, message, buttons)
     int numButtons = (int)this->buttonLabels.size();
-    int totalButtonHeight;
-    bool buttonsHorizontal = false;
+    bool buttonsHorizontal = (numButtons <= 2);
 
-    if (numButtons <= 2) {
-        // Try horizontal layout: buttons share the width
-        buttonsHorizontal = true;
-        totalButtonHeight = buttonHeight;
+    auto contentStack = std::make_shared<VStack>(RectZero);
+    contentStack->setSpacing(sectionSpacing);
+
+    // Title label
+    auto titleLabel = std::make_shared<LabelView>(
+        MakeRect(0, 0, 0, titleHeight), this->alertTitle);
+    if (titleFont) {
+        titleLabel->setFont(titleFont);
+    }
+    contentStack->addSubview(titleLabel);
+
+    // Message label
+    auto messageLabel = std::make_shared<LabelView>(
+        MakeRect(0, 0, 0, messageHeight), this->alertMessage);
+    contentStack->addSubview(messageLabel);
+
+    // Buttons
+    if (buttonsHorizontal && numButtons > 0) {
+        auto buttonRow = std::make_shared<HStack>(
+            MakeRect(0, 0, 0, buttonHeight));
+        buttonRow->setSpacing(buttonSpacing);
+        for (int i = 0; i < numButtons; i++) {
+            auto button = std::make_shared<Button>(
+                RectZero, this->buttonLabels[i]);
+            int buttonIndex = i;
+            button->setAction(
+                [this, buttonIndex](Event, std::weak_ptr<View>) {
+                    this->onButtonPressed(buttonIndex);
+                },
+                FOCUS_EVENT_TOUCH_UP_INSIDE);
+            buttonRow->addSubview(button);
+        }
+        contentStack->addSubview(buttonRow);
     } else {
-        // Vertical layout: stack buttons
-        totalButtonHeight = numButtons * buttonHeight + (numButtons - 1) * buttonSpacing;
+        int buttonSectionHeight = numButtons * buttonHeight
+            + (numButtons - 1) * buttonSpacing;
+        auto buttonStack = std::make_shared<VStack>(
+            MakeRect(0, 0, 0, buttonSectionHeight));
+        buttonStack->setSpacing(buttonSpacing);
+        for (int i = 0; i < numButtons; i++) {
+            auto button = std::make_shared<Button>(
+                MakeRect(0, 0, 0, buttonHeight), this->buttonLabels[i]);
+            int buttonIndex = i;
+            button->setAction(
+                [this, buttonIndex](Event, std::weak_ptr<View>) {
+                    this->onButtonPressed(buttonIndex);
+                },
+                FOCUS_EVENT_TOUCH_UP_INSIDE);
+            buttonStack->addSubview(button);
+        }
+        contentStack->addSubview(buttonStack);
     }
 
-    // Total alert height
-    int alertHeight = padding + titleHeight + sectionSpacing
-                    + messageHeight + sectionSpacing
-                    + totalButtonHeight + padding;
+    // Calculate total alert height
+    int buttonSectionHeight = buttonsHorizontal ? buttonHeight
+        : (numButtons * buttonHeight + (numButtons - 1) * buttonSpacing);
+    int contentHeight = titleHeight + sectionSpacing
+        + messageHeight + sectionSpacing + buttonSectionHeight;
+    int alertHeight = 2 * padding + contentHeight;
 
     // Center the alert in the window
     int alertX = (windowSize.width - alertWidth) / 2;
     int alertY = (windowSize.height - alertHeight) / 2;
 
     // Create the root view (transparent, just for positioning)
-    this->view = std::make_shared<View>(MakeRect(0, 0, windowSize.width, windowSize.height));
+    this->view = std::make_shared<View>(
+        MakeRect(0, 0, windowSize.width, windowSize.height));
     this->view->setOpaque(false);
 
     // Create the bordered alert box
@@ -150,67 +204,8 @@ void AlertViewController::createView() {
         MakeRect(alertX, alertY, alertWidth, alertHeight));
     this->view->addSubview(alertBox);
 
-    int yPos = padding;
-
-    // Title label
-    auto titleLabel = std::make_shared<LabelView>(
-        MakeRect(padding, yPos, contentWidth, titleHeight),
-        this->alertTitle);
-    if (titleFont) {
-        titleLabel->setFont(titleFont);
-    }
-    alertBox->addSubview(titleLabel);
-    yPos += titleHeight + sectionSpacing;
-
-    // Message label
-    auto messageLabel = std::make_shared<LabelView>(
-        MakeRect(padding, yPos, contentWidth, messageHeight),
-        this->alertMessage);
-    alertBox->addSubview(messageLabel);
-    yPos += messageHeight + sectionSpacing;
-
-    // Buttons
-    if (buttonsHorizontal && numButtons > 0) {
-        int totalSpacing = (numButtons - 1) * buttonSpacing;
-        int singleButtonWidth = (contentWidth - totalSpacing) / numButtons;
-
-        // Wrap horizontal buttons in a container with horizontal affinity
-        // so LEFT/RIGHT navigates between them via d-pad.
-        auto buttonRow = std::make_shared<View>(
-            MakeRect(padding, yPos, contentWidth, buttonHeight));
-        buttonRow->setDirectionalAffinity(DirectionalAffinityHorizontal);
-
-        for (int i = 0; i < numButtons; i++) {
-            int buttonX = i * (singleButtonWidth + buttonSpacing);
-            auto button = std::make_shared<Button>(
-                MakeRect(buttonX, 0, singleButtonWidth, buttonHeight),
-                this->buttonLabels[i]);
-
-            int buttonIndex = i;
-            button->setAction(
-                [this, buttonIndex](Event, std::weak_ptr<View>) {
-                    this->onButtonPressed(buttonIndex);
-                },
-                FOCUS_EVENT_TOUCH_UP_INSIDE);
-
-            buttonRow->addSubview(button);
-        }
-        alertBox->addSubview(buttonRow);
-    } else {
-        for (int i = 0; i < numButtons; i++) {
-            auto button = std::make_shared<Button>(
-                MakeRect(padding, yPos, contentWidth, buttonHeight),
-                this->buttonLabels[i]);
-
-            int buttonIndex = i;
-            button->setAction(
-                [this, buttonIndex](Event, std::weak_ptr<View>) {
-                    this->onButtonPressed(buttonIndex);
-                },
-                FOCUS_EVENT_TOUCH_UP_INSIDE);
-
-            alertBox->addSubview(button);
-            yPos += buttonHeight + buttonSpacing;
-        }
-    }
+    // Position the content stack inside the alert box
+    contentStack->setFrame(
+        MakeRect(padding, padding, contentWidth, contentHeight));
+    alertBox->addSubview(contentStack);
 }
