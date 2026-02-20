@@ -24,6 +24,7 @@
 
 #include "ViewController.hpp"
 #include "NavigationViewController.hpp"
+#include "TabViewController.hpp"
 #include "Application.hpp"
 #include "Window.hpp"
 
@@ -75,4 +76,12 @@ void ViewController::setTitle(const std::string& title) {
 
 std::shared_ptr<NavigationViewController> ViewController::getNavigationController() const {
     return this->navigationController.lock();
+}
+
+std::shared_ptr<TabViewController> ViewController::getTabViewController() const {
+    return this->tabViewController.lock();
+}
+
+std::shared_ptr<View> ViewController::getView() const {
+    return this->view;
 }

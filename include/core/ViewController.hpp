@@ -41,6 +41,7 @@
 #include <string>
 
 class NavigationViewController;
+class TabViewController;
 
 /**
  * @brief Abstract controller that manages a view and its lifecycle.
@@ -95,6 +96,12 @@ public:
     /// @brief Get the navigation controller managing this view controller, if any.
     std::shared_ptr<NavigationViewController> getNavigationController() const;
 
+    /// @brief Get the tab view controller managing this view controller, if any.
+    std::shared_ptr<TabViewController> getTabViewController() const;
+
+    /// @brief Get the root view managed by this controller, or nullptr if not yet created.
+    std::shared_ptr<View> getView() const;
+
 protected:
     /**
      * @brief Create this controller's view hierarchy.
@@ -112,7 +119,9 @@ protected:
     std::weak_ptr<Application> application; ///< Weak reference to the owning application.
     std::string title;                     ///< Title displayed in navigation bars.
     std::weak_ptr<NavigationViewController> navigationController; ///< Set by NavigationViewController when pushed.
+    std::weak_ptr<TabViewController> tabViewController; ///< Set by TabViewController when added as a tab.
 
     friend class Application;
     friend class NavigationViewController;
+    friend class TabViewController;
 };
