@@ -29,7 +29,7 @@
 #include <chrono>
 #include <cxxabi.h>
 
-#include "esp_log.h"
+#include "FocusLog.hpp"
 static const char *VIEW_TAG = "View";
 
 int View::drawCount = 0;

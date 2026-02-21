@@ -29,7 +29,7 @@
 #include "Display.hpp"
 #include <algorithm>
 #include <typeinfo>
-#include "esp_log.h"
+#include "FocusLog.hpp"
 
 static const char *TAG = "Focus";
 

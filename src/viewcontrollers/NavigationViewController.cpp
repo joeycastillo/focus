@@ -27,7 +27,7 @@
 #include "Application.hpp"
 #include "Window.hpp"
 #include <typeinfo>
-#include "esp_log.h"
+#include "FocusLog.hpp"
 
 static const char *TAG = "Focus";
 
