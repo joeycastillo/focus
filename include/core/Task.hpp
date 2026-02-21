@@ -46,6 +46,7 @@
 class Task {
 public:
     Task();
+    virtual ~Task() = default;
 
     /**
      * @brief Execute one iteration of this task.
