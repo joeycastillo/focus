@@ -24,7 +24,7 @@
 
 /**
  * @file TabItem.hpp
- * @brief A focusable tab label for use in a TabbedView's tab bar.
+ * @brief A focusable tab label for use in TabViewController's tab bar.
  *
  * TabItem renders like a Button but has a `selected` state that keeps the
  * inverted appearance even when the item doesn't have focus. This allows
@@ -44,8 +44,8 @@ class CanvasView;
 /**
  * @brief A tab label control that inverts when selected or focused.
  *
- * Used internally by TabbedView. When a TabItem receives focus via d-pad
- * navigation, TabbedView switches to that tab's content immediately.
+ * Used internally by TabViewController. When a TabItem receives focus via d-pad
+ * navigation, TabViewController switches to that tab's content immediately.
  */
 class TabItem : public Control {
 public:
@@ -56,8 +56,8 @@ public:
 
     void setFont(std::shared_ptr<Font> font);
 
-    /// @brief Called when this tab item receives focus. TabbedView uses this
-    /// to switch tabs immediately on d-pad navigation (no SELECT needed).
+    /// @brief Called when this tab item receives focus. TabViewController uses
+    /// this to switch tabs immediately on d-pad navigation (no SELECT needed).
     std::function<void()> onFocused;
 
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
