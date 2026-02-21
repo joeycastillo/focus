@@ -57,6 +57,7 @@ public:
      * @param window The root window for this application's view hierarchy.
      */
     Application(const std::shared_ptr<Window>& window);
+    virtual ~Application() = default;
 
     /**
      * @brief Application-specific initialization.

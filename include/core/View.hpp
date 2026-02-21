@@ -59,7 +59,7 @@ public:
      *             The bounds are automatically set to the same size with origin (0,0).
      */
     View(Rect rect);
-    ~View();
+    virtual ~View();
 
     /**
      * @brief Draw this view and its subviews.

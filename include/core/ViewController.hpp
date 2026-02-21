@@ -63,6 +63,7 @@ public:
      * @param application The owning application (stored as a weak reference).
      */
     ViewController(std::shared_ptr<Application> application);
+    virtual ~ViewController() = default;
 
     /// @brief Called before the view is added to the window. Creates the view if needed.
     virtual void viewWillAppear();

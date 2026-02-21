@@ -53,6 +53,7 @@
 class GlyphProvider : public std::enable_shared_from_this<GlyphProvider> {
 public:
     GlyphProvider();
+    virtual ~GlyphProvider() = default;
 
     /**
      * @brief Get a pre-populated cache of metrics for ASCII codepoints 0x20..0x7F.
