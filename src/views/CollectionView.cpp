@@ -348,6 +348,10 @@ void CollectionView::reloadData() {
     }
 
     this->loadPage(0);
+
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
+    }
 }
 
 void CollectionView::goToPage(size_t page) {
