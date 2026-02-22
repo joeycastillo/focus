@@ -54,6 +54,9 @@ public:
     void longPress(Event event) override;
     void reset() override;
 
+    /// @brief Get the initial touch-down point for this gesture.
+    Point getTouchDownPoint() const { return this->touchDownPoint; }
+
 private:
     Rect activationRegion;
     int moveThreshold;
