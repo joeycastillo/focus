@@ -514,7 +514,19 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
         this->writeCodepoint(cp, glyphProvider);
         if (this->wordMapOutput && this->codepointByteOffsets) {
             int16_t afterX = this->cursor.x;
-            if (cp > 0x20) {
+            unicode_info_t traits = getTraitsForCodepoint(cp);
+            uint8_t wb = traits.is.word_break;
+
+            // Word characters: always start or continue a word
+            bool isWordChar = (wb == WB_ALetter || wb == WB_Hebrew_Letter ||
+                               wb == WB_Numeric || wb == WB_Katakana ||
+                               wb == WB_ExtendNumLet || wb == WB_Extend);
+
+            // Mid-word characters: continue a word only if followed by a word character
+            bool isMidWord = (wb == WB_MidLetter || wb == WB_MidNum ||
+                              wb == WB_MidNumLet || wb == WB_Single_Quote);
+
+            if (isWordChar) {
                 int16_t left = std::min(beforeX, afterX);
                 int16_t right = std::max(beforeX, afterX);
                 if (!trackingWord) {
@@ -528,11 +540,36 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
                     wordMaxX = std::max(wordMaxX, right);
                 }
                 wordEndOffset = this->codepointByteOffsets[lineStart + j + 1];
-            } else if (cp == 0x20 && trackingWord) {
-                this->wordMapOutput->push_back({wordMinX, wordY,
-                    (int16_t)(wordMaxX - wordMinX), wordLineHeight,
-                    wordStartOffset, wordEndOffset});
-                trackingWord = false;
+            } else if (trackingWord && isMidWord && (j + 1) < lineLen) {
+                // Lookahead: if the next codepoint is a word character, include
+                // this mid-word character (handles contractions like "don't"
+                // and decimals like "3.14").
+                unicode_info_t nextTraits = getTraitsForCodepoint(codepoints[lineStart + j + 1]);
+                uint8_t nextWb = nextTraits.is.word_break;
+                bool nextIsWord = (nextWb == WB_ALetter || nextWb == WB_Hebrew_Letter ||
+                                   nextWb == WB_Numeric || nextWb == WB_Katakana ||
+                                   nextWb == WB_ExtendNumLet || nextWb == WB_Extend);
+                if (nextIsWord) {
+                    int16_t left = std::min(beforeX, afterX);
+                    int16_t right = std::max(beforeX, afterX);
+                    wordMinX = std::min(wordMinX, left);
+                    wordMaxX = std::max(wordMaxX, right);
+                    wordEndOffset = this->codepointByteOffsets[lineStart + j + 1];
+                } else {
+                    // Trailing punctuation — emit the word before it
+                    this->wordMapOutput->push_back({wordMinX, wordY,
+                        (int16_t)(wordMaxX - wordMinX), wordLineHeight,
+                        wordStartOffset, wordEndOffset});
+                    trackingWord = false;
+                }
+            } else {
+                // Boundary character — emit any tracked word
+                if (trackingWord) {
+                    this->wordMapOutput->push_back({wordMinX, wordY,
+                        (int16_t)(wordMaxX - wordMinX), wordLineHeight,
+                        wordStartOffset, wordEndOffset});
+                    trackingWord = false;
+                }
             }
         }
     };

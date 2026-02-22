@@ -40,10 +40,10 @@
  *     bit  6:   mapped         (a mirror-image mapping exists)
  *     bit  7:   controlchar    (control character)
  *   Byte 1 — text layout / classification fields:
- *     bits 8–12: general_category (Unicode General Category)
- *     bit  13:   whitespace       (whitespace character)
- *     bit  14:   linebreak        (line break opportunity after this character)
- *     bit  15:   (reserved)
+ *     bits 8–11: word_break       (UAX#29 Word_Break property)
+ *     bit  12:   whitespace       (whitespace character)
+ *     bit  13:   linebreak        (line break opportunity after this character)
+ *     bits 14–15: (reserved)
  */
 
 #pragma once
@@ -74,39 +74,28 @@ enum BidiClass : uint8_t {
 };
 
 /**
- * @brief Unicode General Category values (5 bits, 0–31).
+ * @brief UAX#29 Word_Break property values (4 bits, 0–14).
+ *
+ * Some Unicode Word_Break values are merged for compactness:
+ *   Format, ZWJ → WB_Extend
+ *   WSegSpace, Regional_Indicator → WB_Other
  */
-enum GeneralCategory : uint8_t {
-    GC_Lu = 0,   ///< Letter, uppercase
-    GC_Ll = 1,   ///< Letter, lowercase
-    GC_Lt = 2,   ///< Letter, titlecase
-    GC_Lm = 3,   ///< Letter, modifier
-    GC_Lo = 4,   ///< Letter, other
-    GC_Mn = 5,   ///< Mark, nonspacing
-    GC_Mc = 6,   ///< Mark, spacing combining
-    GC_Me = 7,   ///< Mark, enclosing
-    GC_Nd = 8,   ///< Number, decimal digit
-    GC_Nl = 9,   ///< Number, letter
-    GC_No = 10,  ///< Number, other
-    GC_Pc = 11,  ///< Punctuation, connector
-    GC_Pd = 12,  ///< Punctuation, dash
-    GC_Ps = 13,  ///< Punctuation, open
-    GC_Pe = 14,  ///< Punctuation, close
-    GC_Pi = 15,  ///< Punctuation, initial quote
-    GC_Pf = 16,  ///< Punctuation, final quote
-    GC_Po = 17,  ///< Punctuation, other
-    GC_Sm = 18,  ///< Symbol, math
-    GC_Sc = 19,  ///< Symbol, currency
-    GC_Sk = 20,  ///< Symbol, modifier
-    GC_So = 21,  ///< Symbol, other
-    GC_Zs = 22,  ///< Separator, space
-    GC_Zl = 23,  ///< Separator, line
-    GC_Zp = 24,  ///< Separator, paragraph
-    GC_Cc = 25,  ///< Other, control
-    GC_Cf = 26,  ///< Other, format
-    GC_Cs = 27,  ///< Other, surrogate
-    GC_Co = 28,  ///< Other, private use
-    GC_Cn = 29,  ///< Other, not assigned
+enum WordBreak : uint8_t {
+    WB_Other         = 0,   ///< Default: punctuation, symbols, separators — always a word boundary
+    WB_ALetter       = 1,   ///< Alphabetic letter
+    WB_Hebrew_Letter = 2,   ///< Hebrew script letter
+    WB_Numeric       = 3,   ///< Digit
+    WB_Katakana      = 4,   ///< Japanese katakana
+    WB_ExtendNumLet  = 5,   ///< Connector (underscore, etc.)
+    WB_Extend        = 6,   ///< Combining mark, format character, or ZWJ
+    WB_MidLetter     = 7,   ///< Mid-word letter separator (U+2019, U+00B7, etc.)
+    WB_MidNum        = 8,   ///< Mid-number separator (comma between digits, etc.)
+    WB_MidNumLet     = 9,   ///< Mid-word or mid-number (period, etc.)
+    WB_Single_Quote  = 10,  ///< Apostrophe (U+0027)
+    WB_Double_Quote  = 11,  ///< Quotation mark (U+0022)
+    WB_CR            = 12,  ///< Carriage return
+    WB_LF            = 13,  ///< Line feed
+    WB_Newline       = 14,  ///< Other newline characters
 };
 
 /**
@@ -124,10 +113,10 @@ typedef union {
         uint16_t mapped: 1;           ///< A mirror-image mapping exists for this character
         uint16_t controlchar: 1;      ///< Is a control character (U+0000..U+001F, etc.)
         // Byte 1 — text layout / classification fields
-        uint16_t general_category: 5; ///< Unicode General Category (GeneralCategory enum)
+        uint16_t word_break: 4;       ///< UAX#29 Word_Break property (WordBreak enum)
         uint16_t whitespace: 1;       ///< Is a whitespace character
         uint16_t linebreak: 1;        ///< A line break opportunity exists after this character
-        uint16_t _reserved: 1;
+        uint16_t _reserved: 2;
     } is;
     uint16_t packed; ///< All fields packed into a single 16-bit value.
 } unicode_info_t;
