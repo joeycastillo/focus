@@ -188,5 +188,20 @@ protected:
     /// @return A FOCUS_EVENT_SWIPE_* constant, or 0 if not a swipe.
     int32_t detectSwipe(int dx, int dy, int64_t durationUs);
 
+    /// @brief Dispatch a touch event through normal view hit-test and capture.
+    void dispatchTouchEvent(Event event);
+
+    /// @brief Attempt to route a touch event through system gesture recognizers.
+    /// @return true if the event was consumed (buffered or dispatched to a recognizer).
+    bool handleSystemGestures(Event event);
+
+    /// @name System gesture recognition state
+    /// @{
+    std::vector<std::shared_ptr<GestureRecognizer>> activeRecognizers;  ///< Recognizers interested in current touch.
+    std::vector<Event> gestureEventBuffer;                              ///< Buffered events during Possible state.
+    bool gestureRecognitionPending = false;                             ///< Whether we're in the buffering phase.
+    std::shared_ptr<GestureRecognizer> recognizedGesture;              ///< The recognizer that won, or nullptr.
+    /// @}
+
     std::atomic<uint32_t> loopCounter_{0}; ///< Completed run-loop iterations (readable from any thread).
 };

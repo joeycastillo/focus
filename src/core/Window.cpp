@@ -26,6 +26,7 @@
 #include "View.hpp"
 #include "Display.hpp"
 #include "KeyboardView.hpp"
+#include <algorithm>
 
 Window::Window(std::shared_ptr<Display> display, Size size) : View(MakeRect(0, 0, size.width, size.height)) {
     this->display = display;
@@ -126,6 +127,21 @@ void Window::clearCapturedTouchView() {
 
 Point Window::getTouchDownPoint() {
     return this->touchDownPoint;
+}
+
+void Window::addSystemGestureRecognizer(std::shared_ptr<GestureRecognizer> recognizer) {
+    this->systemGestureRecognizers.push_back(recognizer);
+}
+
+void Window::removeSystemGestureRecognizer(std::shared_ptr<GestureRecognizer> recognizer) {
+    auto it = std::find(this->systemGestureRecognizers.begin(), this->systemGestureRecognizers.end(), recognizer);
+    if (it != this->systemGestureRecognizers.end()) {
+        this->systemGestureRecognizers.erase(it);
+    }
+}
+
+const std::vector<std::shared_ptr<GestureRecognizer>>& Window::getSystemGestureRecognizers() const {
+    return this->systemGestureRecognizers;
 }
 
 void Window::onFocusedViewChanged() {

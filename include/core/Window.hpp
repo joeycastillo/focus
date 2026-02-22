@@ -40,6 +40,7 @@
 
 #include "Focus.hpp"
 #include "View.hpp"
+#include "GestureRecognizer.hpp"
 
 class KeyboardView;
 
@@ -90,6 +91,21 @@ public:
 
     /// @brief Get the initial touch-down point for the current touch sequence.
     Point getTouchDownPoint();
+
+    /// @name System Gesture Recognizers
+    /// @brief Gesture recognizers that intercept touches before view dispatch.
+    /// @{
+
+    /// @brief Add a system gesture recognizer to the window.
+    void addSystemGestureRecognizer(std::shared_ptr<GestureRecognizer> recognizer);
+
+    /// @brief Remove a system gesture recognizer from the window.
+    void removeSystemGestureRecognizer(std::shared_ptr<GestureRecognizer> recognizer);
+
+    /// @brief Get the list of active system gesture recognizers.
+    const std::vector<std::shared_ptr<GestureRecognizer>>& getSystemGestureRecognizers() const;
+
+    /// @}
 
     /// @brief Check whether any region needs to be redrawn.
     bool needsDisplay();
@@ -156,6 +172,7 @@ protected:
     Point touchDownPoint;                      ///< Initial touch-down point in window coordinates.
     std::shared_ptr<KeyboardView> keyboard;    ///< Window-managed on-screen keyboard, or nullptr.
     KeyboardType currentKeyboardType = KeyboardTypeDefault; ///< Type of currently presented keyboard.
+    std::vector<std::shared_ptr<GestureRecognizer>> systemGestureRecognizers; ///< Registered system gesture recognizers.
 
     void presentKeyboard();
     void dismissKeyboard();

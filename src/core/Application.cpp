@@ -81,6 +81,182 @@ int32_t Application::detectSwipe(int dx, int dy, int64_t durationUs) {
     return 0;
 }
 
+void Application::dispatchTouchEvent(Event event) {
+    switch (event.type) {
+        case FOCUS_EVENT_TOUCH_DOWN:
+        {
+            this->longPressFired = false;
+            this->touchDownTimestamp = event.timestamp;
+            Point touch = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
+            if (std::shared_ptr<View> touchedView = this->window->getViewForTouch(touch).lock()) {
+                // If a text-input view is focused and the touch landed outside
+                // both it and the keyboard, resign focus to dismiss the keyboard.
+                if (std::shared_ptr<View> focused = this->window->getFocusedView().lock()) {
+                    if (focused->wantsKeyboardInput() &&
+                        touchedView != focused &&
+                        !this->window->isKeyboardView(touchedView)) {
+                        this->window->becomeFocused();
+                    }
+                }
+                this->window->setCapturedTouchView(touchedView, touch);
+                touchedView->handleEvent(event);
+            }
+        }
+        break;
+
+        case FOCUS_EVENT_TOUCH_MOVED:
+        {
+            if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
+                capturedView->handleEvent(event);
+            }
+        }
+        break;
+
+        case FOCUS_EVENT_TOUCH_UP:
+        {
+            if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
+                Event upEvent;
+                upEvent.userInfo = event.userInfo;
+                upEvent.timestamp = event.timestamp;
+
+                if (this->longPressFired) {
+                    // Long press already handled; suppress normal tap
+                    upEvent.type = FOCUS_EVENT_TOUCH_UP_OUTSIDE;
+                } else {
+                    Point touchDown = this->window->getTouchDownPoint();
+                    Point touchUp = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
+                    int64_t duration = event.timestamp - this->touchDownTimestamp;
+                    int32_t swipe = this->detectSwipe(touchUp.x - touchDown.x, touchUp.y - touchDown.y, duration);
+                    if (swipe) {
+                        upEvent.type = swipe;
+                    } else {
+                        bool isInside = capturedView->containsPointInWindowCoordinates(touchUp);
+                        upEvent.type = isInside ? FOCUS_EVENT_TOUCH_UP_INSIDE : FOCUS_EVENT_TOUCH_UP_OUTSIDE;
+                    }
+                }
+                capturedView->handleEvent(upEvent);
+
+                this->window->clearCapturedTouchView();
+                this->longPressFired = false;
+            }
+        }
+        break;
+
+        case FOCUS_EVENT_LONG_PRESS:
+        {
+            this->longPressFired = true;
+            if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
+                capturedView->handleEvent(event);
+            }
+        }
+        break;
+
+        default:
+            break;
+    }
+}
+
+bool Application::handleSystemGestures(Event event) {
+    // If a gesture was already recognized, forward events to it
+    if (this->recognizedGesture) {
+        switch (event.type) {
+            case FOCUS_EVENT_TOUCH_MOVED:
+                this->recognizedGesture->touchMoved(event);
+                return true;
+            case FOCUS_EVENT_TOUCH_UP:
+                this->recognizedGesture->touchUp(event);
+                this->recognizedGesture->reset();
+                this->recognizedGesture = nullptr;
+                return true;
+            case FOCUS_EVENT_LONG_PRESS:
+                this->recognizedGesture->longPress(event);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // On TOUCH_DOWN: check which recognizers want this touch
+    if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
+        Point touch = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
+        const auto& recognizers = this->window->getSystemGestureRecognizers();
+        this->activeRecognizers.clear();
+        for (const auto& recognizer : recognizers) {
+            if (recognizer->wantsTouch(touch)) {
+                this->activeRecognizers.push_back(recognizer);
+            }
+        }
+        if (this->activeRecognizers.empty()) return false;
+
+        // Start buffering
+        this->gestureRecognitionPending = true;
+        this->gestureEventBuffer.clear();
+        this->gestureEventBuffer.push_back(event);
+
+        for (auto& recognizer : this->activeRecognizers) {
+            recognizer->touchDown(event);
+        }
+        return true;
+    }
+
+    // Not in buffering mode — nothing to do
+    if (!this->gestureRecognitionPending) return false;
+
+    // Feed event to active recognizers
+    for (auto& recognizer : this->activeRecognizers) {
+        switch (event.type) {
+            case FOCUS_EVENT_TOUCH_MOVED: recognizer->touchMoved(event); break;
+            case FOCUS_EVENT_TOUCH_UP:    recognizer->touchUp(event); break;
+            case FOCUS_EVENT_LONG_PRESS:  recognizer->longPress(event); break;
+            default: break;
+        }
+    }
+
+    // Check recognizer states
+    bool anyRecognized = false;
+    bool anyPossible = false;
+    for (auto& recognizer : this->activeRecognizers) {
+        if (recognizer->getState() == GestureRecognizer::State::Recognized) {
+            anyRecognized = true;
+            this->recognizedGesture = recognizer;
+            break;
+        }
+        if (recognizer->getState() == GestureRecognizer::State::Possible) {
+            anyPossible = true;
+        }
+    }
+
+    if (anyRecognized) {
+        // Gesture won — discard buffer, reset other recognizers
+        this->gestureEventBuffer.clear();
+        this->gestureRecognitionPending = false;
+        for (auto& recognizer : this->activeRecognizers) {
+            if (recognizer != this->recognizedGesture) {
+                recognizer->reset();
+            }
+        }
+        this->activeRecognizers.clear();
+        return true;
+    }
+
+    if (anyPossible) {
+        // Still undecided — buffer the event
+        this->gestureEventBuffer.push_back(event);
+        return true;
+    }
+
+    // All failed — replay buffered events through normal dispatch
+    this->gestureRecognitionPending = false;
+    std::vector<Event> buffer = std::move(this->gestureEventBuffer);
+    this->activeRecognizers.clear();
+    for (const auto& buffered : buffer) {
+        this->dispatchTouchEvent(buffered);
+    }
+    // Also dispatch the current event (it wasn't buffered yet since we check states first)
+    this->dispatchTouchEvent(event);
+    return true;  // We handled replay
+}
+
 void Application::generateEvent(int32_t eventType, int32_t userInfo) {
     Event event;
     event.type = eventType;
@@ -109,85 +285,18 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
         }
     }
 
-    if (this->window.get()->touchEnabled) {
-        switch (event.type) {
-            case FOCUS_EVENT_TOUCH_DOWN:
-            {
-                longPressFired = false;
-                this->touchDownTimestamp = event.timestamp;
-                Point touch = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
-                if (std::shared_ptr<View> touchedView = this->window->getViewForTouch(touch).lock()) {
-                    // If a text-input view is focused and the touch landed outside
-                    // both it and the keyboard, resign focus to dismiss the keyboard.
-                    if (std::shared_ptr<View> focused = this->window->getFocusedView().lock()) {
-                        if (focused->wantsKeyboardInput() &&
-                            touchedView != focused &&
-                            !this->window->isKeyboardView(touchedView)) {
-                            this->window->becomeFocused();
-                        }
-                    }
-                    this->window->setCapturedTouchView(touchedView, touch);
-                    touchedView->handleEvent(event);
-                    return;
-                }
-            }
-            break;
-
-            case FOCUS_EVENT_TOUCH_MOVED:
-            {
-                if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
-                    capturedView->handleEvent(event);
-                    return;
-                }
-            }
-            break;
-
-            case FOCUS_EVENT_TOUCH_UP:
-            {
-                if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
-                    Event upEvent;
-                    upEvent.userInfo = event.userInfo;
-                    upEvent.timestamp = event.timestamp;
-
-                    if (longPressFired) {
-                        // Long press already handled; suppress normal tap
-                        upEvent.type = FOCUS_EVENT_TOUCH_UP_OUTSIDE;
-                    } else {
-                        Point touchDown = this->window->getTouchDownPoint();
-                        Point touchUp = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
-                        int64_t duration = event.timestamp - this->touchDownTimestamp;
-                        int32_t swipe = this->detectSwipe(touchUp.x - touchDown.x, touchUp.y - touchDown.y, duration);
-                        if (swipe) {
-                            upEvent.type = swipe;
-                        } else {
-                            bool isInside = capturedView->containsPointInWindowCoordinates(touchUp);
-                            upEvent.type = isInside ? FOCUS_EVENT_TOUCH_UP_INSIDE : FOCUS_EVENT_TOUCH_UP_OUTSIDE;
-                        }
-                    }
-                    capturedView->handleEvent(upEvent);
-
-                    this->window->clearCapturedTouchView();
-                    longPressFired = false;
-                    return;
-                }
-            }
-            break;
-
-            case FOCUS_EVENT_LONG_PRESS:
-            {
-                longPressFired = true;
-                if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
-                    capturedView->handleEvent(event);
-                    return;
-                }
-            }
-            break;
-
-            default:
-                // Non-touch events: deliver to the window
-                this->window->handleEvent(event);
-                return;
+    if (this->window->touchEnabled) {
+        // Non-touch events bypass gesture recognition and go to the window
+        if (event.type != FOCUS_EVENT_TOUCH_DOWN &&
+            event.type != FOCUS_EVENT_TOUCH_MOVED &&
+            event.type != FOCUS_EVENT_TOUCH_UP &&
+            event.type != FOCUS_EVENT_LONG_PRESS) {
+            this->window->handleEvent(event);
+            return;
         }
+
+        if (this->handleSystemGestures(event)) return;
+        this->dispatchTouchEvent(event);
     } else if (std::shared_ptr<View> focusedView = this->window->focusedView.lock()) {
         focusedView->handleEvent(event);
     }
