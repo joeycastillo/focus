@@ -22,19 +22,19 @@
  * SOFTWARE.
  */
 
-#include "BitmapView.hpp"
+#include "MaskView.hpp"
 #include "Window.hpp"
 #include "Display.hpp"
 
-BitmapView::BitmapView(Rect rect, const unsigned char *bitmap) : View(rect) {
-    this->bitmap = bitmap;
+MaskView::MaskView(Rect rect, const unsigned char *mask) : View(rect) {
+    this->mask = mask;
 }
 
-void BitmapView::drawContent(int x, int y, Rect clipRect) {
+void MaskView::drawContent(int x, int y, Rect clipRect) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        int bitmapRowBytes = (this->frame.size.width + 7) / 8;
+        int maskRowBytes = (this->frame.size.width + 7) / 8;
         display->blitMasked(this->frame.origin.x + x, this->frame.origin.y + y,
                             this->frame.size.width, this->frame.size.height,
-                            this->foregroundColor, this->bitmap, bitmapRowBytes, clipRect);
+                            this->foregroundColor, this->mask, maskRowBytes, clipRect);
     }
 }

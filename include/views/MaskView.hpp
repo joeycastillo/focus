@@ -23,8 +23,8 @@
  */
 
 /**
- * @file BitmapView.hpp
- * @brief View that displays a static 1bpp bitmap image.
+ * @file MaskView.hpp
+ * @brief View that renders a 1bpp mask, drawing foreground color where bits are set.
  */
 
 #pragma once
@@ -33,22 +33,24 @@
 #include "View.hpp"
 
 /**
- * @brief A view that renders a pre-existing 1bpp bitmap to the display.
+ * @brief A view that renders foreground color through a 1bpp mask.
  *
- * The bitmap data is not owned by this view — it must remain valid for
- * the lifetime of the BitmapView. The bitmap is blitted opaquely using
- * the view's frame dimensions.
+ * Where mask bits are 1, the view's foreground color is drawn. Where mask
+ * bits are 0, nothing is drawn (transparent). If the view is opaque, the
+ * background color is drawn where mask bits are 0.
+ *
+ * The mask data is not owned by this view — it must remain valid for the
+ * lifetime of the MaskView.
  */
-class BitmapView : public View {
+class MaskView : public View {
 public:
     /**
-     * @brief Construct a bitmap view.
+     * @brief Construct a mask view.
      * @param rect Frame rectangle (position and size).
-     * @param bitmap Pointer to 1bpp MSB-first bitmap data. Must remain valid.
+     * @param mask Pointer to 1bpp MSB-first mask data. Must remain valid.
      */
-    BitmapView(Rect rect, const unsigned char *bitmap);
+    MaskView(Rect rect, const unsigned char *mask);
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
 protected:
-    const unsigned char *bitmap; ///< Pointer to the external bitmap data.
+    const unsigned char *mask; ///< Pointer to the external mask data.
 };
-
