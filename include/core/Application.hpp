@@ -179,6 +179,14 @@ protected:
     std::vector<ModalEntry> modalStack; ///< Stack of modally presented view controllers.
 
     bool longPressFired = false; ///< Set when LONG_PRESS is delivered during a touch; forces UP_OUTSIDE on release.
+    int64_t touchDownTimestamp = 0; ///< Timestamp of the current touch sequence's TOUCH_DOWN event.
+
+    /// @brief Detect whether a completed touch sequence was a swipe gesture.
+    /// @param dx Horizontal displacement (positive = rightward).
+    /// @param dy Vertical displacement (positive = downward).
+    /// @param durationUs Duration of the touch in microseconds.
+    /// @return A FOCUS_EVENT_SWIPE_* constant, or 0 if not a swipe.
+    int32_t detectSwipe(int dx, int dy, int64_t durationUs);
 
     std::atomic<uint32_t> loopCounter_{0}; ///< Completed run-loop iterations (readable from any thread).
 };

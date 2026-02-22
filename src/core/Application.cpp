@@ -29,6 +29,7 @@
 #include "Display.hpp"
 #include <algorithm>
 #include <typeinfo>
+#include <cstdlib>
 #include "FocusLog.hpp"
 #include "esp_timer.h"
 
@@ -60,6 +61,24 @@ void Application::run() {
         }
         this->loopCounter_.fetch_add(1, std::memory_order_relaxed);
     }
+}
+
+int32_t Application::detectSwipe(int dx, int dy, int64_t durationUs) {
+    int absDx = abs(dx);
+    int absDy = abs(dy);
+    int64_t maxDuration = 400000;  // 400ms — must be a quick motion
+    int minDistance = 60;           // pixels — must travel far enough
+
+    if (durationUs > maxDuration) return 0;
+
+    // Dominant axis must be at least 2x the other to count as directional
+    if (absDx >= minDistance && absDx > absDy * 2) {
+        return (dx < 0) ? FOCUS_EVENT_SWIPE_LEFT : FOCUS_EVENT_SWIPE_RIGHT;
+    }
+    if (absDy >= minDistance && absDy > absDx * 2) {
+        return (dy < 0) ? FOCUS_EVENT_SWIPE_UP : FOCUS_EVENT_SWIPE_DOWN;
+    }
+    return 0;
 }
 
 void Application::generateEvent(int32_t eventType, int32_t userInfo) {
@@ -95,6 +114,7 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
             case FOCUS_EVENT_TOUCH_DOWN:
             {
                 longPressFired = false;
+                this->touchDownTimestamp = event.timestamp;
                 Point touch = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
                 if (std::shared_ptr<View> touchedView = this->window->getViewForTouch(touch).lock()) {
                     // If a text-input view is focused and the touch landed outside
@@ -133,9 +153,16 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
                         // Long press already handled; suppress normal tap
                         upEvent.type = FOCUS_EVENT_TOUCH_UP_OUTSIDE;
                     } else {
+                        Point touchDown = this->window->getTouchDownPoint();
                         Point touchUp = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
-                        bool isInside = capturedView->containsPointInWindowCoordinates(touchUp);
-                        upEvent.type = isInside ? FOCUS_EVENT_TOUCH_UP_INSIDE : FOCUS_EVENT_TOUCH_UP_OUTSIDE;
+                        int64_t duration = event.timestamp - this->touchDownTimestamp;
+                        int32_t swipe = this->detectSwipe(touchUp.x - touchDown.x, touchUp.y - touchDown.y, duration);
+                        if (swipe) {
+                            upEvent.type = swipe;
+                        } else {
+                            bool isInside = capturedView->containsPointInWindowCoordinates(touchUp);
+                            upEvent.type = isInside ? FOCUS_EVENT_TOUCH_UP_INSIDE : FOCUS_EVENT_TOUCH_UP_OUTSIDE;
+                        }
                     }
                     capturedView->handleEvent(upEvent);
 

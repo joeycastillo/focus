@@ -115,6 +115,17 @@ size_t PaginatedCollectionView::getItemsPerPage() const {
 }
 
 bool PaginatedCollectionView::handleEvent(Event event) {
+    if (event.type >= FOCUS_EVENT_SWIPE_LEFT && event.type <= FOCUS_EVENT_SWIPE_DOWN) {
+        bool isVertical = (this->currentLayout != CollectionViewLayout::HorizontalList);
+        if (isVertical) {
+            if (event.type == FOCUS_EVENT_SWIPE_UP) { this->goToNextPage(); return true; }
+            if (event.type == FOCUS_EVENT_SWIPE_DOWN) { this->goToPreviousPage(); return true; }
+        } else {
+            if (event.type == FOCUS_EVENT_SWIPE_LEFT) { this->goToNextPage(); return true; }
+            if (event.type == FOCUS_EVENT_SWIPE_RIGHT) { this->goToPreviousPage(); return true; }
+        }
+    }
+
     if (this->paginationStyle == PaginationStyle::Arrows) {
         bool isVertical = (this->currentLayout != CollectionViewLayout::HorizontalList);
         bool isNext = false;

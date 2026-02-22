@@ -78,6 +78,17 @@
 #define FOCUS_EVENT_LONG_PRESS (1005)        ///< Finger held in place for ≥500ms without significant movement.
 /// @}
 
+/// @name Gesture Events
+/// @brief Synthesized from touch sequences. Delivered to the captured view
+/// instead of TOUCH_UP_INSIDE when the touch matches a gesture pattern.
+/// userInfo encodes the touch-up coordinates as (x << 16 | y).
+/// @{
+#define FOCUS_EVENT_SWIPE_LEFT (1006)   ///< Quick horizontal swipe toward the left edge.
+#define FOCUS_EVENT_SWIPE_RIGHT (1007)  ///< Quick horizontal swipe toward the right edge.
+#define FOCUS_EVENT_SWIPE_UP (1008)     ///< Quick vertical swipe toward the top edge.
+#define FOCUS_EVENT_SWIPE_DOWN (1009)   ///< Quick vertical swipe toward the bottom edge.
+/// @}
+
 /// @name Hardware Status Events
 /// @{
 #define FOCUS_EVENT_BUS_POWER_CHANGED (2000)    ///< External power connected or disconnected.
