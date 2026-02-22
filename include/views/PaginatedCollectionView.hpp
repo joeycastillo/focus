@@ -112,7 +112,7 @@ private:
     PaginationStyle paginationStyle = PaginationStyle::None;
     CollectionViewLayout currentLayout = CollectionViewLayout::VerticalList;
 
-    static constexpr int kArrowThickness = 24;
+    static constexpr int kArrowThickness = 36;
     static constexpr int kFooterThickness = 48;
     static constexpr int kFooterGap = 8;
 
