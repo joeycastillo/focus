@@ -37,10 +37,11 @@ void LabelView::renderCanvas() {
         this->canvas = std::make_shared<CanvasView>(
             MakeRect(0, 0, this->frame.size.width, this->frame.size.height));
     }
+    this->canvas->setCanvasRotation(this->canvasRotation);
     if (this->font) {
         this->canvas->setFont(this->font);
     }
-    Rect layoutRect = MakeRect(0, 0, this->frame.size.width, this->frame.size.height);
+    Rect layoutRect = MakeRect(0, 0, this->canvas->getCanvasWidth(), this->canvas->getCanvasHeight());
     if (this->opaque) {
         // Opaque: render full background + text, blit everything
         this->canvas->clear(this->backgroundColor);
@@ -104,6 +105,14 @@ std::shared_ptr<Font> LabelView::getFont() const {
 
 void LabelView::setTextAlignment(TextAlignment alignment) {
     this->textAlignment = alignment;
+    this->canvasValid = false;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
+    }
+}
+
+void LabelView::setCanvasRotation(int degrees) {
+    this->canvasRotation = degrees;
     this->canvasValid = false;
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);

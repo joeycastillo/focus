@@ -50,6 +50,31 @@ void CanvasView::setCanvasMode(DisplayMode mode) {
     }
 }
 
+void CanvasView::setCanvasRotation(int degrees) {
+    this->canvasRotation = (degrees / 90) & 0x03;
+}
+
+void CanvasView::mapToBuffer(int x, int y, int &bx, int &by) const {
+    switch (this->canvasRotation) {
+        case 1:  // 90° CW
+            bx = this->frame.size.width - 1 - y;
+            by = x;
+            break;
+        case 2:  // 180°
+            bx = this->getCanvasWidth() - 1 - x;
+            by = this->getCanvasHeight() - 1 - y;
+            break;
+        case 3:  // 270° CW
+            bx = y;
+            by = this->frame.size.height - 1 - x;
+            break;
+        default: // 0°
+            bx = x;
+            by = y;
+            break;
+    }
+}
+
 void CanvasView::drawContent(int x, int y, Rect clipRect) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         if (canvasMode == DisplayMode::TwoBpp) {
@@ -65,9 +90,11 @@ void CanvasView::drawContent(int x, int y, Rect clipRect) {
 }
 
 void CanvasView::drawPixel(int x, int y, uint16_t color) {
-    if (x < 0 || x >= frame.size.width || y < 0 || y >= frame.size.height) return;
-    int idx = y * rowBytes + (x >> 3);
-    uint8_t mask = 0x80 >> (x & 7);
+    if (x < 0 || x >= this->getCanvasWidth() || y < 0 || y >= this->getCanvasHeight()) return;
+    int bx, by;
+    this->mapToBuffer(x, y, bx, by);
+    int idx = by * rowBytes + (bx >> 3);
+    uint8_t mask = 0x80 >> (bx & 7);
 
     if (canvasMode == DisplayMode::TwoBpp) {
         // plane0 (buffer) stores bit 1 (high bit) of color
@@ -143,12 +170,23 @@ void CanvasView::_fillPlane(uint8_t* plane, int x0, int y0, int x1, int y1, uint
 }
 
 void CanvasView::fillRect(int x, int y, int w, int h, uint16_t color) {
-    // Clamp to canvas bounds
+    // Clamp to logical canvas bounds
     int x0 = std::max(0, x);
     int y0 = std::max(0, y);
-    int x1 = std::min((int)frame.size.width, x + w);
-    int y1 = std::min((int)frame.size.height, y + h);
+    int x1 = std::min(this->getCanvasWidth(), x + w);
+    int y1 = std::min(this->getCanvasHeight(), y + h);
     if (x0 >= x1 || y0 >= y1) return;
+
+    if (this->canvasRotation != 0) {
+        // Rotated: per-pixel fallback (logical horizontal spans become
+        // non-contiguous in the physical buffer for 90°/270°).
+        for (int fy = y0; fy < y1; fy++) {
+            for (int fx = x0; fx < x1; fx++) {
+                this->drawPixel(fx, fy, color);
+            }
+        }
+        return;
+    }
 
     if (canvasMode == DisplayMode::TwoBpp) {
         _fillPlane(buffer.data(), x0, y0, x1, y1, (color & 0x02) ? 0xFF : 0x00);
@@ -161,9 +199,23 @@ void CanvasView::fillRect(int x, int y, int w, int h, uint16_t color) {
 void CanvasView::invertRect(int x, int y, int w, int h) {
     int x0 = std::max(0, x);
     int y0 = std::max(0, y);
-    int x1 = std::min((int)frame.size.width, x + w);
-    int y1 = std::min((int)frame.size.height, y + h);
+    int x1 = std::min(this->getCanvasWidth(), x + w);
+    int y1 = std::min(this->getCanvasHeight(), y + h);
     if (x0 >= x1 || y0 >= y1) return;
+
+    if (this->canvasRotation != 0) {
+        // Rotated: per-pixel fallback using XOR on buffer coordinates.
+        for (int iy = y0; iy < y1; iy++) {
+            for (int ix = x0; ix < x1; ix++) {
+                int bx, by;
+                this->mapToBuffer(ix, iy, bx, by);
+                int idx = by * rowBytes + (bx >> 3);
+                uint8_t mask = 0x80 >> (bx & 7);
+                buffer[idx] ^= mask;
+            }
+        }
+        return;
+    }
 
     int firstByte = x0 >> 3;
     int lastByte = (x1 - 1) >> 3;

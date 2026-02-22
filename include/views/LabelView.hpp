@@ -68,11 +68,15 @@ public:
     std::shared_ptr<Font> getFont() const;
     /// @brief Set the horizontal text alignment.
     void setTextAlignment(TextAlignment alignment);
+    /// @brief Set the canvas rotation for this label's text rendering.
+    /// Rotates the text content within the view's frame (0, 90, 180, or 270).
+    void setCanvasRotation(int degrees);
 protected:
     std::string text;              ///< The UTF-8 text content.
     uint8_t textScale = 1;         ///< Text rendering scale factor.
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
     TextAlignment textAlignment = TextAlignmentLeft; ///< Text alignment.
+    int canvasRotation = 0;        ///< Canvas rotation in degrees (0/90/180/270).
 private:
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendered text.
     bool canvasValid = false;           ///< Whether the canvas needs re-rendering.

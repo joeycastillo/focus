@@ -95,8 +95,20 @@ public:
     // byte range into the provided vector (cleared before each drawText call).
     void setWordMapOutput(std::vector<WordPosition> *output);
 
-    int getCanvasWidth() { return frame.size.width; }
-    int getCanvasHeight() { return frame.size.height; }
+    /// Get the logical canvas width (accounts for canvas rotation).
+    /// For 0°/180° this is the frame width; for 90°/270° it is the frame height.
+    int getCanvasWidth() const { return (canvasRotation & 1) ? frame.size.height : frame.size.width; }
+    /// Get the logical canvas height (accounts for canvas rotation).
+    /// For 0°/180° this is the frame height; for 90°/270° it is the frame width.
+    int getCanvasHeight() const { return (canvasRotation & 1) ? frame.size.width : frame.size.height; }
+
+    /// Set the canvas content rotation (0, 90, 180, or 270 degrees).
+    /// This rotates the drawing coordinate space within the canvas buffer.
+    /// The view's frame, hit testing, and child layout are unaffected —
+    /// only drawing operations (drawPixel, drawText, etc.) are remapped.
+    void setCanvasRotation(int degrees);
+    /// Get the canvas content rotation in degrees (0, 90, 180, or 270).
+    int getCanvasRotation() const { return canvasRotation * 90; }
 
     // Display mode — set to TwoBpp before drawing to enable 4-level grayscale.
     void setCanvasMode(DisplayMode mode);
@@ -158,6 +170,10 @@ private:
     std::vector<uint8_t> buffer;  // OneBpp: planeSize bytes; TwoBpp: 2*planeSize (plane0 then plane1)
     const uint8_t* getPlane1Data() const { return buffer.data() + planeSize; }
     DisplayMode canvasMode = DisplayMode::OneBpp;
+    int canvasRotation = 0;       // rotation index: 0=0°, 1=90°, 2=180°, 3=270°
+
+    /// Map logical (pre-rotation) coordinates to physical buffer coordinates.
+    void mapToBuffer(int x, int y, int &bx, int &by) const;
 
     // Private helper for fillRect — fills a single plane buffer
     void _fillPlane(uint8_t* plane, int x0, int y0, int x1, int y1, uint8_t fillByte);
