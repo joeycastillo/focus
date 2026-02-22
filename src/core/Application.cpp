@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <typeinfo>
 #include "FocusLog.hpp"
+#include "esp_timer.h"
 
 static const char *TAG = "Focus";
 
@@ -65,6 +66,7 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
     Event event;
     event.type = eventType;
     event.userInfo = userInfo;
+    event.timestamp = esp_timer_get_time();
 
     // For touch events, transform native panel coordinates to logical coordinates.
     // Each case is the inverse of the Display's rendering rotation.
@@ -125,6 +127,7 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
                 if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
                     Event upEvent;
                     upEvent.userInfo = event.userInfo;
+                    upEvent.timestamp = event.timestamp;
 
                     if (longPressFired) {
                         // Long press already handled; suppress normal tap
