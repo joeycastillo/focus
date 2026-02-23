@@ -109,15 +109,16 @@ protected:
     std::shared_ptr<NavigationBar> navigationBar;
     std::shared_ptr<View> contentArea;
 
+    /// @brief Transition from one child VC to another, managing lifecycles and views.
+    /// Override to customize how child view controllers are swapped in and out.
+    virtual void transitionFromViewController(
+        std::shared_ptr<ViewController> oldVC,
+        std::shared_ptr<ViewController> newVC);
+
 private:
     std::vector<std::shared_ptr<ViewController>> viewControllerStack;
     std::string rightButtonTitle;
     std::function<void()> rightButtonAction;
-
-    /// @brief Transition from one child VC to another, managing lifecycles and views.
-    void transitionFromViewController(
-        std::shared_ptr<ViewController> oldVC,
-        std::shared_ptr<ViewController> newVC);
 
     /// @brief Update the navigation bar title and back button visibility.
     void updateNavigationBar();

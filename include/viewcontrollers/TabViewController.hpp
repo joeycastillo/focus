@@ -110,6 +110,10 @@ protected:
     std::shared_ptr<HStack> tabBar;      ///< The tab bar container.
     std::shared_ptr<View> contentArea;   ///< The content area below the tab bar.
 
+    /// @brief Transition from old selected tab to new selected tab.
+    /// Override to customize how tab content is swapped in and out.
+    virtual void transitionToTab(size_t oldIndex, size_t newIndex);
+
 private:
     struct TabEntry {
         std::string label;
@@ -123,7 +127,4 @@ private:
 
     /// @brief Rebuild the tab bar HStack from the current tabs list.
     void rebuildTabBar();
-
-    /// @brief Transition from old selected tab to new selected tab.
-    void transitionToTab(size_t oldIndex, size_t newIndex);
 };
