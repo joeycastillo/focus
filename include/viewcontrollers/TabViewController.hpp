@@ -82,7 +82,7 @@ public:
      *
      * @param index Zero-based tab index.
      */
-    void selectTab(size_t index);
+    virtual void selectTab(size_t index);
 
     /// @brief Get the index of the currently selected tab.
     size_t getSelectedTab() const;
@@ -107,6 +107,9 @@ protected:
     TabViewController(std::shared_ptr<Application> application);
     void createView() override;
 
+    std::shared_ptr<HStack> tabBar;      ///< The tab bar container.
+    std::shared_ptr<View> contentArea;   ///< The content area below the tab bar.
+
 private:
     struct TabEntry {
         std::string label;
@@ -117,8 +120,6 @@ private:
     std::vector<TabEntry> tabs;
     size_t selectedIndex = 0;
     std::shared_ptr<Font> font;
-    std::shared_ptr<HStack> tabBar;
-    std::shared_ptr<View> contentArea;
 
     /// @brief Rebuild the tab bar HStack from the current tabs list.
     void rebuildTabBar();
