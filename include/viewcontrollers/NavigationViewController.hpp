@@ -83,7 +83,8 @@ public:
     virtual void popViewController();
 
     /// @brief Pop all view controllers above the root.
-    void popToRootViewController();
+    /// The default implementation calls popViewController() in a loop.
+    virtual void popToRootViewController();
 
     /// @brief Get the view controller currently on top of the stack.
     std::shared_ptr<ViewController> topViewController() const;
