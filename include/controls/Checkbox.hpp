@@ -74,9 +74,9 @@ protected:
     std::string text;              ///< Label text.
     bool checked = false;          ///< Whether the checkbox is checked.
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
-
-private:
-    std::shared_ptr<CanvasView> canvas;
-    bool canvasValid = false;
-    void renderCanvas();
+    std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendering.
+    bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
+    /// @brief Render the checkbox indicator and label to the internal canvas.
+    /// Override to customize checkbox rendering while reusing the canvas infrastructure.
+    virtual void renderCanvas();
 };

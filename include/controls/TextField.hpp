@@ -102,8 +102,9 @@ protected:
     std::function<void(std::string)> textChangedCallback; ///< Text change callback.
     KeyboardType _keyboardType = KeyboardTypeDefault;    ///< Requested keyboard layout.
 
-private:
-    std::shared_ptr<CanvasView> canvas;
-    bool canvasValid = false;
-    void renderCanvas();
+    std::shared_ptr<CanvasView> canvas;  ///< Internal canvas for rendering.
+    bool canvasValid = false;             ///< Whether the canvas needs re-rendering.
+    /// @brief Render the text field to the internal canvas.
+    /// Override to customize text field rendering while reusing the canvas infrastructure.
+    virtual void renderCanvas();
 };

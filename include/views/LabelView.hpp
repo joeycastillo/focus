@@ -77,8 +77,9 @@ protected:
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
     TextAlignment textAlignment = TextAlignmentLeft; ///< Text alignment.
     int canvasRotation = 0;        ///< Canvas rotation in degrees (0/90/180/270).
-private:
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendered text.
     bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
-    void renderCanvas();                ///< Render the text to the internal canvas.
+    /// @brief Render the text to the internal canvas.
+    /// Override to customize text rendering while reusing the canvas infrastructure.
+    virtual void renderCanvas();
 };

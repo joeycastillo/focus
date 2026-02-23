@@ -70,8 +70,9 @@ public:
 protected:
     std::string text;              ///< The button's label text.
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
-private:
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendering.
-    bool canvasValid = false;
-    void renderCanvas();
+    bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
+    /// @brief Render the button text and border to the internal canvas.
+    /// Override to customize button rendering while reusing the canvas infrastructure.
+    virtual void renderCanvas();
 };
