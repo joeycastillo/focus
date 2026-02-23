@@ -40,6 +40,18 @@ int StackView::getSpacing() const {
     return this->spacing;
 }
 
+void StackView::setMargins(int top, int right, int bottom, int left) {
+    this->marginTop = top;
+    this->marginRight = right;
+    this->marginBottom = bottom;
+    this->marginLeft = left;
+    this->layoutSubviews();
+}
+
+void StackView::setMargins(int uniform) {
+    this->setMargins(uniform, uniform, uniform, uniform);
+}
+
 void StackView::addSubview(std::shared_ptr<View> view) {
     bool vertical = (this->axis == Axis::Vertical);
     int preferredSize = vertical ? view->getFrame().size.height
@@ -71,8 +83,14 @@ void StackView::layoutSubviews() {
     if (this->preferredSizes.size() != count) return;
 
     bool vertical = (this->axis == Axis::Vertical);
-    int stackSize = vertical ? this->frame.size.height : this->frame.size.width;
-    int crossSize = vertical ? this->frame.size.width : this->frame.size.height;
+    int leadingMargin = vertical ? this->marginTop : this->marginLeft;
+    int trailingMargin = vertical ? this->marginBottom : this->marginRight;
+    int crossLeading = vertical ? this->marginLeft : this->marginTop;
+    int crossTrailing = vertical ? this->marginRight : this->marginBottom;
+    int stackSize = (vertical ? this->frame.size.height : this->frame.size.width)
+                    - leadingMargin - trailingMargin;
+    int crossSize = (vertical ? this->frame.size.width : this->frame.size.height)
+                    - crossLeading - crossTrailing;
 
     // Pass 1: sum fixed sizes and count flexible children.
     int fixedTotal = 0;
@@ -94,7 +112,7 @@ void StackView::layoutSubviews() {
     int flexRemainder = (flexCount > 0) ? remaining % flexCount : 0;
 
     // Pass 2: position each child.
-    int offset = 0;
+    int offset = leadingMargin;
     int flexIndex = 0;
     for (size_t i = 0; i < count; i++) {
         int childSize = this->preferredSizes[i];
@@ -109,9 +127,9 @@ void StackView::layoutSubviews() {
 
         Rect childFrame;
         if (vertical) {
-            childFrame = MakeRect(0, offset, crossSize, childSize);
+            childFrame = MakeRect(crossLeading, offset, crossSize, childSize);
         } else {
-            childFrame = MakeRect(offset, 0, childSize, crossSize);
+            childFrame = MakeRect(offset, crossLeading, childSize, crossSize);
         }
         this->subviews[i]->setFrame(childFrame);
 

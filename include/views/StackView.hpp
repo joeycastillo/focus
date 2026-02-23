@@ -40,8 +40,8 @@
  * The cross-axis dimension always fills the stack's width (VStack) or
  * height (HStack). Children handle their own internal alignment.
  *
- * Spacing is applied between items only, not at edges. Use the stack's
- * frame position to control edge insets from the superview.
+ * Spacing is applied between items only, not at edges. Optional margins
+ * inset children from the stack's edges on all four sides.
  *
  * Hidden children reserve their space in the layout but are not drawn.
  * To collapse a child's space, remove it with removeSubview() — layout
@@ -74,6 +74,12 @@ public:
     /// @brief Get the current spacing between children.
     int getSpacing() const;
 
+    /// @brief Set margins on all four sides (top, right, bottom, left).
+    void setMargins(int top, int right, int bottom, int left);
+
+    /// @brief Set uniform margins on all four sides.
+    void setMargins(int uniform);
+
     /// @brief Recalculate and apply frames for all children.
     void layoutSubviews();
 
@@ -84,6 +90,10 @@ public:
 private:
     Axis axis;
     int spacing = 0;
+    int marginTop = 0;
+    int marginRight = 0;
+    int marginBottom = 0;
+    int marginLeft = 0;
     std::vector<int> preferredSizes; ///< Axis-size recorded at addSubview time (0 = flexible).
 };
 
