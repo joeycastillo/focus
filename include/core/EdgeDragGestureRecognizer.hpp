@@ -40,7 +40,7 @@
 
 #include "GestureRecognizer.hpp"
 
-class EdgeDragGestureRecognizer : public GestureRecognizer {
+class EdgeDragGestureRecognizer final : public GestureRecognizer {
 public:
     /// @brief Construct a recognizer for drags starting in a specific region.
     /// @param activationRegion Screen region (in window coordinates) where touches activate this recognizer.

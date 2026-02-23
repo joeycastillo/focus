@@ -108,7 +108,7 @@ private:
  * Children with frame height > 0 get fixed height. Children with frame
  * height == 0 share the remaining space equally.
  */
-class VStack : public StackView {
+class VStack final : public StackView {
 public:
     VStack(Rect rect) : StackView(rect, Axis::Vertical) {}
 };
@@ -119,7 +119,7 @@ public:
  * Children with frame width > 0 get fixed width. Children with frame
  * width == 0 share the remaining space equally.
  */
-class HStack : public StackView {
+class HStack final : public StackView {
 public:
     HStack(Rect rect) : StackView(rect, Axis::Horizontal) {}
 };

@@ -40,7 +40,7 @@
 ///       // Code to run after delay
 ///   }, 1);  // Wait 1 cycle before executing
 ///   application->addTask(task);
-class DeferredTask : public Task {
+class DeferredTask final : public Task {
 public:
     /// Create a deferred task.
     /// @param callback The function to execute

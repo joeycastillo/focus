@@ -46,7 +46,7 @@
  * Present via Application::presentViewController(). The dialog auto-dismisses
  * when any button is pressed.
  */
-class AlertViewController : public ViewController {
+class AlertViewController final : public ViewController {
 public:
     /// @brief Callback invoked when a button is pressed, with the button's index.
     using CompletionHandler = std::function<void(int buttonIndex)>;

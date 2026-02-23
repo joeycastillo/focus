@@ -38,7 +38,7 @@
 /**
  * @brief A text input control that hides its content with bullet characters.
  */
-class PasswordField : public TextField {
+class PasswordField final : public TextField {
 public:
     /// @brief Construct a password field with the given frame.
     PasswordField(Rect rect);

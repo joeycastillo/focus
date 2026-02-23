@@ -67,7 +67,7 @@
  *     [this](Timer&) { updateTimeDisplay(); }, true);
  * @endcode
  */
-class Timer : public Task {
+class Timer final : public Task {
 public:
     using Clock = std::chrono::steady_clock;
 
