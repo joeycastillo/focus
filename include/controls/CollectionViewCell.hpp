@@ -27,7 +27,7 @@
  * @brief A focusable container for use as an item in a CollectionView.
  *
  * CollectionViewCell is a Control (focusable, enabled/disabled) that starts
- * empty. Populate it with subviews — Labels, MaskViews, or any other View —
+ * empty. Populate it with subviews — Labels, BitmapViews, or any other View —
  * to create rich collection view items. Register actions on the cell itself
  * to handle taps and other events.
  */
