@@ -388,14 +388,14 @@ protected:
         std::optional<std::weak_ptr<void>> owner; ///< nullopt = permanent (unowned).
     };
     std::map<int32_t, OwnedAction> actions;       ///< Registered event action callbacks.
+
+private:
     /// Non-owning back-reference to the parent view. Raw pointer (not weak_ptr)
     /// because the parent structurally outlives its children: the parent holds
     /// shared_ptr<View> in its subviews vector, and removeSubview() / ~View()
-    /// null this pointer on removal. Always null-check before use — a view with
-    /// no parent has superview == nullptr.
+    /// null this pointer on removal. Use getSuperview() to read; the framework
+    /// manages this pointer internally via addSubview() / removeSubview().
     View* superview = nullptr;
-
-private:
     std::weak_ptr<Window> window; ///< The window this view belongs to.
 
     friend class Window;
