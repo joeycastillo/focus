@@ -64,11 +64,12 @@ public:
     void didBecomeFocused() override;
     void didResignFocus() override;
 
-private:
-    std::string label;
-    bool selected = false;
-    std::shared_ptr<Font> font;
-    std::shared_ptr<CanvasView> canvas;
-    bool canvasValid = false;
-    void renderCanvas();
+protected:
+    std::string label;                      ///< The tab label text.
+    bool selected = false;                  ///< Whether this tab is the active tab.
+    std::shared_ptr<Font> font;             ///< Custom font, or nullptr for system font.
+    std::shared_ptr<CanvasView> canvas;     ///< Internal canvas for rendering.
+    bool canvasValid = false;               ///< Whether the canvas needs re-rendering.
+    /// @brief Render the tab label to the internal canvas.
+    virtual void renderCanvas();
 };
