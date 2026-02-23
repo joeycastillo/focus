@@ -72,7 +72,7 @@ public:
      *
      * @param viewController The view controller to push.
      */
-    void pushViewController(std::shared_ptr<ViewController> viewController);
+    virtual void pushViewController(std::shared_ptr<ViewController> viewController);
 
     /**
      * @brief Pop the top view controller from the stack.
@@ -80,7 +80,7 @@ public:
      * Does nothing if only the root VC remains. The popped VC's view is
      * destroyed, and the new top VC's view is recreated.
      */
-    void popViewController();
+    virtual void popViewController();
 
     /// @brief Pop all view controllers above the root.
     void popToRootViewController();
@@ -106,10 +106,11 @@ protected:
                              std::shared_ptr<ViewController> rootViewController);
     void createView() override;
 
-private:
-    std::vector<std::shared_ptr<ViewController>> viewControllerStack;
     std::shared_ptr<NavigationBar> navigationBar;
     std::shared_ptr<View> contentArea;
+
+private:
+    std::vector<std::shared_ptr<ViewController>> viewControllerStack;
     std::string rightButtonTitle;
     std::function<void()> rightButtonAction;
 
