@@ -89,11 +89,10 @@ protected:
     float value = 0.0f;           ///< Current value (0.0 to 1.0).
     float step = 0.1f;            ///< Step size for d-pad adjustment.
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
-
-private:
-    std::shared_ptr<CanvasView> canvas;
-    bool canvasValid = false;
-    void renderCanvas();
+    std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendering.
+    bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
+    /// @brief Render the slider label and track to the internal canvas.
+    virtual void renderCanvas();
     /// @brief Calculate the horizontal start of the track area.
     int getTrackX() const;
     /// @brief Calculate the width of the track area.
