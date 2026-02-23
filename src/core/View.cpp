@@ -109,7 +109,7 @@ void View::draw(int x, int y, Rect clipRect) {
 
             int status;
             char *demangled = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
-            ESP_LOGV(VIEW_TAG,"  [draw] %-28s fill=%4lldus  content=%7lldus  frame=(%d,%d %dx%d)",
+            FOCUS_LOGV(VIEW_TAG,"  [draw] %-28s fill=%4lldus  content=%7lldus  frame=(%d,%d %dx%d)",
                 (status == 0) ? demangled : typeid(*this).name(),
                 (long long)fillUs, (long long)contentUs,
                 x + this->frame.origin.x, y + this->frame.origin.y,
@@ -118,7 +118,7 @@ void View::draw(int x, int y, Rect clipRect) {
         } else {
             int status;
             char *demangled = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
-            ESP_LOGV(VIEW_TAG,"  [draw] %-28s OCCLUDED (by child %d)  frame=(%d,%d %dx%d)",
+            FOCUS_LOGV(VIEW_TAG,"  [draw] %-28s OCCLUDED (by child %d)  frame=(%d,%d %dx%d)",
                 (status == 0) ? demangled : typeid(*this).name(),
                 occluderIndex,
                 x + this->frame.origin.x, y + this->frame.origin.y,
@@ -172,7 +172,7 @@ void View::removeSubview(std::shared_ptr<View> view) {
 
     auto it = std::find(this->subviews.begin(), this->subviews.end(), view);
     if (it == this->subviews.end()) {
-        ESP_LOGW(VIEW_TAG, "removeSubview: view is not a subview of this view");
+        FOCUS_LOGW(VIEW_TAG, "removeSubview: view is not a subview of this view");
         return;
     }
     view->superview = nullptr;

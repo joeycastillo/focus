@@ -138,7 +138,7 @@ void NavigationViewController::viewDidDisappear() {
 
 void NavigationViewController::pushViewController(std::shared_ptr<ViewController> viewController) {
     if (!this->contentArea) return;
-    ESP_LOGD(TAG, "push %s", typeid(*viewController).name());
+    FOCUS_LOGD(TAG, "push %s", typeid(*viewController).name());
 
     auto oldVC = this->viewControllerStack.back();
     viewController->navigationController = std::dynamic_pointer_cast<NavigationViewController>(
@@ -153,7 +153,7 @@ void NavigationViewController::popViewController() {
     if (!this->contentArea) return;
 
     auto oldVC = this->viewControllerStack.back();
-    ESP_LOGD(TAG, "pop %s", typeid(*oldVC).name());
+    FOCUS_LOGD(TAG, "pop %s", typeid(*oldVC).name());
     oldVC->navigationController.reset();
     this->viewControllerStack.pop_back();
     auto newVC = this->viewControllerStack.back();

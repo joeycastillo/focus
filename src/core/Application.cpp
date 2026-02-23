@@ -307,7 +307,7 @@ std::shared_ptr<Window> Application::getWindow() {
 }
 
 void Application::setRootViewController(std::shared_ptr<ViewController> viewController) {
-    ESP_LOGD(TAG, "setRoot %s", typeid(*viewController).name());
+    FOCUS_LOGD(TAG, "setRoot %s", typeid(*viewController).name());
     if (this->rootViewController) {
         // clean up old view controller
         this->rootViewController->viewWillDisappear();
@@ -328,7 +328,7 @@ bool Application::isModalPresented() const {
 }
 
 void Application::presentViewController(std::shared_ptr<ViewController> viewController) {
-    ESP_LOGD(TAG, "present %s", typeid(*viewController).name());
+    FOCUS_LOGD(TAG, "present %s", typeid(*viewController).name());
     ModalEntry entry;
     entry.viewController = viewController;
     entry.previousFocusedView = this->window->focusedView;
@@ -367,7 +367,7 @@ void Application::dismissViewController() {
     if (this->modalStack.empty()) return;
 
     ModalEntry entry = this->modalStack.back();
-    ESP_LOGD(TAG, "dismiss %s", typeid(*entry.viewController).name());
+    FOCUS_LOGD(TAG, "dismiss %s", typeid(*entry.viewController).name());
     this->modalStack.pop_back();
 
     // Remove modal VC's view
