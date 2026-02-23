@@ -59,6 +59,11 @@
  * @brief Base class for stack layout views.
  *
  * Use VStack or HStack instead of instantiating StackView directly.
+ * These classes are not designed for subclassing — they provide a fixed
+ * layout algorithm (equal-share flexible + fixed-size children along one
+ * axis). For more complex layouts, nest VStack and HStack within each
+ * other, or subclass View directly and position children manually in a
+ * setFrame() override.
  */
 class StackView : public View {
 public:
