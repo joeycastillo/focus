@@ -170,10 +170,14 @@ void View::removeSubview(std::shared_ptr<View> view) {
         }
     }
 
+    auto it = std::find(this->subviews.begin(), this->subviews.end(), view);
+    if (it == this->subviews.end()) {
+        ESP_LOGW(VIEW_TAG, "removeSubview: view is not a subview of this view");
+        return;
+    }
     view->superview = nullptr;
     view->window.reset();
-    int index = std::distance(this->subviews.begin(), std::find(this->subviews.begin(), this->subviews.end(), view));
-    this->subviews.erase(this->subviews.begin() + index);
+    this->subviews.erase(it);
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         if (removingFocused) {
             window->becomeFocused();
