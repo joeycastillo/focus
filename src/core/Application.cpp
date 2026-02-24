@@ -286,12 +286,16 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
     }
 
     if (this->window->touchEnabled) {
-        // Non-touch events bypass gesture recognition and go to the window
+        // Give the window first chance to handle (or swallow) any event.
+        // For touch events this allows the window to intercept before
+        // gesture recognizers and hit-test dispatch run.
+        if (this->window->handleEvent(event)) return;
+
+        // Non-touch events were already offered to the window above.
         if (event.type != FOCUS_EVENT_TOUCH_DOWN &&
             event.type != FOCUS_EVENT_TOUCH_MOVED &&
             event.type != FOCUS_EVENT_TOUCH_UP &&
             event.type != FOCUS_EVENT_LONG_PRESS) {
-            this->window->handleEvent(event);
             return;
         }
 
