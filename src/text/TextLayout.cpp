@@ -194,3 +194,51 @@ int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, G
     free(codepoints);
     return width;
 }
+
+int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidth, uint8_t textSize, GlyphProvider* glyphProvider) {
+    if (utf8String == nullptr || glyphProvider == nullptr || strlen(utf8String) == 0 || layoutWidth <= 0) {
+        return 0;
+    }
+
+    size_t len = utf8_codepoint_length((char*)utf8String);
+    if (len == 0) return 0;
+
+    UNICODE_CODEPOINT* codepoints = (UNICODE_CODEPOINT*)malloc(len * sizeof(UNICODE_CODEPOINT));
+    if (codepoints == nullptr) return 0;
+
+    utf8_parse((char*)utf8String, codepoints);
+
+    int16_t lineSpacing = calculateLineSpacing(glyphProvider);
+    int16_t paragraphSpacing = calculateParagraphSpacing(glyphProvider);
+    int16_t lineHeight = getLineHeight(glyphProvider, textSize, lineSpacing);
+    int16_t paragraphHeight = getParagraphHeight(glyphProvider, textSize, paragraphSpacing);
+
+    int16_t totalHeight = 0;
+    size_t offset = 0;
+
+    while (offset < len) {
+        WordWrapResult result = measureLineWrap(
+            codepoints + offset,
+            len - offset,
+            layoutWidth,
+            textSize,
+            glyphProvider);
+
+        if (result.codepointsConsumed < 0) {
+            // Remaining text fits on one line — this is the last line
+            totalHeight += glyphProvider->getGlyphRowCount() * textSize;
+            break;
+        }
+
+        if (result.isParagraphBreak) {
+            totalHeight += paragraphHeight;
+        } else {
+            totalHeight += lineHeight;
+        }
+
+        offset += result.codepointsConsumed;
+    }
+
+    free(codepoints);
+    return totalHeight;
+}

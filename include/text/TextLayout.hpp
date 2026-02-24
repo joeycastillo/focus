@@ -111,4 +111,13 @@ public:
     /// @return Width of the text in pixels
     static int16_t measureTextWidth(const char* utf8String, uint8_t textSize, GlyphProvider* glyphProvider);
 
+    /// Measure the total height of a UTF-8 text string when word-wrapped
+    /// to a given layout width.
+    /// @param utf8String The UTF-8 encoded string to measure
+    /// @param layoutWidth Available width in pixels for word wrapping
+    /// @param textSize Text scaling factor (1 = normal)
+    /// @param glyphProvider Provider for glyph metrics
+    /// @return Total height in pixels, including line and paragraph spacing
+    static int16_t measureTextHeight(const char* utf8String, int16_t layoutWidth, uint8_t textSize, GlyphProvider* glyphProvider);
+
 };
