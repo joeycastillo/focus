@@ -86,7 +86,7 @@ public:
     void setMargins(int uniform);
 
     /// @brief Recalculate and apply frames for all children.
-    void layoutSubviews();
+    virtual void layoutSubviews();
 
     void addSubview(std::shared_ptr<View> view) override;
     void removeSubview(std::shared_ptr<View> view) override;

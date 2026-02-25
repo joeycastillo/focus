@@ -62,8 +62,10 @@ public:
     float getProgress();
 protected:
     float progress = 0; ///< Current progress (0.0 to 1.0).
-private:
+protected:
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendering.
     bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
-    void renderCanvas();                ///< Render the progress bar to the canvas.
+
+    /// @brief Render the progress bar to the canvas. Override for custom rendering.
+    virtual void renderCanvas();
 };

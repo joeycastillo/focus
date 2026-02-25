@@ -186,14 +186,14 @@ protected:
     /// @param dy Vertical displacement (positive = downward).
     /// @param durationUs Duration of the touch in microseconds.
     /// @return A FOCUS_EVENT_SWIPE_* constant, or 0 if not a swipe.
-    int32_t detectSwipe(int dx, int dy, int64_t durationUs);
+    virtual int32_t detectSwipe(int dx, int dy, int64_t durationUs);
 
     /// @brief Dispatch a touch event through normal view hit-test and capture.
-    void dispatchTouchEvent(Event event);
+    virtual void dispatchTouchEvent(Event event);
 
     /// @brief Attempt to route a touch event through system gesture recognizers.
     /// @return true if the event was consumed (buffered or dispatched to a recognizer).
-    bool handleSystemGestures(Event event);
+    virtual bool handleSystemGestures(Event event);
 
     /// @name System gesture recognition state
     /// @{

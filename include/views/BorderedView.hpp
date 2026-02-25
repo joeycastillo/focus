@@ -53,8 +53,10 @@ public:
      */
     BorderedView(Rect rect);
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
-private:
+protected:
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for the border pixels.
     bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
-    void renderCanvas();                ///< Render the border to the canvas.
+
+    /// @brief Render the border to the canvas. Override for custom border rendering.
+    virtual void renderCanvas();
 };

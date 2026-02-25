@@ -174,9 +174,12 @@ protected:
     KeyboardType currentKeyboardType = KeyboardTypeDefault; ///< Type of currently presented keyboard.
     std::vector<std::shared_ptr<GestureRecognizer>> systemGestureRecognizers; ///< Registered system gesture recognizers.
 
-    void presentKeyboard();
-    void dismissKeyboard();
-    void onKeyPressed(std::string key);
+    /// @brief Present the on-screen keyboard for the currently focused view.
+    virtual void presentKeyboard();
+    /// @brief Dismiss the on-screen keyboard.
+    virtual void dismissKeyboard();
+    /// @brief Handle a key press from the on-screen keyboard.
+    virtual void onKeyPressed(std::string key);
 
     friend class Application;
     friend class View;
