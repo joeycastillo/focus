@@ -96,13 +96,27 @@ public:
     void setFrame(Rect rect) override;
     bool handleEvent(Event event) override;
 
-private:
+protected:
     std::shared_ptr<CollectionView> collectionView;
 
     // Arrows style
     std::shared_ptr<CanvasView> beforeIndicator;
     std::shared_ptr<CanvasView> afterIndicator;
 
+    CollectionViewLayout currentLayout = CollectionViewLayout::VerticalList;
+
+    static constexpr int kArrowThickness = 36;
+
+    /// @brief Called after pagination state changes to update indicator visibility.
+    /// Override in subclasses to customize behavior after page changes.
+    virtual void updateIndicators();
+
+    /// @brief Draw an arrow on the given canvas. Override for custom arrow rendering.
+    /// @param canvas The canvas view to draw on.
+    /// @param forward true for next-page arrow (down/right), false for previous (up/left).
+    virtual void drawArrow(std::shared_ptr<CanvasView> canvas, bool forward);
+
+private:
     // Footer style
     std::shared_ptr<View> footerContainer;
     std::shared_ptr<Button> prevButton;
@@ -110,14 +124,10 @@ private:
     std::shared_ptr<Button> nextButton;
 
     PaginationStyle paginationStyle = PaginationStyle::None;
-    CollectionViewLayout currentLayout = CollectionViewLayout::VerticalList;
 
-    static constexpr int kArrowThickness = 36;
     static constexpr int kFooterThickness = 48;
     static constexpr int kFooterGap = 8;
 
     void rebuildLayout();
-    void updateIndicators();
-    void drawArrow(std::shared_ptr<CanvasView> canvas, bool forward);
     void updateFooterLabel();
 };
