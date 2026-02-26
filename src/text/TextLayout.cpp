@@ -67,7 +67,7 @@ WordWrapResult TextLayout::measureLineWrap(
     // Pre-fetch ASCII metrics cache to avoid virtual dispatch in the hot loop
     const Rect* asciiMetrics = glyphProvider->getAsciiMetricsCache();
 
-    while (cursorX < layoutWidth) {
+    while (cursorX <= layoutWidth) {
         // Check if we've consumed all input (no wrap needed)
         if (position >= len) {
             result.codepointsConsumed = -1;
