@@ -62,3 +62,12 @@ void ProgressView::setProgress(float value) {
 float ProgressView::getProgress() {
     return this->progress;
 }
+
+AccessibilityRole ProgressView::accessibilityRole() const {
+    return AccessibilityRole::ProgressBar;
+}
+
+std::string ProgressView::accessibilityValue() const {
+    int percent = (int)(this->progress * 100.0f + 0.5f);
+    return std::to_string(percent) + "%";
+}

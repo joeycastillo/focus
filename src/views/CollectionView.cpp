@@ -327,6 +327,10 @@ bool CollectionView::handleEvent(Event event) {
     return View::handleEvent(event);
 }
 
+AccessibilityRole CollectionView::accessibilityRole() const {
+    return AccessibilityRole::List;
+}
+
 void CollectionView::reloadData() {
     this->removeCurrentPageViews();
     this->currentPage = 0;

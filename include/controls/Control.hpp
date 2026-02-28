@@ -54,6 +54,8 @@ public:
     bool canBecomeFocused() override;
     /// @brief Disabled controls ignore all events.
     bool handleEvent(Event event) override;
+    /// @brief Controls are meaningful accessibility elements by default.
+    bool isAccessibilityElement() const override;
 protected:
     bool enabled = true; ///< Whether this control accepts input.
 };

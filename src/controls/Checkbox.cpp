@@ -168,3 +168,15 @@ void Checkbox::setFont(std::shared_ptr<Font> font) {
 std::shared_ptr<Font> Checkbox::getFont() const {
     return this->font;
 }
+
+std::string Checkbox::accessibilityLabel() const {
+    return this->text;
+}
+
+AccessibilityRole Checkbox::accessibilityRole() const {
+    return AccessibilityRole::Checkbox;
+}
+
+std::string Checkbox::accessibilityValue() const {
+    return this->checked ? "checked" : "unchecked";
+}

@@ -71,6 +71,14 @@ public:
     /// @brief Set the canvas rotation for this label's text rendering.
     /// Rotates the text content within the view's frame (0, 90, 180, or 270).
     void setCanvasRotation(int degrees);
+
+    /// @brief Returns the displayed text.
+    std::string accessibilityLabel() const override;
+    /// @brief Returns AccessibilityRole::StaticText.
+    AccessibilityRole accessibilityRole() const override;
+    /// @brief Labels are meaningful accessibility elements.
+    bool isAccessibilityElement() const override;
+
 protected:
     std::string text;              ///< The UTF-8 text content.
     uint8_t textScale = 1;         ///< Text rendering scale factor.

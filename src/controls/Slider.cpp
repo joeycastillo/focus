@@ -225,3 +225,12 @@ std::shared_ptr<Font> Slider::getFont() const {
 void Slider::setStep(float step) {
     this->step = step;
 }
+
+AccessibilityRole Slider::accessibilityRole() const {
+    return AccessibilityRole::Slider;
+}
+
+std::string Slider::accessibilityValue() const {
+    int percent = (int)(this->value * 100.0f + 0.5f);
+    return std::to_string(percent) + "%";
+}

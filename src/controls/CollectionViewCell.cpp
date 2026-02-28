@@ -36,3 +36,7 @@ void CollectionViewCell::didResignFocus() {
     Control::didResignFocus();
     if (this->onFocusChanged) this->onFocusChanged(*this, false);
 }
+
+AccessibilityRole CollectionViewCell::accessibilityRole() const {
+    return AccessibilityRole::ListItem;
+}

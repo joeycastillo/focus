@@ -122,6 +122,15 @@ protected:
     std::weak_ptr<NavigationViewController> navigationController; ///< Set by NavigationViewController when pushed.
     std::weak_ptr<TabViewController> tabViewController; ///< Set by TabViewController when added as a tab.
 
+public:
+    /// @brief Stable programmatic identifier for this view controller.
+    ///
+    /// Used by test harnesses and accessibility tools to identify which
+    /// screen is currently active (e.g. "home-screen", "book-list").
+    /// Set by application code; empty by default.
+    std::string accessibilityIdentifier;
+
+protected:
     friend class Application;
     friend class NavigationViewController;
     friend class TabViewController;

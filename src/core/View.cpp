@@ -640,3 +640,43 @@ bool View::_contains(Point point) {
         (this->frame.origin.y <= point.y) && (point.y <= (this->frame.origin.y + this->frame.size.height))
     );
 }
+
+// --- Accessibility ---
+
+std::string View::accessibilityLabel() const {
+    return "";
+}
+
+AccessibilityRole View::accessibilityRole() const {
+    return AccessibilityRole::None;
+}
+
+std::string View::accessibilityValue() const {
+    return "";
+}
+
+bool View::isAccessibilityElement() const {
+    return false;
+}
+
+Rect View::accessibilityRect() const {
+    Rect rect = this->frame;
+    View* sv = this->superview;
+    while (sv) {
+        rect.origin.x += sv->frame.origin.x - sv->bounds.origin.x;
+        rect.origin.y += sv->frame.origin.y - sv->bounds.origin.y;
+        sv = sv->superview;
+    }
+    return rect;
+}
+
+std::shared_ptr<View> findAccessibilityElement(
+    std::shared_ptr<View> root, const std::string& identifier) {
+    if (!root || identifier.empty()) return nullptr;
+    if (root->accessibilityIdentifier == identifier) return root;
+    for (const auto& child : root->getSubviews()) {
+        auto found = findAccessibilityElement(child, identifier);
+        if (found) return found;
+    }
+    return nullptr;
+}

@@ -222,3 +222,11 @@ void TextField::didResignFocus() {
     Control::didResignFocus();
     this->canvasValid = false;
 }
+
+AccessibilityRole TextField::accessibilityRole() const {
+    return AccessibilityRole::TextField;
+}
+
+std::string TextField::accessibilityValue() const {
+    return this->text;
+}

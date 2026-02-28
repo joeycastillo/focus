@@ -60,6 +60,12 @@ public:
 
     /// @brief Get the current progress value.
     float getProgress();
+
+    /// @brief Returns AccessibilityRole::ProgressBar.
+    AccessibilityRole accessibilityRole() const override;
+    /// @brief Returns the current progress as a percentage string.
+    std::string accessibilityValue() const override;
+
 protected:
     float progress = 0; ///< Current progress (0.0 to 1.0).
 protected:

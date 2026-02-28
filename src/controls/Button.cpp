@@ -143,3 +143,11 @@ void Button::setFont(std::shared_ptr<Font> font) {
 std::shared_ptr<Font> Button::getFont() const {
     return this->font;
 }
+
+std::string Button::accessibilityLabel() const {
+    return this->text;
+}
+
+AccessibilityRole Button::accessibilityRole() const {
+    return AccessibilityRole::Button;
+}

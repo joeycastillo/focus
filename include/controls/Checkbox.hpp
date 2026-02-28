@@ -70,6 +70,13 @@ public:
     /// @brief Get the current font.
     std::shared_ptr<Font> getFont() const;
 
+    /// @brief Returns the checkbox label text.
+    std::string accessibilityLabel() const override;
+    /// @brief Returns AccessibilityRole::Checkbox.
+    AccessibilityRole accessibilityRole() const override;
+    /// @brief Returns "checked" or "unchecked".
+    std::string accessibilityValue() const override;
+
 protected:
     std::string text;              ///< Label text.
     bool checked = false;          ///< Whether the checkbox is checked.

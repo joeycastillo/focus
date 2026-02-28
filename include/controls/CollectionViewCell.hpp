@@ -57,6 +57,9 @@ public:
     void didBecomeFocused() override;
     void didResignFocus() override;
 
+    /// @brief Returns AccessibilityRole::ListItem.
+    AccessibilityRole accessibilityRole() const override;
+
 private:
     /// Internal callback set by CollectionView to route focus events to the delegate.
     std::function<void(CollectionViewCell&, bool)> onFocusChanged;

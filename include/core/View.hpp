@@ -359,6 +359,64 @@ public:
 
     int32_t tag = 0; ///< Application-defined tag for identifying views.
 
+    /// @name Accessibility
+    /// @brief Properties and methods for accessibility consumers (screen readers,
+    /// test harnesses, external automation tools). Subclasses provide sensible
+    /// defaults; application code sets identifiers on views that need to be
+    /// targeted by name.
+    /// @{
+
+    /// @brief Stable programmatic identifier for this view.
+    ///
+    /// Used by test harnesses, external tools, and assistive devices to target
+    /// specific views without relying on coordinates. Never displayed to users;
+    /// use accessibilityLabel() for the human-readable name.
+    ///
+    /// Set by application code (e.g. `button->accessibilityIdentifier = "pin-button"`).
+    /// Empty by default (view is not targetable by identifier).
+    std::string accessibilityIdentifier;
+
+    /// @brief Human-readable name of this element.
+    ///
+    /// A screen reader would speak this text. Subclasses provide defaults:
+    /// Button returns its label text, LabelView returns its displayed text.
+    /// Override for custom views or to provide context beyond the default.
+    ///
+    /// @return A localized, user-facing description of this element.
+    virtual std::string accessibilityLabel() const;
+
+    /// @brief The semantic role of this element.
+    ///
+    /// Tells accessibility consumers what kind of element this is and how
+    /// to interact with it. Subclasses provide defaults (Button returns
+    /// AccessibilityRole::Button, etc.). The base View returns None.
+    virtual AccessibilityRole accessibilityRole() const;
+
+    /// @brief Dynamic state or value of this element.
+    ///
+    /// For elements with changing state: a Slider's current value, a
+    /// Checkbox's checked/unchecked status, a ProgressView's percentage.
+    /// The base View returns an empty string.
+    virtual std::string accessibilityValue() const;
+
+    /// @brief Whether this view is a meaningful element in the accessibility tree.
+    ///
+    /// When true, accessibility consumers (screen readers, test harnesses) will
+    /// visit this view. When false, the view is treated as a structural container
+    /// and its children are visited instead. Controls return true by default;
+    /// plain Views return false.
+    virtual bool isAccessibilityElement() const;
+
+    /// @brief The rectangle representing this element's location on screen.
+    ///
+    /// Returns the view's frame converted to window coordinates by walking
+    /// the superview chain. Used by test harnesses to compute tap coordinates
+    /// from an identifier. Override in subclasses where the meaningful
+    /// interactive area differs from the frame (e.g. expanded hit targets).
+    virtual Rect accessibilityRect() const;
+
+    /// @}
+
 protected:
     /// Returns the display if this view is attached to a window, nullptr otherwise.
     /// Use this in draw() methods to safely get the display for rendering.
@@ -400,4 +458,16 @@ private:
 
     friend class Window;
 };
+
+/// @brief Search the view hierarchy for a view with the given accessibility identifier.
+///
+/// Performs a depth-first search starting from root. Returns the first view
+/// whose accessibilityIdentifier matches the given string, or nullptr if
+/// no match is found.
+///
+/// @param root The root of the subtree to search.
+/// @param identifier The accessibility identifier to match.
+/// @return A shared pointer to the matching view, or nullptr.
+std::shared_ptr<View> findAccessibilityElement(
+    std::shared_ptr<View> root, const std::string& identifier);
 

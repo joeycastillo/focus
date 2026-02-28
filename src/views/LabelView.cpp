@@ -118,3 +118,15 @@ void LabelView::setCanvasRotation(int degrees) {
         this->setNeedsDisplayInRect(this->frame);
     }
 }
+
+std::string LabelView::accessibilityLabel() const {
+    return this->text;
+}
+
+AccessibilityRole LabelView::accessibilityRole() const {
+    return AccessibilityRole::StaticText;
+}
+
+bool LabelView::isAccessibilityElement() const {
+    return true;
+}

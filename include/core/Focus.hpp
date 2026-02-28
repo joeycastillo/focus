@@ -218,6 +218,28 @@ typedef enum {
     KeyboardTypeDecimalPad, ///< Numeric keypad with decimal point.
 } KeyboardType;
 
+/// @brief Semantic role of a UI element for accessibility consumers.
+///
+/// Accessibility roles describe what kind of element a view represents,
+/// allowing screen readers, test harnesses, and other assistive tools to
+/// understand how to interact with it. Views return their role from
+/// accessibilityRole(). The default is None (not a meaningful element).
+enum class AccessibilityRole {
+    None,           ///< Structural container or decorative view; skip in accessibility tree.
+    Button,         ///< A tappable button control.
+    StaticText,     ///< Read-only text (e.g. LabelView).
+    TextField,      ///< Editable text input.
+    Image,          ///< An image or bitmap.
+    Checkbox,       ///< A toggleable checkbox control.
+    Slider,         ///< An adjustable slider control.
+    ListItem,       ///< An item in a list (e.g. CollectionViewCell).
+    List,           ///< A scrollable list of items (e.g. CollectionView).
+    Header,         ///< A heading or section title.
+    Tab,            ///< A tab in a tab bar.
+    ProgressBar,    ///< A progress indicator.
+    Adjustable,     ///< A value that can be incremented or decremented.
+};
+
 #include "Color.hpp"
 #include "NotificationCenter.hpp"
 #include "UserSettings.hpp"

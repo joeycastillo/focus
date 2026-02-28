@@ -84,6 +84,11 @@ public:
     /// @brief Set the step size for d-pad LEFT/RIGHT adjustment (default 0.1).
     void setStep(float step);
 
+    /// @brief Returns AccessibilityRole::Slider.
+    AccessibilityRole accessibilityRole() const override;
+    /// @brief Returns the current value as a percentage string.
+    std::string accessibilityValue() const override;
+
 protected:
     std::string label;             ///< Label text displayed left of the track.
     float value = 0.0f;           ///< Current value (0.0 to 1.0).

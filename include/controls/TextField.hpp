@@ -86,6 +86,11 @@ public:
     void insertText(const std::string& str) override;
     void deleteBackward() override;
 
+    /// @brief Returns AccessibilityRole::TextField.
+    AccessibilityRole accessibilityRole() const override;
+    /// @brief Returns the current text content.
+    std::string accessibilityValue() const override;
+
 protected:
     /**
      * @brief Get the text to render on screen.

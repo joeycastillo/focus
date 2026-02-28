@@ -50,3 +50,7 @@ bool Control::handleEvent(Event event) {
     if (!this->enabled) return false;
     return View::handleEvent(event);
 }
+
+bool Control::isAccessibilityElement() const {
+    return true;
+}

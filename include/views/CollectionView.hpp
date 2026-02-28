@@ -97,6 +97,9 @@ public:
 
     bool handleEvent(Event event) override;
 
+    /// @brief Returns AccessibilityRole::List.
+    AccessibilityRole accessibilityRole() const override;
+
 private:
     CollectionViewDataSource* dataSource = nullptr;
     std::optional<std::weak_ptr<void>> dataSourceOwner;

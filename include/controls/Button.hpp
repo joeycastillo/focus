@@ -67,6 +67,11 @@ public:
     void didBecomeFocused() override;
     /// @brief Invalidate the canvas when focus is lost (restores colors).
     void didResignFocus() override;
+
+    /// @brief Returns the button's label text.
+    std::string accessibilityLabel() const override;
+    /// @brief Returns AccessibilityRole::Button.
+    AccessibilityRole accessibilityRole() const override;
 protected:
     std::string text;              ///< The button's label text.
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
