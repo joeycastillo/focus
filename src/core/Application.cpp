@@ -24,6 +24,7 @@
 
 #include "Application.hpp"
 #include "ViewController.hpp"
+#include "NavigationViewController.hpp"
 #include "HatchedView.hpp"
 #include "Task.hpp"
 #include "Display.hpp"
@@ -329,6 +330,16 @@ void Application::setRootViewController(std::shared_ptr<ViewController> viewCont
 
 bool Application::isModalPresented() const {
     return !this->modalStack.empty();
+}
+
+std::shared_ptr<ViewController> Application::activeViewController() const {
+    if (!this->modalStack.empty()) {
+        return this->modalStack.back().viewController;
+    }
+    if (auto navVC = std::dynamic_pointer_cast<NavigationViewController>(this->rootViewController)) {
+        return navVC->topViewController();
+    }
+    return this->rootViewController;
 }
 
 void Application::presentViewController(std::shared_ptr<ViewController> viewController) {

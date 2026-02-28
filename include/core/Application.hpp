@@ -119,6 +119,15 @@ public:
     bool isModalPresented() const;
 
     /**
+     * @brief Get the topmost active view controller.
+     *
+     * Returns the modal VC on top if any modals are presented, otherwise
+     * returns the top of the navigation stack if the root VC is a
+     * NavigationViewController, otherwise returns the root VC itself.
+     */
+    std::shared_ptr<ViewController> activeViewController() const;
+
+    /**
      * @brief Present a view controller modally on top of the current content.
      *
      * A HatchedView dimmer is inserted behind the modal to visually dim the
