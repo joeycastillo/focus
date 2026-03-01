@@ -195,9 +195,10 @@ inline bool RectContains(Rect outer, Rect inner) {
 
 /// @brief Controls horizontal text alignment within a layout rect.
 typedef enum {
-    TextAlignmentLeft,   ///< Align text to the left edge (default).
-    TextAlignmentCenter, ///< Center text horizontally.
-    TextAlignmentRight,  ///< Align text to the right edge.
+    TextAlignmentLeft,      ///< Align text to the left edge (default).
+    TextAlignmentCenter,    ///< Center text horizontally.
+    TextAlignmentRight,     ///< Align text to the right edge.
+    TextAlignmentJustified, ///< Distribute words evenly across the full width.
 } TextAlignment;
 
 /// @brief Controls how a view's subviews are navigated with directional events.

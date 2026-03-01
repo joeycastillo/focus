@@ -403,6 +403,13 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
         this->cursor.x = indentedOriginX + effectiveWidth;
     }
 
+    // Justification state: extra pixels to add after each word gap (space).
+    // Computed in the justified branch below, consumed in emitCodepoint.
+    int16_t justifyExtraPerGap = 0;
+    int16_t justifyRemainder = 0;
+    int16_t justifyGapsEmitted = 0;
+    int16_t justifyMaxGaps = 0;
+
     // Apply text alignment offset for this line
     if (this->textAlignment != TextAlignmentLeft) {
         int16_t lineWidth = measureCodepointsWidth(codepoints + lineStart, lineLen, glyphProvider);
@@ -419,6 +426,29 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
                     this->cursor.x = indentedOriginX + slack;
                 }
                 // RTL right-align is the default (cursor at right edge)
+            } else if (this->textAlignment == TextAlignmentJustified) {
+                // Count word gaps (space codepoints)
+                int16_t numSpaces = 0;
+                for (size_t k = 0; k < lineLen; k++) {
+                    if (codepoints[lineStart + k] == 0x20) numSpaces++;
+                }
+                // Word-wrapped lines include a trailing space at the break
+                // point. Exclude it from justification: it's not a visible
+                // inter-word gap, and its width should become part of the
+                // slack distributed across the real gaps.
+                bool hasTrailingSpace = (lineLen > 0 && codepoints[lineStart + lineLen - 1] == 0x20);
+                int16_t interWordGaps = hasTrailingSpace ? numSpaces - 1 : numSpaces;
+                if (interWordGaps > 0) {
+                    int16_t adjustedSlack = slack;
+                    if (hasTrailingSpace) {
+                        adjustedSlack += measureCodepointsWidth(
+                            &codepoints[lineStart + lineLen - 1], 1, glyphProvider);
+                    }
+                    justifyMaxGaps = interWordGaps;
+                    justifyExtraPerGap = adjustedSlack / interWordGaps;
+                    justifyRemainder = adjustedSlack % interWordGaps;
+                }
+                // Cursor stays at left edge — justified starts flush left
             }
         }
     }
@@ -512,6 +542,12 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
         UNICODE_CODEPOINT cp = codepoints[lineStart + j];
         int16_t beforeX = this->cursor.x;
         this->writeCodepoint(cp, glyphProvider);
+        // Justified alignment: distribute extra space after each inter-word gap
+        if (justifyMaxGaps > 0 && cp == 0x20 && justifyGapsEmitted < justifyMaxGaps) {
+            int16_t extra = justifyExtraPerGap + (justifyGapsEmitted < justifyRemainder ? 1 : 0);
+            this->cursor.x += extra * this->direction;
+            justifyGapsEmitted++;
+        }
         if (this->wordMapOutput && this->codepointByteOffsets) {
             int16_t afterX = this->cursor.x;
             unicode_info_t traits = getTraitsForCodepoint(cp);
