@@ -534,8 +534,9 @@ void View::setClipsFocus(bool value) {
 }
 
 std::weak_ptr<View> View::getViewForTouch(Point touch) {
-    if (!this->_contains(touch)) {
-        // if we don't contain the touch, move on.
+    if (this->hidden || !this->_contains(touch)) {
+        // Hidden views (and their entire subtree) are invisible to touch.
+        // If we don't contain the touch, move on.
         return std::weak_ptr<View>();
     }
 
