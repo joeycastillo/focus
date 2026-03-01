@@ -769,6 +769,10 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
         if (this->hasLastGlyph) {
             this->cursor.x = this->lastGlyphPosition.x;
         }
+        // Detect _BS<char> underline pattern: if the previous glyph was _,
+        // the next visible character needs its underscore redrawn to match width.
+        this->pendingOverprintUnderline = this->lastGlyphWasUnderscore;
+        this->lastGlyphWasUnderscore = false;
         return 1;
     }
 
@@ -800,6 +804,26 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
             this->cursor.x += advance;
         }
     }
+
+    // Overprint underline: after drawing the character in a _BS<char> triplet,
+    // redraw the underscore glyph to match the character's width. Draw once
+    // left-aligned, and if the character is wider than the underscore, draw
+    // again right-aligned. Covers characters up to 2x the underscore width.
+    if (this->pendingOverprintUnderline) {
+        Rect uMetrics = glyphProvider->metricsForCodepoint('_');
+        uint8_t *uGlyph = glyphProvider->glyphForCodepoint('_');
+        unicode_info_t uTraits = {};
+        int16_t charWidth = metrics.size.width;
+        int16_t uWidth = uMetrics.size.width;
+        drawGlyph(this->lastGlyphPosition.x, this->lastGlyphPosition.y, uMetrics, uTraits, uGlyph);
+        if (charWidth > uWidth) {
+            int16_t rightAlignedX = this->lastGlyphPosition.x + (charWidth - uWidth);
+            drawGlyph(rightAlignedX, this->lastGlyphPosition.y, uMetrics, uTraits, uGlyph);
+        }
+        this->pendingOverprintUnderline = false;
+    }
+
+    this->lastGlyphWasUnderscore = (codepoint == '_');
 
     return 1;
 }

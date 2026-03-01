@@ -140,6 +140,8 @@ protected:
     int glyphRowCount = 0;
     Point lastGlyphPosition = {};
     bool hasLastGlyph = false;
+    bool lastGlyphWasUnderscore = false;     // Tracks _ for overprint underline detection
+    bool pendingOverprintUnderline = false;  // Set when BS follows _, triggers underscore redraw
     bool lastWasNewline = false;  // Tracks consecutive newlines for paragraph detection
     TextAlignment textAlignment = TextAlignmentLeft;
 
