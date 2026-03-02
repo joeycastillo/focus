@@ -42,9 +42,12 @@ CanvasView::CanvasView(Rect rect)
 
 void CanvasView::setCanvasMode(DisplayMode mode) {
     canvasMode = mode;
-    if (mode == DisplayMode::TwoBpp) {
-        buffer.resize(2 * planeSize, 0xFF);
+    if (mode == DisplayMode::Grayscale) {
+        rowBytes = frame.size.width;
+        buffer.resize(frame.size.width * frame.size.height, 0xFF);
     } else {
+        rowBytes = (frame.size.width + 7) / 8;
+        planeSize = rowBytes * frame.size.height;
         buffer.resize(planeSize);
         buffer.shrink_to_fit();
     }
@@ -77,15 +80,9 @@ void CanvasView::mapToBuffer(int x, int y, int &bx, int &by) const {
 
 void CanvasView::drawContent(int x, int y, Rect clipRect) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        if (canvasMode == DisplayMode::TwoBpp) {
-            display->blitOpaque2bpp(x + this->frame.origin.x, y + this->frame.origin.y,
-                                    this->frame.size.width, this->frame.size.height,
-                                    this->buffer.data(), this->rowBytes, clipRect);
-        } else {
-            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
-                                this->frame.size.width, this->frame.size.height,
-                                this->buffer.data(), this->rowBytes, clipRect);
-        }
+        display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+                            this->frame.size.width, this->frame.size.height,
+                            this->buffer.data(), this->rowBytes, clipRect);
     }
 }
 
@@ -93,23 +90,12 @@ void CanvasView::drawPixel(int x, int y, uint16_t color) {
     if (x < 0 || x >= this->getCanvasWidth() || y < 0 || y >= this->getCanvasHeight()) return;
     int bx, by;
     this->mapToBuffer(x, y, bx, by);
-    int idx = by * rowBytes + (bx >> 3);
-    uint8_t mask = 0x80 >> (bx & 7);
 
-    if (canvasMode == DisplayMode::TwoBpp) {
-        // plane0 (buffer) stores bit 1 (high bit) of color
-        if (color & 0x02) {
-            buffer[idx] |= mask;
-        } else {
-            buffer[idx] &= ~mask;
-        }
-        // plane1 stores bit 0 (low bit) of color
-        if (color & 0x01) {
-            buffer[planeSize + idx] |= mask;
-        } else {
-            buffer[planeSize + idx] &= ~mask;
-        }
+    if (canvasMode == DisplayMode::Grayscale) {
+        buffer[by * frame.size.width + bx] = (uint8_t)(color >> 8);
     } else {
+        int idx = by * rowBytes + (bx >> 3);
+        uint8_t mask = 0x80 >> (bx & 7);
         if (color == 0) {
             buffer[idx] &= ~mask;  // black: clear bit
         } else {
@@ -188,9 +174,12 @@ void CanvasView::fillRect(int x, int y, int w, int h, uint16_t color) {
         return;
     }
 
-    if (canvasMode == DisplayMode::TwoBpp) {
-        _fillPlane(buffer.data(), x0, y0, x1, y1, (color & 0x02) ? 0xFF : 0x00);
-        _fillPlane(buffer.data() + planeSize, x0, y0, x1, y1, (color & 0x01) ? 0xFF : 0x00);
+    if (canvasMode == DisplayMode::Grayscale) {
+        uint8_t val = (uint8_t)(color >> 8);
+        int width = frame.size.width;
+        for (int row = y0; row < y1; row++) {
+            std::memset(&buffer[row * width + x0], val, x1 - x0);
+        }
     } else {
         _fillPlane(buffer.data(), x0, y0, x1, y1, (color != 0) ? 0xFF : 0x00);
     }
@@ -202,6 +191,26 @@ void CanvasView::invertRect(int x, int y, int w, int h) {
     int x1 = std::min(this->getCanvasWidth(), x + w);
     int y1 = std::min(this->getCanvasHeight(), y + h);
     if (x0 >= x1 || y0 >= y1) return;
+
+    if (canvasMode == DisplayMode::Grayscale) {
+        int width = frame.size.width;
+        if (this->canvasRotation != 0) {
+            for (int iy = y0; iy < y1; iy++) {
+                for (int ix = x0; ix < x1; ix++) {
+                    int bx, by;
+                    this->mapToBuffer(ix, iy, bx, by);
+                    buffer[by * width + bx] ^= 0xFF;
+                }
+            }
+        } else {
+            for (int row = y0; row < y1; row++) {
+                for (int col = x0; col < x1; col++) {
+                    buffer[row * width + col] ^= 0xFF;
+                }
+            }
+        }
+        return;
+    }
 
     if (this->canvasRotation != 0) {
         // Rotated: per-pixel fallback using XOR on buffer coordinates.
@@ -281,32 +290,37 @@ void CanvasView::fillCircle(int cx, int cy, int r, uint16_t color) {
 }
 
 void CanvasView::clear(uint16_t color) {
-    if (canvasMode == DisplayMode::TwoBpp) {
-        std::memset(buffer.data(), (color & 0x02) ? 0xFF : 0x00, planeSize);
-        std::memset(buffer.data() + planeSize, (color & 0x01) ? 0xFF : 0x00, planeSize);
+    if (canvasMode == DisplayMode::Grayscale) {
+        std::memset(buffer.data(), (uint8_t)(color >> 8), buffer.size());
     } else {
         std::memset(buffer.data(), (color != 0) ? 0xFF : 0x00, planeSize);
     }
 }
 
 void CanvasView::applyCheckerboardMask(uint16_t color) {
-    auto applyToPlane = [&](uint8_t* plane, bool setBits) {
+    if (canvasMode == DisplayMode::Grayscale) {
+        uint8_t val = (uint8_t)(color >> 8);
+        int width = frame.size.width;
         for (int y = 0; y < frame.size.height; y++) {
-            uint8_t pattern = (y & 1) ? 0x55 : 0xAA;
-            for (int b = 0; b < rowBytes; b++) {
-                if (setBits) {
-                    plane[y * rowBytes + b] |= pattern;
-                } else {
-                    plane[y * rowBytes + b] &= ~pattern;
+            for (int x = 0; x < width; x++) {
+                if ((x + y) & 1) {
+                    buffer[y * width + x] = val;
                 }
             }
         }
-    };
-
-    if (canvasMode == DisplayMode::TwoBpp) {
-        applyToPlane(buffer.data(), (color & 0x02) != 0);
-        applyToPlane(buffer.data() + planeSize, (color & 0x01) != 0);
     } else {
+        auto applyToPlane = [&](uint8_t* plane, bool setBits) {
+            for (int y = 0; y < frame.size.height; y++) {
+                uint8_t pattern = (y & 1) ? 0x55 : 0xAA;
+                for (int b = 0; b < rowBytes; b++) {
+                    if (setBits) {
+                        plane[y * rowBytes + b] |= pattern;
+                    } else {
+                        plane[y * rowBytes + b] &= ~pattern;
+                    }
+                }
+            }
+        };
         applyToPlane(buffer.data(), color != 0);
     }
 }

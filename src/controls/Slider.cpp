@@ -28,6 +28,7 @@
 #include "Display.hpp"
 #include "Font.hpp"
 #include "TextLayout.hpp"
+#include <algorithm>
 #include <cstring>
 
 Slider::Slider(Rect rect, std::string label) : Control(rect), label(label) {
@@ -69,17 +70,8 @@ void Slider::renderCanvas() {
         lineHeight = providerPtr->getGlyphRowCount();
     }
 
-    // Determine colors based on focus state
-    int bgColor, fgColor;
-    if (this->focused) {
-        bgColor = this->foregroundColor;
-        fgColor = this->backgroundColor;
-    } else {
-        bgColor = this->backgroundColor;
-        fgColor = this->foregroundColor;
-    }
-
-    this->canvas->clear(bgColor);
+    // Canvas is a shape mask: 0 = transparent, 1 = foreground
+    this->canvas->clear(0);
 
     // Draw label text on the left
     if (resolvedFont) {
@@ -91,7 +83,7 @@ void Slider::renderCanvas() {
         int labelWidth = TextLayout::measureTextWidth(
             this->label.c_str(), 1, providerPtr);
         Rect textRect = MakeRect(textX, textY, labelWidth, lineHeight);
-        this->canvas->drawText(textRect, fgColor, 1, this->label.c_str());
+        this->canvas->drawText(textRect, 1, 1, this->label.c_str());
     }
 
     // Draw track to the right of the label
@@ -102,12 +94,12 @@ void Slider::renderCanvas() {
 
     if (trackWidth > 0) {
         // Track outline
-        this->canvas->drawRect(trackX, trackY, trackWidth, trackHeight, fgColor);
+        this->canvas->drawRect(trackX, trackY, trackWidth, trackHeight, 1);
 
         // Filled portion
         int filledWidth = (int)(trackWidth * this->value);
         if (filledWidth > 0) {
-            this->canvas->fillRect(trackX, trackY, filledWidth, trackHeight, fgColor);
+            this->canvas->fillRect(trackX, trackY, filledWidth, trackHeight, 1);
         }
     }
 
@@ -118,8 +110,9 @@ void Slider::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+            display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,
+                                this->foregroundColor,
                                 this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
         }
     }
@@ -178,11 +171,13 @@ bool Slider::handleEvent(Event event) {
 
 void Slider::didBecomeFocused() {
     Control::didBecomeFocused();
+    std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
 }
 
 void Slider::didResignFocus() {
     Control::didResignFocus();
+    std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
 }
 

@@ -28,6 +28,7 @@
 #include "Display.hpp"
 #include "Font.hpp"
 #include "TextLayout.hpp"
+#include <algorithm>
 
 TextField::TextField(Rect rect) : Control(rect) {
 }
@@ -125,27 +126,11 @@ void TextField::renderCanvas() {
 
     int lineHeight = providerPtr ? providerPtr->getGlyphRowCount() : 16;
 
-    // Determine colors based on focus state
-    int bgColor, textColor, borderColor;
-    if (this->focused) {
-        bgColor = this->foregroundColor;
-        textColor = this->backgroundColor;
-        borderColor = this->foregroundColor;
-    } else {
-        bgColor = this->backgroundColor;
-        textColor = this->foregroundColor;
-        borderColor = this->foregroundColor;
-    }
-
-    int canvasBg = (bgColor == this->foregroundColor) ? 0 : 1;
-    int canvasText = (textColor == this->foregroundColor) ? 0 : 1;
-    int canvasBorder = (borderColor == this->foregroundColor) ? 0 : 1;
-
-    // Fill background
-    this->canvas->clear(canvasBg);
+    // Canvas is a shape mask: 0 = transparent, 1 = foreground
+    this->canvas->clear(0);
 
     // Draw border
-    this->canvas->drawRect(0, 0, this->frame.size.width, this->frame.size.height, canvasBorder);
+    this->canvas->drawRect(0, 0, this->frame.size.width, this->frame.size.height, 1);
 
     if (resolvedFont) {
         this->canvas->setFont(resolvedFont);
@@ -159,10 +144,9 @@ void TextField::renderCanvas() {
 
     std::string displayText = this->getDisplayText();
     if (!displayText.empty()) {
-        this->canvas->drawText(textRect, canvasText, 1, displayText.c_str());
+        this->canvas->drawText(textRect, 1, 1, displayText.c_str());
     } else if (!this->placeholder.empty() && !this->focused) {
-        // Draw placeholder in a lighter style (we only have 1bpp so just use the text color)
-        this->canvas->drawText(textRect, canvasText, 1, this->placeholder.c_str());
+        this->canvas->drawText(textRect, 1, 1, this->placeholder.c_str());
     }
 
     // Draw cursor when focused
@@ -172,7 +156,7 @@ void TextField::renderCanvas() {
             cursorX += TextLayout::measureTextWidth(displayText.c_str(), 1, providerPtr);
         }
         if (cursorX < this->frame.size.width - textPadding) {
-            this->canvas->fillRect(cursorX, textY, 2, lineHeight, canvasText);
+            this->canvas->fillRect(cursorX, textY, 2, lineHeight, 1);
         }
     }
 
@@ -183,8 +167,9 @@ void TextField::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+            display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,
+                                this->foregroundColor,
                                 this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
         }
     }
@@ -215,11 +200,13 @@ bool TextField::handleEvent(Event event) {
 
 void TextField::didBecomeFocused() {
     Control::didBecomeFocused();
+    std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
 }
 
 void TextField::didResignFocus() {
     Control::didResignFocus();
+    std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
 }
 

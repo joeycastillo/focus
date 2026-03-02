@@ -30,8 +30,9 @@
  * must implement. Focus views render through this interface, making the framework
  * independent of any particular display technology (e-paper, LCD, SDL, etc.).
  *
- * Bitmap operations use a 1-bit-per-pixel model with MSB-first byte packing.
- * In TwoBpp mode, two 1bpp planes encode 2 bits per pixel for 4-level grayscale.
+ * Subclasses must implement fillRect() and blitMasked(). blitOpaque() has a
+ * slow default implementation that decodes pixels via fillRect(); backends
+ * should override it for performance.
  */
 
 #pragma once
@@ -39,23 +40,25 @@
 #include <stdint.h>
 #include "Focus.hpp"
 
-/// Display operating mode: 1 bit per pixel (black & white) or 2 bits per pixel
-/// (4-level grayscale). In TwoBpp mode, pixel data is stored as two separate
-/// 1bpp planes rather than a single packed 2bpp buffer.
+/// Display operating mode — describes the display's pixel capability.
 enum class DisplayMode {
-    OneBpp,   ///< 1 bit per pixel (black & white) — default
-    TwoBpp    ///< 2 bits per pixel (4-level grayscale)
+    Monochrome,   ///< 1 bit per pixel (black & white) — default
+    Grayscale,    ///< 8-bit grayscale (one byte per pixel, 0x00–0xFF)
+    RGB565        ///< 16-bit color (5 red, 6 green, 5 blue)
 };
 
 /**
  * @brief Abstract base class for display rendering backends.
  *
- * Subclasses must implement fillRect(), blitOpaque(), blitOpaque2bpp(),
- * and blitMasked(). The framework calls these methods during the view
- * draw cycle.
+ * Subclasses must implement fillRect() and blitMasked(). blitOpaque() has
+ * a default implementation that decodes pixels via fillRect(); backends
+ * should override it for performance.
  *
- * Color values: 0 = black, 3 = white. In TwoBpp mode, 1 = dark gray and
- * 2 = light gray. In OneBpp mode, all nonzero values are treated as white.
+ * Color values are uint16_t, produced by the GrayscaleColor or RGB565Color
+ * factory classes (see Color.hpp). Display backends are responsible for
+ * converting these 16-bit values to their native bit depth. Color.hpp
+ * documents the standard bit-shift conversions (e.g. color >> 14 for 2-bit,
+ * color >> 8 for 8-bit).
  */
 class Display {
 public:
@@ -65,46 +68,34 @@ public:
      * @param y Top edge in pixels.
      * @param w Width in pixels.
      * @param h Height in pixels.
-     * @param color Fill color (0 = black, 3 = white; 1/2 for grays in TwoBpp).
+     * @param color Fill color. Use GrayscaleColor or RGB565Color factory values.
      */
     virtual void fillRect(int x, int y, int w, int h, uint16_t color,
                           Rect clipRect = {{0,0},{0,0}}) = 0;
 
     /**
-     * @brief Blit a 1bpp MSB-first bitmap, overwriting all pixels in the region.
+     * @brief Blit a mode-dependent pixel buffer, overwriting all pixels.
      *
-     * Set bits (1) write white; clear bits (0) write black. Every pixel in the
-     * destination rectangle is written.
+     * The data format depends on the current DisplayMode:
+     * - Monochrome: 1bpp MSB-first. Set bits (1) = white, clear bits (0) = black.
+     *   rowBytes = (width + 7) / 8.
+     * - Grayscale: 8bpp, one byte per pixel (0x00 = black, 0xFF = white).
+     *   rowBytes = width.
+     * - RGB565: not yet used by the framework.
+     *
+     * The default implementation decodes pixels and calls fillRect() one pixel
+     * at a time. Performance-sensitive backends should override this.
      *
      * @param x Left edge of the destination region.
      * @param y Top edge of the destination region.
      * @param w Width of the bitmap in pixels.
      * @param h Height of the bitmap in pixels.
-     * @param data Pointer to the 1bpp bitmap data (MSB-first, row-major).
+     * @param data Pointer to the pixel data.
      * @param rowBytes Number of bytes per row in the source data.
      */
     virtual void blitOpaque(int x, int y, int w, int h,
                             const uint8_t* data, int rowBytes,
-                            Rect clipRect = {{0,0},{0,0}}) = 0;
-
-    /**
-     * @brief Blit a 2bpp grayscale image stored as two contiguous 1bpp planes.
-     *
-     * Each pixel's color is encoded across two planes laid out consecutively
-     * in memory: plane 0 (high bit) occupies the first rowBytes*h bytes,
-     * followed immediately by plane 1 (low bit). Both planes use the same
-     * MSB-first packing as blitOpaque.
-     *
-     * @param x Left edge of the destination region.
-     * @param y Top edge of the destination region.
-     * @param w Width of the image in pixels.
-     * @param h Height of the image in pixels.
-     * @param data Pointer to the two contiguous 1bpp planes (plane0 then plane1).
-     * @param rowBytes Number of bytes per row in each plane.
-     */
-    virtual void blitOpaque2bpp(int x, int y, int w, int h,
-                                const uint8_t* data, int rowBytes,
-                                Rect clipRect = {{0,0},{0,0}}) = 0;
+                            Rect clipRect = {{0,0},{0,0}});
 
     /**
      * @brief Write a solid color only where mask bits are set.
@@ -157,7 +148,7 @@ public:
     virtual ~Display() {}
 
 protected:
-    DisplayMode displayMode = DisplayMode::OneBpp;
+    DisplayMode displayMode = DisplayMode::Monochrome;
     uint8_t rotation = 0;      ///< Rotation index: 0=0°, 1=90°, 2=180°, 3=270°.
     int nativeWidth = 0;       ///< Panel width in pixels (unrotated).
     int nativeHeight = 0;      ///< Panel height in pixels (unrotated).

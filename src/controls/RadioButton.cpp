@@ -28,6 +28,7 @@
 #include "Window.hpp"
 #include "Display.hpp"
 #include "Font.hpp"
+#include <algorithm>
 
 RadioButton::RadioButton(Rect rect, std::string text) : Control(rect) {
     this->text = text;
@@ -53,18 +54,8 @@ void RadioButton::renderCanvas() {
         lineHeight = providerPtr->getGlyphRowCount();
     }
 
-    // Determine colors based on focus state
-    int bgColor, fgColor;
-    if (this->focused) {
-        bgColor = this->foregroundColor;
-        fgColor = this->backgroundColor;
-    } else {
-        bgColor = this->backgroundColor;
-        fgColor = this->foregroundColor;
-    }
-
-    // Fill background
-    this->canvas->clear(bgColor);
+    // Canvas is a shape mask: 0 = transparent, 1 = foreground
+    this->canvas->clear(0);
 
     // Draw radio indicator (circle)
     int indicatorSize = lineHeight;
@@ -74,13 +65,13 @@ void RadioButton::renderCanvas() {
     int gap = 8;
 
     // Draw outer circle
-    this->canvas->drawCircle(centerX, centerY, radius, fgColor);
+    this->canvas->drawCircle(centerX, centerY, radius, 1);
 
     // Fill inner circle if selected
     if (this->selected) {
         int innerRadius = radius - 3;
         if (innerRadius < 1) innerRadius = 1;
-        this->canvas->fillCircle(centerX, centerY, innerRadius, fgColor);
+        this->canvas->fillCircle(centerX, centerY, innerRadius, 1);
     }
 
     // Draw label text to the right of indicator
@@ -92,11 +83,11 @@ void RadioButton::renderCanvas() {
     int textWidth = this->frame.size.width - textX;
     if (textWidth > 0) {
         Rect textRect = MakeRect(textX, textY, textWidth, lineHeight);
-        this->canvas->drawText(textRect, fgColor, 1, this->text.c_str());
+        this->canvas->drawText(textRect, 1, 1, this->text.c_str());
     }
 
     if (!this->enabled) {
-        this->canvas->applyCheckerboardMask(bgColor);
+        this->canvas->applyCheckerboardMask(0);
     }
 
     this->canvasValid = true;
@@ -106,8 +97,9 @@ void RadioButton::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+            display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,
+                                this->foregroundColor,
                                 this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
         }
     }
@@ -143,11 +135,13 @@ bool RadioButton::handleEvent(Event event) {
 
 void RadioButton::didBecomeFocused() {
     Control::didBecomeFocused();
+    std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
 }
 
 void RadioButton::didResignFocus() {
     Control::didResignFocus();
+    std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
 }
 

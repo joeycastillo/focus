@@ -76,7 +76,7 @@ public:
     /// Apply a 1px checkerboard mask, setting every other pixel to the given color.
     /// Used to render a "disabled" appearance. The pattern alternates per pixel in
     /// both axes: even rows mask with 0xAA, odd rows with 0x55 (MSB-first).
-    /// In TwoBpp mode, both planes are updated.
+    /// In Grayscale mode, both planes are updated.
     void applyCheckerboardMask(uint16_t color);
 
     /// Draw text with automatic word-wrapping and layout.
@@ -110,7 +110,7 @@ public:
     /// Get the canvas content rotation in degrees (0, 90, 180, or 270).
     int getCanvasRotation() const { return canvasRotation * 90; }
 
-    // Display mode — set to TwoBpp before drawing to enable 4-level grayscale.
+    // Display mode — set to Grayscale before drawing to enable 4-level grayscale.
     void setCanvasMode(DisplayMode mode);
     DisplayMode getCanvasMode() const { return canvasMode; }
 
@@ -165,13 +165,10 @@ protected:
     /// @}
 
 private:
-    int rowBytes;                 // bytes per row = (width + 7) / 8
-    // 2bpp support — some displays use a two-plane buffer for 4-level grayscale.
-    // In TwoBpp mode, plane 1 occupies the second half of buffer (offset planeSize).
-    int planeSize;                // bytes per plane = rowBytes * height
-    std::vector<uint8_t> buffer;  // OneBpp: planeSize bytes; TwoBpp: 2*planeSize (plane0 then plane1)
-    const uint8_t* getPlane1Data() const { return buffer.data() + planeSize; }
-    DisplayMode canvasMode = DisplayMode::OneBpp;
+    int rowBytes;                 // Monochrome: (width+7)/8; Grayscale: width (one byte per pixel)
+    int planeSize;                // Monochrome buffer size = ((width+7)/8) * height
+    std::vector<uint8_t> buffer;  // Monochrome: planeSize bytes (1bpp); Grayscale: width*height bytes (8bpp)
+    DisplayMode canvasMode = DisplayMode::Monochrome;
     int canvasRotation = 0;       // rotation index: 0=0°, 1=90°, 2=180°, 3=270°
 
     /// Map logical (pre-rotation) coordinates to physical buffer coordinates.

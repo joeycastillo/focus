@@ -253,8 +253,8 @@ void KeyboardView::renderCanvas() {
 
     int lineHeight = providerPtr ? providerPtr->getGlyphRowCount() : 16;
 
-    // Clear background
-    this->canvas->clear(this->backgroundColor);
+    // Canvas is a shape mask: 0 = transparent, 1 = foreground
+    this->canvas->clear(0);
 
     if (resolvedFont) {
         this->canvas->setFont(resolvedFont);
@@ -264,12 +264,10 @@ void KeyboardView::renderCanvas() {
     this->buildKeyLayout(this->cachedKeys);
     this->keysCached = true;
 
-    int blackColor = 0; // CanvasView: 0 = black
-
     for (const auto& key : this->cachedKeys) {
         // Draw key background (outlined rectangle)
         this->canvas->drawRect(key.rect.origin.x, key.rect.origin.y,
-                               key.rect.size.width, key.rect.size.height, blackColor);
+                               key.rect.size.width, key.rect.size.height, 1);
 
         // Draw key label centered
         if (providerPtr) {
@@ -281,7 +279,7 @@ void KeyboardView::renderCanvas() {
             Rect textRect = MakeRect(textX, textY,
                                      key.rect.size.width - (textX - key.rect.origin.x),
                                      lineHeight);
-            this->canvas->drawText(textRect, blackColor, 1, key.label.c_str());
+            this->canvas->drawText(textRect, 1, 1, key.label.c_str());
         }
     }
 
@@ -292,8 +290,9 @@ void KeyboardView::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+            display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,
+                                this->foregroundColor,
                                 this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
         }
     }

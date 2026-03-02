@@ -32,10 +32,11 @@ void ProgressView::renderCanvas() {
         this->canvas = std::make_shared<CanvasView>(
             MakeRect(0, 0, this->frame.size.width, this->frame.size.height));
     }
-    this->canvas->clear(this->backgroundColor);
+    // Canvas is a shape mask: 0 = transparent, 1 = foreground
+    this->canvas->clear(0);
     int filledWidth = (int)(this->frame.size.width * this->progress);
     if (filledWidth > 0) {
-        this->canvas->fillRect(0, 0, filledWidth, this->frame.size.height, this->foregroundColor);
+        this->canvas->fillRect(0, 0, filledWidth, this->frame.size.height, 1);
     }
     this->canvasValid = true;
 }
@@ -44,8 +45,9 @@ void ProgressView::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+            display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,
+                                this->foregroundColor,
                                 this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
         }
     }

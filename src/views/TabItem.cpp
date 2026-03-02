@@ -27,13 +27,19 @@
 #include "Display.hpp"
 #include "Font.hpp"
 #include "TextLayout.hpp"
+#include <algorithm>
 
 TabItem::TabItem(Rect rect, std::string label) : Control(rect), label(label) {
 }
 
 void TabItem::setSelected(bool selected) {
     if (this->selected != selected) {
+        bool wasHighlighted = this->selected || this->focused;
         this->selected = selected;
+        bool isHighlighted = this->selected || this->focused;
+        if (wasHighlighted != isHighlighted) {
+            std::swap(this->backgroundColor, this->foregroundColor);
+        }
         this->canvasValid = false;
         if (std::shared_ptr<Window> window = this->getWindow().lock()) {
             this->setNeedsDisplayInRect(this->frame);
@@ -67,15 +73,14 @@ void TabItem::renderCanvas() {
     int lineHeight = providerPtr ? providerPtr->getGlyphRowCount() : 16;
 
     bool highlighted = this->selected || this->focused;
-    int bgColor = highlighted ? this->foregroundColor : this->backgroundColor;
-    int textColor = highlighted ? this->backgroundColor : this->foregroundColor;
 
-    this->canvas->clear(bgColor);
+    // Canvas is a shape mask: 0 = transparent, 1 = foreground
+    this->canvas->clear(0);
 
     // Unselected/unfocused tabs get a bottom border line
     if (!highlighted) {
         this->canvas->fillRect(0, this->frame.size.height - 1,
-                               this->frame.size.width, 1, this->foregroundColor);
+                               this->frame.size.width, 1, 1);
     }
 
     if (resolvedFont) {
@@ -89,7 +94,7 @@ void TabItem::renderCanvas() {
         if (textX < 0) textX = 0;
         int textY = (this->frame.size.height - lineHeight) / 2;
         Rect textRect = MakeRect(textX, textY, this->frame.size.width, lineHeight);
-        this->canvas->drawText(textRect, textColor, 1, this->label.c_str());
+        this->canvas->drawText(textRect, 1, 1, this->label.c_str());
     }
 
     this->canvasValid = true;
@@ -99,20 +104,28 @@ void TabItem::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+            display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,
+                                this->foregroundColor,
                                 this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
         }
     }
 }
 
 void TabItem::didBecomeFocused() {
+    bool wasHighlighted = this->selected;
     Control::didBecomeFocused();
+    if (!wasHighlighted) {
+        std::swap(this->backgroundColor, this->foregroundColor);
+    }
     this->canvasValid = false;
     if (this->onFocused) this->onFocused();
 }
 
 void TabItem::didResignFocus() {
     Control::didResignFocus();
+    if (!this->selected) {
+        std::swap(this->backgroundColor, this->foregroundColor);
+    }
     this->canvasValid = false;
 }

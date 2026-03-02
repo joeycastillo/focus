@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2025 Joey Castillo
+ * Copyright (c) 2022-2026 Joey Castillo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,20 +22,28 @@
  * SOFTWARE.
  */
 
-#include "BitmapView.hpp"
-#include "Window.hpp"
 #include "Display.hpp"
 
-BitmapView::BitmapView(Rect rect, const unsigned char *bitmap) : View(rect) {
-    this->bitmap = bitmap;
-}
-
-void BitmapView::drawContent(int x, int y, Rect clipRect) {
-    if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-        int bitmapRowBytes = (this->frame.size.width + 7) / 8;
-        display->blitMasked(this->frame.origin.x + x, this->frame.origin.y + y,
-                            this->frame.size.width, this->frame.size.height,
-                            this->foregroundColor,
-                            this->bitmap, bitmapRowBytes, clipRect);
+void Display::blitOpaque(int x, int y, int w, int h,
+                         const uint8_t* data, int rowBytes,
+                         Rect clipRect) {
+    if (this->displayMode == DisplayMode::Grayscale) {
+        for (int row = 0; row < h; row++) {
+            for (int col = 0; col < w; col++) {
+                uint8_t byte = data[row * rowBytes + col];
+                uint16_t color = (uint16_t)byte << 8 | byte;
+                this->fillRect(x + col, y + row, 1, 1, color, clipRect);
+            }
+        }
+    } else {
+        for (int row = 0; row < h; row++) {
+            for (int col = 0; col < w; col++) {
+                int byteIdx = col >> 3;
+                int bitIdx = 7 - (col & 7);
+                bool set = (data[row * rowBytes + byteIdx] >> bitIdx) & 1;
+                uint16_t color = set ? 0xFFFF : 0x0000;
+                this->fillRect(x + col, y + row, 1, 1, color, clipRect);
+            }
+        }
     }
 }

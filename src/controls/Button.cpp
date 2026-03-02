@@ -28,6 +28,7 @@
 #include "Display.hpp"
 #include "TextLayout.hpp"
 #include "Font.hpp"
+#include <algorithm>
 #include <vector>
 
 Button::Button(Rect rect, std::string text) : Control(rect) {
@@ -56,22 +57,12 @@ void Button::renderCanvas() {
         textWidth = TextLayout::measureTextWidth(this->text.c_str(), 1, providerPtr);
     }
 
-    // Determine colors based on focus state
-    int bgColor, fgColor, textColor;
-    if (this->focused) {
-        bgColor = this->foregroundColor;
-        textColor = this->backgroundColor;
-    } else {
-        bgColor = this->backgroundColor;
-        textColor = this->foregroundColor;
-    }
-
-    // Fill background
-    this->canvas->clear(bgColor);
+    // Canvas is a shape mask: 0 = transparent, 1 = foreground
+    this->canvas->clear(0);
 
     // Draw border (only when not focused — focused buttons are filled solid)
     if (!this->focused) {
-        this->canvas->drawRect(0, 0, this->frame.size.width, this->frame.size.height, this->foregroundColor);
+        this->canvas->drawRect(0, 0, this->frame.size.width, this->frame.size.height, 1);
     }
 
     // Set font on canvas for text rendering
@@ -94,7 +85,7 @@ void Button::renderCanvas() {
 
     int verticalOffset = (this->frame.size.height - totalTextHeight) / 2;
     Rect layoutRect = MakeRect(0, verticalOffset, this->frame.size.width, totalTextHeight);
-    this->canvas->drawText(layoutRect, textColor, 1, this->text.c_str(), TextAlignmentCenter);
+    this->canvas->drawText(layoutRect, 1, 1, this->text.c_str(), TextAlignmentCenter);
 
     this->canvasValid = true;
 }
@@ -103,8 +94,9 @@ void Button::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+            display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,
+                                this->foregroundColor,
                                 this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
         }
     }
@@ -112,11 +104,13 @@ void Button::drawContent(int x, int y, Rect clipRect) {
 
 void Button::didBecomeFocused() {
     Control::didBecomeFocused();
+    std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
 }
 
 void Button::didResignFocus() {
     Control::didResignFocus();
+    std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
 }
 

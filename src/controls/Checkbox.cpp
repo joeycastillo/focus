@@ -27,6 +27,7 @@
 #include "Window.hpp"
 #include "Display.hpp"
 #include "Font.hpp"
+#include <algorithm>
 
 Checkbox::Checkbox(Rect rect, std::string text) : Control(rect) {
     this->text = text;
@@ -52,18 +53,8 @@ void Checkbox::renderCanvas() {
         lineHeight = providerPtr->getGlyphRowCount();
     }
 
-    // Determine colors based on focus state
-    int bgColor, fgColor;
-    if (this->focused) {
-        bgColor = this->foregroundColor;
-        fgColor = this->backgroundColor;
-    } else {
-        bgColor = this->backgroundColor;
-        fgColor = this->foregroundColor;
-    }
-
-    // Fill background
-    this->canvas->clear(bgColor);
+    // Canvas is a shape mask: 0 = transparent, 1 = foreground
+    this->canvas->clear(0);
 
     // Draw checkbox indicator
     int indicatorSize = lineHeight;
@@ -72,13 +63,13 @@ void Checkbox::renderCanvas() {
     int gap = 8;
 
     // Draw indicator border
-    this->canvas->drawRect(indicatorX, indicatorY, indicatorSize, indicatorSize, fgColor);
+    this->canvas->drawRect(indicatorX, indicatorY, indicatorSize, indicatorSize, 1);
 
     // Fill indicator if checked
     if (this->checked) {
         int inset = 3;
         this->canvas->fillRect(indicatorX + inset, indicatorY + inset,
-                               indicatorSize - 2 * inset, indicatorSize - 2 * inset, fgColor);
+                               indicatorSize - 2 * inset, indicatorSize - 2 * inset, 1);
     }
 
     // Draw label text to the right of indicator
@@ -90,7 +81,7 @@ void Checkbox::renderCanvas() {
     int textWidth = this->frame.size.width - textX;
     if (textWidth > 0) {
         Rect textRect = MakeRect(textX, textY, textWidth, lineHeight);
-        this->canvas->drawText(textRect, fgColor, 1, this->text.c_str());
+        this->canvas->drawText(textRect, 1, 1, this->text.c_str());
     }
 
     this->canvasValid = true;
@@ -100,8 +91,9 @@ void Checkbox::drawContent(int x, int y, Rect clipRect) {
     if (!this->canvasValid) this->renderCanvas();
     if (this->canvas) {
         if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
-            display->blitOpaque(x + this->frame.origin.x, y + this->frame.origin.y,
+            display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
                                 this->frame.size.width, this->frame.size.height,
+                                this->foregroundColor,
                                 this->canvas->getBufferData(), this->canvas->getRowBytes(), clipRect);
         }
     }
@@ -127,11 +119,13 @@ bool Checkbox::handleEvent(Event event) {
 
 void Checkbox::didBecomeFocused() {
     Control::didBecomeFocused();
+    std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
 }
 
 void Checkbox::didResignFocus() {
     Control::didResignFocus();
+    std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
 }
 
