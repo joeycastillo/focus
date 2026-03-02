@@ -118,10 +118,13 @@ LINEBREAK_AFTER = {
     'HY',   # Hyphen
     'SY',   # Symbols allowing breaks (/)
     'ID',   # Ideographic (CJK)
-    'EB',   # Emoji Base
-    'EM',   # Emoji Modifier
     'AI',   # Ambiguous (treat as ideographic for break purposes)
     'CB',   # Contingent break
+    # Note: 'EB' (Emoji Base) and 'EM' (Emoji Modifier) are intentionally
+    # excluded. Treating them as break-after opportunities causes the emoji
+    # to be placed on the current line even when it overflows (wrapCandidate
+    # is updated to the emoji's position, overwriting the preceding space).
+    # Emoji should break like regular text — wrap before them at a space.
 }
 
 
@@ -367,8 +370,78 @@ def find_uniform_ranges(table, ranges, max_cp=0xFFFD):
     return uniform
 
 
-def generate_cpp(table, uniform_ranges, output_path, max_cp=0xFFFD):
-    """Generate the C++ source file with lookup arrays and getTraitsForCodepoint()."""
+def build_range_table(range_start, range_end, traits, ranges, line_breaks, mirror_mapped, word_breaks):
+    """Build a packed value table for codepoints in [range_start, range_end].
+
+    Returns a list indexed [0, range_end - range_start], where index i
+    corresponds to codepoint range_start + i.
+    """
+    count = range_end - range_start + 1
+    table = [0] * count
+
+    for i in range(count):
+        cp = range_start + i
+        if cp in traits:
+            bidi_cls, gen_cat, bidi_mirrored = traits[cp]
+        else:
+            in_range = False
+            for start, end, bidi_cls_r, gen_cat_r, bidi_mirrored_r in ranges:
+                if start <= cp <= end:
+                    bidi_cls = bidi_cls_r
+                    gen_cat = gen_cat_r
+                    bidi_mirrored = bidi_mirrored_r
+                    in_range = True
+                    break
+            if not in_range:
+                bidi_cls = 'L'
+                gen_cat = 'Cn'
+                bidi_mirrored = False
+
+        lb_class = line_breaks.get(cp, 'XX')
+        has_mirror = cp in mirror_mapped
+        wb_class = word_breaks.get(cp, 'Other')
+
+        table[i] = compute_packed_value(bidi_cls, gen_cat, bidi_mirrored,
+                                        has_mirror, lb_class, wb_class)
+
+    return table
+
+
+def find_uniform_ranges_in_range(table, ranges, range_start, range_end):
+    """Identify uniform ranges within [range_start, range_end].
+
+    table is 0-indexed, where table[i] corresponds to codepoint range_start + i.
+    Uses the First/Last ranges from UnicodeData.txt. Only considers ranges
+    that overlap [range_start, range_end] and have at least 128 codepoints.
+
+    Returns list of (abs_start, abs_end, packed_value) in absolute codepoint terms.
+    """
+    uniform = []
+    for u_start, u_end, bidi_cls, gen_cat, bidi_mirrored in ranges:
+        seg_start = max(u_start, range_start)
+        seg_end = min(u_end, range_end)
+        if seg_start > seg_end:
+            continue
+        if (seg_end - seg_start + 1) < 128:
+            continue
+
+        val = table[seg_start - range_start]
+        all_same = all(table[cp - range_start] == val for cp in range(seg_start, seg_end + 1))
+        if all_same:
+            uniform.append((seg_start, seg_end, val))
+
+    uniform.sort(key=lambda x: x[0])
+    return uniform
+
+
+def generate_cpp(table, uniform_ranges, output_path, max_cp=0xFFFD,
+                 emoji_table=None, emoji_uniform_ranges=None,
+                 emoji_start=0x1F000, emoji_end=0x1FAFF):
+    """Generate the C++ source file with lookup arrays and getTraitsForCodepoint().
+
+    emoji_table, emoji_uniform_ranges: optional SMP emoji range data. When provided,
+    the emoji arrays and lookup branch are emitted inside #ifndef UNICODE_BMP_ONLY guards.
+    """
 
     lines = []
     lines.append('/*')
@@ -425,12 +498,43 @@ def generate_cpp(table, uniform_ranges, output_path, max_cp=0xFFFD):
         lines.append('};')
         lines.append('')
 
+    # Emit SMP emoji arrays inside #ifndef UNICODE_BMP_ONLY guard
+    if emoji_table is not None:
+        lines.append('#ifndef UNICODE_BMP_ONLY')
+        lines.append('')
+
+        # Build emoji segment list (gaps between uniform ranges)
+        emoji_segments = []
+        prev_end = emoji_start
+        for u_start, u_end, _ in (emoji_uniform_ranges or []):
+            if prev_end < u_start:
+                emoji_segments.append((prev_end, u_start - 1))
+            prev_end = u_end + 1
+        if prev_end <= emoji_end:
+            emoji_segments.append((prev_end, emoji_end))
+
+        for seg_start, seg_end in emoji_segments:
+            array_name = f'_unicode_info_{seg_start:05X}_{seg_end:05X}'
+            count = seg_end - seg_start + 1
+            lines.append(f'extern const uint16_t {array_name}[] = {{')
+            for i in range(0, count, 16):
+                chunk = []
+                for j in range(i, min(i + 16, count)):
+                    idx = (seg_start + j) - emoji_start
+                    chunk.append(f'0x{emoji_table[idx]:04X}')
+                lines.append('    ' + ', '.join(chunk) + ',')
+            lines.append('};')
+            lines.append('')
+
+        lines.append('#endif  // UNICODE_BMP_ONLY')
+        lines.append('')
+
     # Emit getTraitsForCodepoint()
     lines.append('unicode_info_t getTraitsForCodepoint(UNICODE_CODEPOINT codepoint) {')
     lines.append('    unicode_info_t retval;')
     lines.append('')
 
-    # Build the if/else chain
+    # Build the BMP if/else chain
     first = True
     prev_end = 0
 
@@ -453,13 +557,51 @@ def generate_cpp(table, uniform_ranges, output_path, max_cp=0xFFFD):
         first = False
         prev_end = u_end + 1
 
-    # Final array segment
+    # Final BMP array segment
     if prev_end <= max_cp:
         seg_start = prev_end
         seg_end = max_cp
         array_name = f'_unicode_info_{seg_start:04X}_{seg_end:04X}'
         keyword = 'if' if first else 'else if'
         lines.append(f'    {keyword} (codepoint <= 0x{max_cp:04X}) retval.packed = {array_name}[codepoint - 0x{seg_start:04X}];')
+
+    # Emoji SMP block — nested inside a single range-gated else-if to avoid
+    # boundary ambiguity with unassigned codepoints between BMP and emoji.
+    if emoji_table is not None:
+        lines.append('#ifndef UNICODE_BMP_ONLY')
+        lines.append(f'    else if (codepoint >= 0x{emoji_start:X} && codepoint <= 0x{emoji_end:X}) {{')
+
+        # Inner chain for emoji sub-ranges (no lower-bound checks needed inside)
+        inner_first = True
+        inner_prev = emoji_start
+        for u_start, u_end, u_val in (emoji_uniform_ranges or []):
+            if inner_prev < u_start:
+                seg_start = inner_prev
+                seg_end = u_start - 1
+                array_name = f'_unicode_info_{seg_start:05X}_{seg_end:05X}'
+                keyword = 'if' if inner_first else 'else if'
+                if seg_start == emoji_start:
+                    lines.append(f'        {keyword} (codepoint < 0x{u_start:X}) retval.packed = {array_name}[codepoint - 0x{seg_start:X}];')
+                else:
+                    lines.append(f'        {keyword} (codepoint < 0x{u_start:X}) retval.packed = {array_name}[codepoint - 0x{seg_start:X}];')
+                inner_first = False
+            keyword = 'if' if inner_first else 'else if'
+            lines.append(f'        {keyword} (codepoint <= 0x{u_end:X}) retval.packed = 0x{u_val:04X}; // {u_start:X}-{u_end:X} uniform range')
+            inner_first = False
+            inner_prev = u_end + 1
+
+        if inner_prev <= emoji_end:
+            seg_start = inner_prev
+            seg_end = emoji_end
+            array_name = f'_unicode_info_{seg_start:05X}_{seg_end:05X}'
+            if inner_first:
+                # Sole branch — outer else-if already bounds the range, no inner condition needed
+                lines.append(f'        retval.packed = {array_name}[codepoint - 0x{seg_start:X}];')
+            else:
+                lines.append(f'        else retval.packed = {array_name}[codepoint - 0x{seg_start:X}];')
+
+        lines.append('    }')
+        lines.append('#endif  // UNICODE_BMP_ONLY')
 
     lines.append('    else retval.packed = 0xFFFF; // not a character')
     lines.append('')
@@ -470,24 +612,40 @@ def generate_cpp(table, uniform_ranges, output_path, max_cp=0xFFFD):
     with open(output_path, 'w') as f:
         f.write('\n'.join(lines))
 
-    # Stats
+    # Stats — BMP
     total_array_entries = sum(seg_end - seg_start + 1 for seg_start, seg_end in segments)
     total_uniform = sum(u_end - u_start + 1 for u_start, u_end, _ in uniform_ranges)
     array_bytes = total_array_entries * 2  # uint16_t
 
     print(f"Generated {output_path}")
-    print(f"  Codepoints covered: 0x0000-0x{max_cp:04X} ({max_cp + 1} total)")
-    print(f"  Array entries: {total_array_entries} ({array_bytes} bytes)")
-    print(f"  Uniform range entries: {total_uniform} (saved {total_uniform * 2} bytes)")
-    print(f"  Uniform ranges: {len(uniform_ranges)}")
+    print(f"  BMP codepoints covered: 0x0000-0x{max_cp:04X} ({max_cp + 1} total)")
+    print(f"  BMP array entries: {total_array_entries} ({array_bytes} bytes)")
+    print(f"  BMP uniform range entries: {total_uniform} (saved {total_uniform * 2} bytes)")
+    print(f"  BMP uniform ranges: {len(uniform_ranges)}")
     for u_start, u_end, u_val in uniform_ranges:
         print(f"    0x{u_start:04X}-0x{u_end:04X}: 0x{u_val:04X} ({u_end - u_start + 1} codepoints)")
+
+    # Stats — emoji SMP
+    if emoji_table is not None:
+        emoji_segs = []
+        prev = emoji_start
+        for u_start, u_end, _ in (emoji_uniform_ranges or []):
+            if prev < u_start:
+                emoji_segs.append((prev, u_start - 1))
+            prev = u_end + 1
+        if prev <= emoji_end:
+            emoji_segs.append((prev, emoji_end))
+        emoji_array_entries = sum(e - s + 1 for s, e in emoji_segs)
+        emoji_uniform_count = sum(u_end - u_start + 1 for u_start, u_end, _ in (emoji_uniform_ranges or []))
+        print(f"  Emoji SMP (0x{emoji_start:X}-0x{emoji_end:X}, #ifndef UNICODE_BMP_ONLY):")
+        print(f"    Array entries: {emoji_array_entries} ({emoji_array_entries * 2} bytes)")
+        print(f"    Uniform entries: {emoji_uniform_count} (saved {emoji_uniform_count * 2} bytes)")
 
 
 def main():
     parser = argparse.ArgumentParser(description='Generate UnicodeTraits.cpp')
     parser.add_argument('--output', '-o',
-                        default='../../components/focus/src/text/UnicodeTraits.cpp',
+                        default='../../src/text/UnicodeTraits.cpp',
                         help='Output file path')
     args = parser.parse_args()
 
@@ -510,13 +668,32 @@ def main():
     word_breaks = parse_word_break()
     print(f"  {len(word_breaks)} word break entries")
 
-    print("Building full table...")
+    print("Building BMP table...")
     table = build_full_table(traits, ranges, line_breaks, mirror_mapped, word_breaks)
 
-    print("Finding uniform ranges...")
+    print("Finding BMP uniform ranges...")
     uniform_ranges = find_uniform_ranges(table, ranges)
 
-    generate_cpp(table, uniform_ranges, args.output)
+    EMOJI_START = 0x1F000
+    EMOJI_END   = 0x1FAFF
+    print(f"Building emoji range table (U+{EMOJI_START:X}-U+{EMOJI_END:X})...")
+    emoji_table = build_range_table(EMOJI_START, EMOJI_END, traits, ranges,
+                                    line_breaks, mirror_mapped, word_breaks)
+    # Clear linebreak bit for all emoji. Most emoji have lb_class='ID' (same as
+    # CJK ideographs), which would mark them as break-after opportunities. That's
+    # correct for CJK text but wrong for emoji in Latin prose — emoji should wrap
+    # like regular words, breaking at surrounding spaces, not after themselves.
+    LINEBREAK_BIT = 1 << 13
+    emoji_table = [val & ~LINEBREAK_BIT for val in emoji_table]
+    emoji_uniform_ranges = find_uniform_ranges_in_range(emoji_table, ranges,
+                                                        EMOJI_START, EMOJI_END)
+    print(f"  Emoji uniform ranges: {len(emoji_uniform_ranges)}")
+    for u_start, u_end, u_val in emoji_uniform_ranges:
+        print(f"    U+{u_start:X}-U+{u_end:X}: 0x{u_val:04X} ({u_end - u_start + 1} codepoints)")
+
+    generate_cpp(table, uniform_ranges, args.output,
+                 emoji_table=emoji_table, emoji_uniform_ranges=emoji_uniform_ranges,
+                 emoji_start=EMOJI_START, emoji_end=EMOJI_END)
 
     # Sanity checks
     print("\nSanity checks:")
