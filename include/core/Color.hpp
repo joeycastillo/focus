@@ -51,10 +51,6 @@ struct GrayscaleColor {
     static constexpr uint16_t LightGray() { return 0xAAAA; }  // 170/255 intensity
     static constexpr uint16_t White()     { return 0xFFFF; }  // 255/255 intensity
 
-    static uint16_t DefaultForegroundColor();
-    static uint16_t DefaultBackgroundColor();
-    static void SetDefaultForegroundColor(uint16_t color);
-    static void SetDefaultBackgroundColor(uint16_t color);
 };
 
 /// @brief Factory class for RGB565 color values.
@@ -103,8 +99,4 @@ struct RGB565Color {
         return fromRGB(value, value, value);
     }
 
-    static uint16_t DefaultForegroundColor();
-    static uint16_t DefaultBackgroundColor();
-    static void SetDefaultForegroundColor(uint16_t color);
-    static void SetDefaultBackgroundColor(uint16_t color);
 };

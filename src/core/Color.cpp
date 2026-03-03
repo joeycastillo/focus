@@ -23,17 +23,3 @@
  */
 
 #include "Color.hpp"
-
-static uint16_t defaultFG = GrayscaleColor::Black();
-static uint16_t defaultBG = GrayscaleColor::White();
-
-uint16_t GrayscaleColor::DefaultForegroundColor() { return defaultFG; }
-uint16_t GrayscaleColor::DefaultBackgroundColor() { return defaultBG; }
-void GrayscaleColor::SetDefaultForegroundColor(uint16_t color) { defaultFG = color; }
-void GrayscaleColor::SetDefaultBackgroundColor(uint16_t color) { defaultBG = color; }
-
-// RGB565Color shares the same default state
-uint16_t RGB565Color::DefaultForegroundColor() { return defaultFG; }
-uint16_t RGB565Color::DefaultBackgroundColor() { return defaultBG; }
-void RGB565Color::SetDefaultForegroundColor(uint16_t color) { defaultFG = color; }
-void RGB565Color::SetDefaultBackgroundColor(uint16_t color) { defaultBG = color; }

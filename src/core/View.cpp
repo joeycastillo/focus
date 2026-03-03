@@ -36,13 +36,16 @@ int View::drawCount = 0;
 int View::cullCount = 0;
 int View::fillCount = 0;
 
+static uint16_t sDefaultFG = 0x0000;
+static uint16_t sDefaultBG = 0xFFFF;
+
 View::View(Rect rect) {
     // printf("Creating view %p\n", this);
     this->frame = rect;
     // bounds has origin at (0,0) in the view's local coordinate system
     this->bounds = MakeRect(0, 0, rect.size.width, rect.size.height);
-    this->foregroundColor = GrayscaleColor::DefaultForegroundColor();
-    this->backgroundColor = GrayscaleColor::DefaultBackgroundColor();
+    this->foregroundColor = sDefaultFG;
+    this->backgroundColor = sDefaultBG;
     this->window.reset();
 }
 
@@ -611,13 +614,11 @@ void View::clearTouchChecked() {
     }
 }
 
-void View::SetDefaultBackgroundColor(uint16_t color) {
-    GrayscaleColor::SetDefaultBackgroundColor(color);
-}
+uint16_t View::DefaultBackgroundColor() { return sDefaultBG; }
+uint16_t View::DefaultForegroundColor() { return sDefaultFG; }
 
-void View::SetDefaultForegroundColor(uint16_t color) {
-    GrayscaleColor::SetDefaultForegroundColor(color);
-}
+void View::SetDefaultBackgroundColor(uint16_t color) { sDefaultBG = color; }
+void View::SetDefaultForegroundColor(uint16_t color) { sDefaultFG = color; }
 
 bool View::wantsKeyboardInput() {
     return false;

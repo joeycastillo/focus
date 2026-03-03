@@ -352,6 +352,10 @@ public:
     /// @brief Clear the touch-checked flag on this view and all descendants.
     void clearTouchChecked();
 
+    /// @brief Get the default background color for newly created views.
+    static uint16_t DefaultBackgroundColor();
+    /// @brief Get the default foreground color for newly created views.
+    static uint16_t DefaultForegroundColor();
     /// @brief Set the default background color for all newly created views.
     static void SetDefaultBackgroundColor(uint16_t color);
     /// @brief Set the default foreground color for all newly created views.
