@@ -166,6 +166,9 @@ void CanvasView::fillRect(int x, int y, int w, int h, uint16_t color) {
     if (this->canvasRotation != 0) {
         // Rotated: per-pixel fallback (logical horizontal spans become
         // non-contiguous in the physical buffer for 90°/270°).
+        // TODO: for large rotated canvases, consider writing a rotation-aware
+        // bulk fill that maps logical rows to physical columns directly instead
+        // of paying the mapToBuffer + bounds-check overhead per pixel.
         for (int fy = y0; fy < y1; fy++) {
             for (int fx = x0; fx < x1; fx++) {
                 this->drawPixel(fx, fy, color);
