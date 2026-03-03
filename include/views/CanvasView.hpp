@@ -24,12 +24,16 @@
 
 /**
  * @file CanvasView.hpp
- * @brief View with a 1bpp pixel buffer for programmatic drawing.
+ * @brief View with an owned pixel buffer for programmatic drawing.
  *
- * CanvasView owns an in-memory 1-bit-per-pixel framebuffer that can be drawn
- * to programmatically using drawPixel(), drawRect(), fillRect(), drawCircle(),
- * fillCircle(), clear(), and drawText(). During the view draw cycle, the buffer
- * is blitted to the Display.
+ * CanvasView owns an in-memory framebuffer that can be drawn to programmatically
+ * using drawPixel(), drawRect(), fillRect(), drawCircle(), fillCircle(), clear(),
+ * and drawText(). During the view draw cycle the buffer is blitted to the Display.
+ *
+ * The buffer format depends on the canvas mode (set via setCanvasMode()):
+ * - Monochrome (default): 1bpp MSB-first, rowBytes = (width+7)/8
+ * - Grayscale: 8bpp, one byte per pixel (0x00=black, 0xFF=white), rowBytes = width
+ * - RGB565: 16bpp, one uint16_t per pixel in platform-native byte order, rowBytes = width*2
  *
  * CanvasView is used internally by many Focus views (LabelView, Button,
  * Checkbox, etc.) for off-screen rendering, and can also be used directly
@@ -166,9 +170,9 @@ protected:
     /// @}
 
 private:
-    int rowBytes;                 // Monochrome: (width+7)/8; Grayscale: width (one byte per pixel)
+    int rowBytes;                 // Monochrome: (width+7)/8; Grayscale: width; RGB565: width*2
     int planeSize;                // Monochrome buffer size = ((width+7)/8) * height
-    std::vector<uint8_t> buffer;  // Monochrome: planeSize bytes (1bpp); Grayscale: width*height bytes (8bpp)
+    std::vector<uint8_t> buffer;  // Monochrome: 1bpp; Grayscale: 8bpp; RGB565: 16bpp platform-native uint16_t
     DisplayMode canvasMode = DisplayMode::Monochrome;
     int canvasRotation = 0;       // rotation index: 0=0°, 1=90°, 2=180°, 3=270°
 

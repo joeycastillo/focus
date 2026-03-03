@@ -35,6 +35,13 @@ void Display::blitOpaque(int x, int y, int w, int h,
                 this->fillRect(x + col, y + row, 1, 1, color, clipRect);
             }
         }
+    } else if (this->displayMode == DisplayMode::RGB565) {
+        for (int row = 0; row < h; row++) {
+            const uint16_t* srcRow = reinterpret_cast<const uint16_t*>(data + row * rowBytes);
+            for (int col = 0; col < w; col++) {
+                this->fillRect(x + col, y + row, 1, 1, srcRow[col], clipRect);
+            }
+        }
     } else {
         for (int row = 0; row < h; row++) {
             for (int col = 0; col < w; col++) {

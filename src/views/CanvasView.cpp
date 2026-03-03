@@ -45,6 +45,10 @@ void CanvasView::setCanvasMode(DisplayMode mode) {
     if (mode == DisplayMode::Grayscale) {
         rowBytes = frame.size.width;
         buffer.resize(frame.size.width * frame.size.height, 0xFF);
+    } else if (mode == DisplayMode::RGB565) {
+        rowBytes = frame.size.width * 2;
+        buffer.resize(frame.size.width * frame.size.height * 2);
+        buffer.shrink_to_fit();
     } else {
         rowBytes = (frame.size.width + 7) / 8;
         planeSize = rowBytes * frame.size.height;
@@ -93,6 +97,8 @@ void CanvasView::drawPixel(int x, int y, uint16_t color) {
 
     if (canvasMode == DisplayMode::Grayscale) {
         buffer[by * frame.size.width + bx] = (uint8_t)(color >> 8);
+    } else if (canvasMode == DisplayMode::RGB565) {
+        reinterpret_cast<uint16_t*>(buffer.data())[by * frame.size.width + bx] = color;
     } else {
         int idx = by * rowBytes + (bx >> 3);
         uint8_t mask = 0x80 >> (bx & 7);
@@ -183,6 +189,22 @@ void CanvasView::fillRect(int x, int y, int w, int h, uint16_t color) {
         for (int row = y0; row < y1; row++) {
             std::memset(&buffer[row * width + x0], val, x1 - x0);
         }
+    } else if (canvasMode == DisplayMode::RGB565) {
+        int width = frame.size.width;
+        uint16_t* pixels = reinterpret_cast<uint16_t*>(buffer.data());
+        int spanW = x1 - x0;
+        if ((color >> 8) == (color & 0xFF)) {
+            uint8_t byte = color & 0xFF;
+            for (int row = y0; row < y1; row++) {
+                std::memset(&buffer[row * rowBytes + x0 * 2], byte, spanW * 2);
+            }
+        } else {
+            uint16_t* firstRow = pixels + y0 * width + x0;
+            for (int col = 0; col < spanW; col++) firstRow[col] = color;
+            for (int row = y0 + 1; row < y1; row++) {
+                std::memcpy(pixels + row * width + x0, firstRow, spanW * 2);
+            }
+        }
     } else {
         _fillPlane(buffer.data(), x0, y0, x1, y1, (color != 0) ? 0xFF : 0x00);
     }
@@ -209,6 +231,27 @@ void CanvasView::invertRect(int x, int y, int w, int h) {
             for (int row = y0; row < y1; row++) {
                 for (int col = x0; col < x1; col++) {
                     buffer[row * width + col] ^= 0xFF;
+                }
+            }
+        }
+        return;
+    }
+
+    if (canvasMode == DisplayMode::RGB565) {
+        int width = frame.size.width;
+        uint16_t* pixels = reinterpret_cast<uint16_t*>(buffer.data());
+        if (this->canvasRotation != 0) {
+            for (int iy = y0; iy < y1; iy++) {
+                for (int ix = x0; ix < x1; ix++) {
+                    int bx, by;
+                    this->mapToBuffer(ix, iy, bx, by);
+                    pixels[by * width + bx] ^= 0xFFFF;
+                }
+            }
+        } else {
+            for (int row = y0; row < y1; row++) {
+                for (int col = x0; col < x1; col++) {
+                    pixels[row * width + col] ^= 0xFFFF;
                 }
             }
         }
@@ -295,6 +338,14 @@ void CanvasView::fillCircle(int cx, int cy, int r, uint16_t color) {
 void CanvasView::clear(uint16_t color) {
     if (canvasMode == DisplayMode::Grayscale) {
         std::memset(buffer.data(), (uint8_t)(color >> 8), buffer.size());
+    } else if (canvasMode == DisplayMode::RGB565) {
+        if ((color >> 8) == (color & 0xFF)) {
+            std::memset(buffer.data(), color & 0xFF, buffer.size());
+        } else {
+            int total = frame.size.width * frame.size.height;
+            uint16_t* pixels = reinterpret_cast<uint16_t*>(buffer.data());
+            for (int i = 0; i < total; i++) pixels[i] = color;
+        }
     } else {
         std::memset(buffer.data(), (color != 0) ? 0xFF : 0x00, planeSize);
     }
@@ -309,6 +360,14 @@ void CanvasView::applyCheckerboardMask(uint16_t color) {
                 if ((x + y) & 1) {
                     buffer[y * width + x] = val;
                 }
+            }
+        }
+    } else if (canvasMode == DisplayMode::RGB565) {
+        uint16_t* pixels = reinterpret_cast<uint16_t*>(buffer.data());
+        int width = frame.size.width;
+        for (int y = 0; y < frame.size.height; y++) {
+            for (int x = 0; x < width; x++) {
+                if ((x + y) & 1) pixels[y * width + x] = color;
             }
         }
     } else {

@@ -81,7 +81,11 @@ public:
      *   rowBytes = (width + 7) / 8.
      * - Grayscale: 8bpp, one byte per pixel (0x00 = black, 0xFF = white).
      *   rowBytes = width.
-     * - RGB565: not yet used by the framework.
+     * - RGB565: 16bpp, one uint16_t per pixel in platform-native byte order.
+     *   rowBytes = width * 2. If the display controller expects a different byte
+     *   order than the platform's native order, the backend is responsible for
+     *   swapping — either in software in its blitOpaque() override, or via
+     *   hardware byte-swap in the SPI/DMA configuration.
      *
      * The default implementation decodes pixels and calls fillRect() one pixel
      * at a time. Performance-sensitive backends should override this.
