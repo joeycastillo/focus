@@ -116,6 +116,7 @@ public:
 
     // Buffer access — for views that use a CanvasView internally and blit directly
     const uint8_t* getBufferData() const { return buffer.data(); }
+    uint8_t* getMutableBufferData() { return buffer.data(); }
     int getRowBytes() const { return rowBytes; }
 
 protected:
