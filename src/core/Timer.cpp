@@ -55,6 +55,12 @@ bool Timer::run(std::shared_ptr<Application> application) {
     return false;
 }
 
+void Timer::reset() {
+    if (valid) {
+        fireDate = Clock::now() + interval;
+    }
+}
+
 void Timer::invalidate() {
     valid = false;
 }

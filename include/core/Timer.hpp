@@ -128,6 +128,15 @@ public:
         bool repeats = false);
 
     /**
+     * @brief Restart the timer's interval from now.
+     *
+     * Resets the fire date to now + interval, so the full interval must
+     * elapse before the next fire. Useful for "idle" timers that should
+     * restart when activity occurs (e.g. cursor blink on movement).
+     */
+    void reset();
+
+    /**
      * @brief Stop the timer from firing.
      *
      * The timer will be removed from the task list on the next run loop
