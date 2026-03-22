@@ -96,15 +96,6 @@ public:
     void setFrame(Rect rect) override;
     bool handleEvent(Event event) override;
 
-protected:
-    std::shared_ptr<CollectionView> collectionView;
-
-    // Arrows style
-    std::shared_ptr<CanvasView> beforeIndicator;
-    std::shared_ptr<CanvasView> afterIndicator;
-
-    CollectionViewLayout currentLayout = CollectionViewLayout::VerticalList;
-
     /// @name Pagination metrics
     /// @brief Font-proportional defaults that scale with the system font.
     /// Call the static setters to override with fixed values for your app.
@@ -118,6 +109,15 @@ protected:
     static int getFooterButtonWidth();
     static void setFooterButtonWidth(int value);
     /// @}
+
+protected:
+    std::shared_ptr<CollectionView> collectionView;
+
+    // Arrows style
+    std::shared_ptr<CanvasView> beforeIndicator;
+    std::shared_ptr<CanvasView> afterIndicator;
+
+    CollectionViewLayout currentLayout = CollectionViewLayout::VerticalList;
 
     /// @brief Called after pagination state changes to update indicator visibility.
     /// Override in subclasses to customize behavior after page changes.
