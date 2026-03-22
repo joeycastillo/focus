@@ -74,6 +74,7 @@ public:
     void fillRect(int x, int y, int w, int h, uint16_t color);
     void drawCircle(int cx, int cy, int r, uint16_t color);
     void fillCircle(int cx, int cy, int r, uint16_t color);
+    void drawLine(int x0, int y0, int x1, int y1, uint16_t color);
     void invertRect(int x, int y, int w, int h);
     void clear(uint16_t color);
 

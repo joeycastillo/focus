@@ -351,6 +351,32 @@ void CanvasView::clear(uint16_t color) {
     }
 }
 
+void CanvasView::drawLine(int x0, int y0, int x1, int y1, uint16_t color) {
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+    if (dx < 0) dx = -dx;
+    if (dy < 0) dy = -dy;
+    int sx = x0 < x1 ? 1 : -1;
+    int sy = y0 < y1 ? 1 : -1;
+    int err = dx - dy;
+
+    while (true) {
+        drawPixel(x0, y0, color);
+
+        if (x0 == x1 && y0 == y1) break;
+
+        int e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
 void CanvasView::applyCheckerboardMask(uint16_t color) {
     if (canvasMode == DisplayMode::Grayscale) {
         uint8_t val = (uint8_t)(color >> 8);
