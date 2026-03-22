@@ -83,15 +83,16 @@ size_t CollectionView::calculateItemsPerPage() const {
         return end - start;
     }
 
-    if (this->itemSize.width <= 0 || this->itemSize.height <= 0) return 0;
-
     int s = this->itemSpacing;
     switch (this->layout) {
         case CollectionViewLayout::VerticalList:
+            if (this->itemSize.height <= 0) return 0;
             return (this->frame.size.height + s) / (this->itemSize.height + s);
         case CollectionViewLayout::HorizontalList:
+            if (this->itemSize.width <= 0) return 0;
             return (this->frame.size.width + s) / (this->itemSize.width + s);
         case CollectionViewLayout::Grid: {
+            if (this->itemSize.width <= 0 || this->itemSize.height <= 0) return 0;
             int columns = (this->frame.size.width + s) / (this->itemSize.width + s);
             int rows = (this->frame.size.height + s) / (this->itemSize.height + s);
             return columns * rows;
