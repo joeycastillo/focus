@@ -29,6 +29,7 @@
 #include "Font.hpp"
 #include "TextLayout.hpp"
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 
 Slider::Slider(Rect rect, std::string label) : Control(rect), label(label) {
@@ -96,8 +97,13 @@ void Slider::renderCanvas() {
         // Track outline
         this->canvas->drawRect(trackX, trackY, trackWidth, trackHeight, 1);
 
-        // Filled portion
-        int filledWidth = (int)(trackWidth * this->value);
+        // Filled portion (quantize to step grid if step is set)
+        float displayValue = this->value;
+        if (this->step > 0.0f) {
+            displayValue = roundf(displayValue / this->step) * this->step;
+            if (displayValue > 1.0f) displayValue = 1.0f;
+        }
+        int filledWidth = (int)(trackWidth * displayValue);
         if (filledWidth > 0) {
             this->canvas->fillRect(trackX, trackY, filledWidth, trackHeight, 1);
         }
