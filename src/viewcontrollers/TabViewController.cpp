@@ -102,20 +102,24 @@ void TabViewController::rebuildTabBar() {
 void TabViewController::createView() {
     ViewController::createView();
 
-    this->view = std::make_shared<View>(RectZero);
+    auto app = this->application.lock();
+    if (!app) return;
+
+    Size windowSize = app->getWindow()->getContentRect().size;
+
+    this->view = std::make_shared<View>(MakeRect(0, 0, windowSize.width, windowSize.height));
 
     int barHeight = this->getTabBarHeight();
 
     // Tab bar — HStack of TabItems
     this->tabBar = std::make_shared<HStack>(
-        MakeRect(0, 0, this->view->getFrame().size.width, barHeight));
+        MakeRect(0, 0, windowSize.width, barHeight));
     this->tabBar->setOpaque(false);
     this->view->addSubview(this->tabBar);
 
     // Content area below the tab bar
     this->contentArea = std::make_shared<View>(
-        MakeRect(0, barHeight, this->view->getFrame().size.width,
-                 this->view->getFrame().size.height - barHeight));
+        MakeRect(0, barHeight, windowSize.width, windowSize.height - barHeight));
     this->view->addSubview(this->contentArea);
 
     // Build tab items
