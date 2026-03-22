@@ -105,7 +105,19 @@ protected:
 
     CollectionViewLayout currentLayout = CollectionViewLayout::VerticalList;
 
-    static constexpr int kArrowThickness = 36;
+    /// @name Pagination metrics
+    /// @brief Font-proportional defaults that scale with the system font.
+    /// Call the static setters to override with fixed values for your app.
+    /// @{
+    static int getArrowThickness();
+    static void setArrowThickness(int value);
+    static int getFooterThickness();
+    static void setFooterThickness(int value);
+    static int getFooterGap();
+    static void setFooterGap(int value);
+    static int getFooterButtonWidth();
+    static void setFooterButtonWidth(int value);
+    /// @}
 
     /// @brief Called after pagination state changes to update indicator visibility.
     /// Override in subclasses to customize behavior after page changes.
@@ -124,9 +136,6 @@ private:
     std::shared_ptr<Button> nextButton;
 
     PaginationStyle paginationStyle = PaginationStyle::None;
-
-    static constexpr int kFooterThickness = 48;
-    static constexpr int kFooterGap = 8;
 
     void rebuildLayout();
     void updateFooterLabel();

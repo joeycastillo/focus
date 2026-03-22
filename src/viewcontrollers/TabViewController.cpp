@@ -28,6 +28,9 @@
 #include "Application.hpp"
 #include "Window.hpp"
 #include "Font.hpp"
+#include <algorithm>
+
+static int sTabBarHeight = -1;
 
 std::shared_ptr<TabViewController> TabViewController::create(
     std::shared_ptr<Application> application)
@@ -58,15 +61,29 @@ void TabViewController::addTab(std::string label, std::shared_ptr<ViewController
     }
 }
 
-int TabViewController::getTabBarHeight() const {
-    std::shared_ptr<Font> resolvedFont = this->font ? this->font : Font::systemFont();
-    if (resolvedFont) {
-        auto provider = resolvedFont->getSharedGlyphProvider();
-        if (provider) {
-            return provider->getGlyphRowCount() + 16;
-        }
+int TabViewController::getDefaultTabBarHeight() {
+    if (sTabBarHeight >= 0) return sTabBarHeight;
+    auto font = Font::systemFont();
+    if (font) {
+        int gh = font->getGlyphRowCount();
+        int padding = std::max(2, gh / 2);
+        return gh + 2 * padding;
     }
     return 32;
+}
+void TabViewController::setDefaultTabBarHeight(int value) { sTabBarHeight = value; }
+
+int TabViewController::getTabBarHeight() const {
+    // Per-instance font takes priority over global default
+    if (this->font) {
+        auto provider = this->font->getSharedGlyphProvider();
+        if (provider) {
+            int gh = provider->getGlyphRowCount();
+            int padding = std::max(2, gh / 2);
+            return gh + 2 * padding;
+        }
+    }
+    return getDefaultTabBarHeight();
 }
 
 void TabViewController::rebuildTabBar() {

@@ -29,6 +29,46 @@
 #include "LabelView.hpp"
 #include "Locale.hpp"
 #include "Window.hpp"
+#include "Font.hpp"
+#include <algorithm>
+
+// -1 = use font-proportional default
+static int sArrowThickness = -1;
+static int sFooterThickness = -1;
+static int sFooterGap = -1;
+static int sFooterButtonWidth = -1;
+
+int PaginatedCollectionView::getArrowThickness() {
+    if (sArrowThickness >= 0) return sArrowThickness;
+    auto font = Font::systemFont();
+    int gh = font ? font->getGlyphRowCount() : 16;
+    return std::max(8, gh + 4);
+}
+void PaginatedCollectionView::setArrowThickness(int value) { sArrowThickness = value; }
+
+int PaginatedCollectionView::getFooterThickness() {
+    if (sFooterThickness >= 0) return sFooterThickness;
+    auto font = Font::systemFont();
+    int gh = font ? font->getGlyphRowCount() : 16;
+    return std::max(10, gh + 4);
+}
+void PaginatedCollectionView::setFooterThickness(int value) { sFooterThickness = value; }
+
+int PaginatedCollectionView::getFooterGap() {
+    if (sFooterGap >= 0) return sFooterGap;
+    auto font = Font::systemFont();
+    int gh = font ? font->getGlyphRowCount() : 16;
+    return std::max(2, gh / 4);
+}
+void PaginatedCollectionView::setFooterGap(int value) { sFooterGap = value; }
+
+int PaginatedCollectionView::getFooterButtonWidth() {
+    if (sFooterButtonWidth >= 0) return sFooterButtonWidth;
+    auto font = Font::systemFont();
+    int gh = font ? font->getGlyphRowCount() : 16;
+    return std::max(30, gh * 5);
+}
+void PaginatedCollectionView::setFooterButtonWidth(int value) { sFooterButtonWidth = value; }
 
 PaginatedCollectionView::PaginatedCollectionView(Rect rect) : View(rect) {
     this->collectionView = std::make_shared<CollectionView>(MakeRect(0, 0, rect.size.width, rect.size.height));
@@ -190,24 +230,25 @@ void PaginatedCollectionView::rebuildLayout() {
         }
 
         case PaginationStyle::Arrows: {
+            int arrowThickness = getArrowThickness();
             if (isVertical) {
                 // Top arrow strip, collection, bottom arrow strip
                 this->beforeIndicator = std::make_shared<CanvasView>(
-                    MakeRect(0, 0, w, kArrowThickness));
-                int collectionH = h - 2 * kArrowThickness;
+                    MakeRect(0, 0, w, arrowThickness));
+                int collectionH = h - 2 * arrowThickness;
                 this->collectionView->setFrame(
-                    MakeRect(0, kArrowThickness, w, collectionH));
+                    MakeRect(0, arrowThickness, w, collectionH));
                 this->afterIndicator = std::make_shared<CanvasView>(
-                    MakeRect(0, h - kArrowThickness, w, kArrowThickness));
+                    MakeRect(0, h - arrowThickness, w, arrowThickness));
             } else {
                 // Left arrow strip, collection, right arrow strip
                 this->beforeIndicator = std::make_shared<CanvasView>(
-                    MakeRect(0, 0, kArrowThickness, h));
-                int collectionW = w - 2 * kArrowThickness;
+                    MakeRect(0, 0, arrowThickness, h));
+                int collectionW = w - 2 * arrowThickness;
                 this->collectionView->setFrame(
-                    MakeRect(kArrowThickness, 0, collectionW, h));
+                    MakeRect(arrowThickness, 0, collectionW, h));
                 this->afterIndicator = std::make_shared<CanvasView>(
-                    MakeRect(w - kArrowThickness, 0, kArrowThickness, h));
+                    MakeRect(w - arrowThickness, 0, arrowThickness, h));
             }
 
             drawArrow(this->beforeIndicator, false);
@@ -229,30 +270,33 @@ void PaginatedCollectionView::rebuildLayout() {
 
         case PaginationStyle::Footer: {
             // Collection view fills most of the space; footer strip at bottom
-            int collectionH = h - kFooterGap - kFooterThickness;
+            int footerThickness = getFooterThickness();
+            int footerGap = getFooterGap();
+            int collectionH = h - footerGap - footerThickness;
             this->collectionView->setFrame(MakeRect(0, 0, w, collectionH));
 
-            int footerY = collectionH + kFooterGap;
+            int footerY = collectionH + footerGap;
             this->footerContainer = std::make_shared<View>(
-                MakeRect(0, footerY, w, kFooterThickness));
+                MakeRect(0, footerY, w, footerThickness));
             this->footerContainer->setOpaque(false);
             this->footerContainer->setDirectionalAffinity(DirectionalAffinityHorizontal);
 
-            int buttonWidth = 100;
-            int labelWidth = w - 2 * buttonWidth - 2 * 8;
+            int buttonWidth = getFooterButtonWidth();
+            int gap = footerGap;
+            int labelWidth = w - 2 * buttonWidth - 2 * gap;
 
             this->prevButton = std::make_shared<Button>(
-                MakeRect(0, 0, buttonWidth, kFooterThickness), _LS("pagination.prev", "< Prev"));
+                MakeRect(0, 0, buttonWidth, footerThickness), _LS("pagination.prev", "< Prev"));
             this->prevButton->setAction(
                 [this](Event, std::weak_ptr<View>) { this->goToPreviousPage(); },
                 FOCUS_EVENT_TOUCH_UP_INSIDE);
 
             this->pageLabel = std::make_shared<LabelView>(
-                MakeRect(buttonWidth + 8, 0, labelWidth, kFooterThickness), "");
+                MakeRect(buttonWidth + gap, 0, labelWidth, footerThickness), "");
             this->pageLabel->setTextAlignment(TextAlignmentCenter);
 
             this->nextButton = std::make_shared<Button>(
-                MakeRect(w - buttonWidth, 0, buttonWidth, kFooterThickness), _LS("pagination.next", "Next >"));
+                MakeRect(w - buttonWidth, 0, buttonWidth, footerThickness), _LS("pagination.next", "Next >"));
             this->nextButton->setAction(
                 [this](Event, std::weak_ptr<View>) { this->goToNextPage(); },
                 FOCUS_EVENT_TOUCH_UP_INSIDE);
@@ -311,8 +355,8 @@ void PaginatedCollectionView::drawArrow(std::shared_ptr<CanvasView> canvas, bool
 
     if (isVertical) {
         // Draw a triangle centered horizontally in the strip
-        int arrowHeight = 8;
-        int arrowBase = 16;
+        int arrowHeight = std::max(3, ch / 3);
+        int arrowBase = arrowHeight * 2;
         int cx = cw / 2;
         int startY = (ch - arrowHeight) / 2;
 
@@ -331,8 +375,8 @@ void PaginatedCollectionView::drawArrow(std::shared_ptr<CanvasView> canvas, bool
         }
     } else {
         // Draw a triangle centered vertically in the strip
-        int arrowWidth = 8;
-        int arrowBase = 16;
+        int arrowWidth = std::max(3, cw / 3);
+        int arrowBase = arrowWidth * 2;
         int cy = ch / 2;
         int startX = (cw - arrowWidth) / 2;
 
