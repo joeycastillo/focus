@@ -43,6 +43,9 @@
 
 #include "Focus.hpp"
 #include <optional>
+#include <chrono>
+
+class Timer;
 
 /**
  * @brief Base class for all visual elements in the Focus view hierarchy.
@@ -326,6 +329,23 @@ public:
      * @param rect The region to invalidate, in this view's superview coordinates.
      */
     void setNeedsDisplayInRect(Rect rect);
+
+    /**
+     * @brief Create a repeating or one-shot timer by walking up to the Application.
+     *
+     * Convenience method that walks the view hierarchy to find the owning
+     * Application and registers a Timer task. Returns nullptr if the view
+     * is not currently in a window.
+     *
+     * @param interval Time between fires (or time until first fire for one-shot).
+     * @param callback Function to call when the timer fires.
+     * @param repeats If true, the timer reschedules itself after each fire.
+     * @return A shared_ptr to the timer, or nullptr if no Application is reachable.
+     */
+    std::shared_ptr<Timer> scheduledTimer(
+        std::chrono::milliseconds interval,
+        std::function<void(Timer &)> callback,
+        bool repeats = false);
 
     /**
      * @brief Find the deepest subview containing a touch point.

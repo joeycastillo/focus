@@ -41,6 +41,7 @@
 #include "Focus.hpp"
 #include "View.hpp"
 #include "GestureRecognizer.hpp"
+#include "CursorManager.hpp"
 
 class KeyboardView;
 
@@ -161,6 +162,12 @@ public:
     /// @brief No-op (the window does not belong to another window).
     void setWindow(std::shared_ptr<Window> window) override;
 
+    /// @brief Returns the owning Application (set during Application::run()).
+    std::weak_ptr<Application> getApplication() const { return application; }
+
+    /// @brief Returns the cursor position tracker for trackpad-style input.
+    CursorManager &getCursorManager() { return cursorManager; }
+
 protected:
     std::shared_ptr<Display> display;          ///< The display backend.
     std::weak_ptr<Application> application;    ///< Owning application (set by Application::run()).
@@ -173,6 +180,7 @@ protected:
     std::shared_ptr<KeyboardView> keyboard;    ///< Window-managed on-screen keyboard, or nullptr.
     KeyboardType currentKeyboardType = KeyboardTypeDefault; ///< Type of currently presented keyboard.
     std::vector<std::shared_ptr<GestureRecognizer>> systemGestureRecognizers; ///< Registered system gesture recognizers.
+    CursorManager cursorManager;               ///< Trackpad-style cursor position tracker.
 
     /// @brief Present the on-screen keyboard for the currently focused view.
     virtual void presentKeyboard();

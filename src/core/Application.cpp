@@ -293,6 +293,10 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
             }
             event.userInfo = (lx << 16) | ly;
         }
+
+        // Update cursor position tracker before gesture recognition / view dispatch.
+        Size ws = this->window->getContentRect().size;
+        this->window->getCursorManager().handleTouchEvent(event, ws.width - 1, ws.height - 1);
     }
 
     if (this->window->touchEnabled) {

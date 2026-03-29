@@ -24,6 +24,7 @@
 
 #include "View.hpp"
 #include "Window.hpp"
+#include "Timer.hpp"
 #include "Display.hpp"
 #include <algorithm>
 #include <chrono>
@@ -596,6 +597,18 @@ void View::setNeedsDisplayInRect(Rect rect) {
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         window->setNeedsDisplayInRect(rect);
     }
+}
+
+std::shared_ptr<Timer> View::scheduledTimer(
+    std::chrono::milliseconds interval,
+    std::function<void(Timer &)> callback,
+    bool repeats) {
+    if (auto w = getWindow().lock()) {
+        if (auto app = w->getApplication().lock()) {
+            return Timer::scheduledTimer(app, interval, std::move(callback), repeats);
+        }
+    }
+    return nullptr;
 }
 
 std::string View::description() {
