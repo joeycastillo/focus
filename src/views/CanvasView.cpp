@@ -32,11 +32,16 @@
 
 extern const uint16_t _unicode_info_0000_33FF[];
 
+static int clampPositive(int v) { return v > 0 ? v : 1; }
+
 CanvasView::CanvasView(Rect rect)
     : View(rect),
-      rowBytes((rect.size.width + 7) / 8),
-      planeSize(((rect.size.width + 7) / 8) * rect.size.height),
-      buffer(((rect.size.width + 7) / 8) * rect.size.height, 0xFF) {
+      rowBytes((clampPositive(rect.size.width) + 7) / 8),
+      planeSize(((clampPositive(rect.size.width) + 7) / 8) * clampPositive(rect.size.height)),
+      buffer(((clampPositive(rect.size.width) + 7) / 8) * clampPositive(rect.size.height), 0xFF) {
+    if (rect.size.width <= 0 || rect.size.height <= 0) {
+        printf("WARN CanvasView: bad dimensions %d x %d\n", rect.size.width, rect.size.height);
+    }
     this->opaque = true;
 }
 

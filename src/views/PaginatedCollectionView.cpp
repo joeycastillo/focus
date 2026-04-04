@@ -283,7 +283,7 @@ void PaginatedCollectionView::rebuildLayout() {
 
             int buttonWidth = getFooterButtonWidth();
             int gap = footerGap;
-            int labelWidth = w - 2 * buttonWidth - 2 * gap;
+            int labelWidth = std::max(0, w - 2 * buttonWidth - 2 * gap);
 
             this->prevButton = std::make_shared<Button>(
                 MakeRect(0, 0, buttonWidth, footerThickness), _LS("pagination.prev", "< Prev"));
