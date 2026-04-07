@@ -121,7 +121,7 @@ class ViewController;
 /// timestamp. For touch events, userInfo encodes the touch coordinates as
 /// (x << 16 | y). For FOCUS_EVENT_VALUE_CHANGED, userInfo carries a
 /// control-specific value. The timestamp records when the event was
-/// generated, in microseconds (same epoch as esp_timer_get_time).
+/// generated, in microseconds (monotonic clock, microsecond resolution).
 typedef struct {
     int32_t type;       ///< One of the FOCUS_EVENT_* constants.
     int32_t userInfo;   ///< Event-specific payload data.

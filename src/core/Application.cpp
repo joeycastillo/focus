@@ -33,15 +33,7 @@
 #include <cstdlib>
 #include "FocusLog.hpp"
 
-#ifdef ESP_PLATFORM
-#include "esp_timer.h"
-#else
-#include <chrono>
-static int64_t esp_timer_get_time() {
-    using namespace std::chrono;
-    return duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
-}
-#endif
+#include "focus_platform.h"
 
 static const char *TAG = "Focus";
 
