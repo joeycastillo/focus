@@ -29,7 +29,7 @@ AnimationSequence &AnimationSequence::delay(std::chrono::milliseconds duration)
     return *this;
 }
 
-void AnimationSequence::start(View *owner, std::function<void()> onComplete)
+void AnimationSequence::start(std::shared_ptr<View> owner, std::function<void()> onComplete)
 {
     cancel();
     owner_ = owner;
@@ -46,7 +46,7 @@ void AnimationSequence::cancel()
         timer_.reset();
     }
     running_ = false;
-    owner_ = nullptr;
+    owner_.reset();
     onComplete_ = nullptr;
 }
 
@@ -66,18 +66,21 @@ void AnimationSequence::advanceToStep(size_t index)
             index++;
             continue;
 
-        case StepType::Delay:
-            if (!owner_) { finish(); return; }
-            timer_ = owner_->scheduledTimer(step.interval,
+        case StepType::Delay: {
+            auto owner = owner_.lock();
+            if (!owner) { finish(); return; }
+            timer_ = owner->scheduledTimer(step.interval,
                 [this, next = index + 1](Timer &) {
                     timer_.reset();
                     advanceToStep(next);
                 });
             if (!timer_) { finish(); return; }
             return;
+        }
 
-        case StepType::Animate:
-            if (!owner_ || step.frameCount <= 0) {
+        case StepType::Animate: {
+            auto owner = owner_.lock();
+            if (!owner || step.frameCount <= 0) {
                 index++;
                 continue;
             }
@@ -87,7 +90,7 @@ void AnimationSequence::advanceToStep(size_t index)
                 index++;
                 continue;
             }
-            timer_ = owner_->scheduledTimer(step.interval,
+            timer_ = owner->scheduledTimer(step.interval,
                 [this, next = index + 1](Timer &timer) {
                     currentFrame_++;
                     auto &s = steps_[currentStep_];
@@ -103,6 +106,7 @@ void AnimationSequence::advanceToStep(size_t index)
             if (!timer_) { finish(); return; }
             return;
         }
+        }
     }
 
     // All steps done
@@ -113,6 +117,6 @@ void AnimationSequence::finish()
 {
     running_ = false;
     auto cb = std::move(onComplete_);
-    owner_ = nullptr;
+    owner_.reset();
     if (cb) cb();
 }

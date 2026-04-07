@@ -54,7 +54,7 @@ public:
 
     /// Begin executing the sequence. The view is used to create timers.
     /// The optional onComplete callback fires after the last step finishes.
-    void start(View *owner, std::function<void()> onComplete = nullptr);
+    void start(std::shared_ptr<View> owner, std::function<void()> onComplete = nullptr);
 
     /// Cancel a running sequence. The completion callback is NOT fired.
     void cancel();
@@ -77,7 +77,7 @@ private:
     size_t currentStep_ = 0;
     int currentFrame_ = 0;
     bool running_ = false;
-    View *owner_ = nullptr;
+    std::weak_ptr<View> owner_;
     std::function<void()> onComplete_;
     std::shared_ptr<Timer> timer_;
 
