@@ -28,9 +28,8 @@
 #include "Application.hpp"
 #include "Window.hpp"
 #include "Font.hpp"
+#include "FocusMetrics.hpp"
 #include <algorithm>
-
-static int sTabBarHeight = -1;
 
 std::shared_ptr<TabViewController> TabViewController::create(
     std::shared_ptr<Application> application)
@@ -61,18 +60,6 @@ void TabViewController::addTab(std::string label, std::shared_ptr<ViewController
     }
 }
 
-int TabViewController::getDefaultTabBarHeight() {
-    if (sTabBarHeight >= 0) return sTabBarHeight;
-    auto font = Font::systemFont();
-    if (font) {
-        int gh = font->getGlyphRowCount();
-        int padding = std::max(2, gh / 2);
-        return gh + 2 * padding;
-    }
-    return 32;
-}
-void TabViewController::setDefaultTabBarHeight(int value) { sTabBarHeight = value; }
-
 int TabViewController::getTabBarHeight() const {
     // Per-instance font takes priority over global default
     if (this->font) {
@@ -83,7 +70,7 @@ int TabViewController::getTabBarHeight() const {
             return gh + 2 * padding;
         }
     }
-    return getDefaultTabBarHeight();
+    return FocusMetrics::get().tabBarHeight;
 }
 
 void TabViewController::rebuildTabBar() {

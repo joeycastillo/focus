@@ -96,20 +96,6 @@ public:
     void setFrame(Rect rect) override;
     bool handleEvent(Event event) override;
 
-    /// @name Pagination metrics
-    /// @brief Font-proportional defaults that scale with the system font.
-    /// Call the static setters to override with fixed values for your app.
-    /// @{
-    static int getArrowThickness();
-    static void setArrowThickness(int value);
-    static int getFooterThickness();
-    static void setFooterThickness(int value);
-    static int getFooterGap();
-    static void setFooterGap(int value);
-    static int getFooterButtonWidth();
-    static void setFooterButtonWidth(int value);
-    /// @}
-
 protected:
     std::shared_ptr<CollectionView> collectionView;
 

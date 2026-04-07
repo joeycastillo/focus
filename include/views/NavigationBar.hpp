@@ -66,14 +66,7 @@ public:
     void setRightButton(const std::string& title, std::function<void()> action);
 
     /// @brief Get the height of the navigation bar in pixels.
-    /// Font-proportional by default; call setHeight() to override.
     static int getHeight();
-    static void setHeight(int value);
-
-    /// @brief Get the internal padding of the navigation bar.
-    /// Font-proportional by default; call setPadding() to override.
-    static int getPadding();
-    static void setPadding(int value);
 
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
 

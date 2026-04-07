@@ -96,11 +96,6 @@ public:
     /// @brief Get the height of the tab bar area in pixels.
     int getTabBarHeight() const;
 
-    /// @brief Get/set the default tab bar height.
-    /// Font-proportional by default; call setDefaultTabBarHeight() to override.
-    static int getDefaultTabBarHeight();
-    static void setDefaultTabBarHeight(int value);
-
     // ViewController lifecycle overrides
     void viewWillAppear() override;
     void viewDidLayoutSubviews() override;

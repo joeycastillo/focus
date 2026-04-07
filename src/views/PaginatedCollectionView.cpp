@@ -29,46 +29,8 @@
 #include "LabelView.hpp"
 #include "Locale.hpp"
 #include "Window.hpp"
-#include "Font.hpp"
+#include "FocusMetrics.hpp"
 #include <algorithm>
-
-// -1 = use font-proportional default
-static int sArrowThickness = -1;
-static int sFooterThickness = -1;
-static int sFooterGap = -1;
-static int sFooterButtonWidth = -1;
-
-int PaginatedCollectionView::getArrowThickness() {
-    if (sArrowThickness >= 0) return sArrowThickness;
-    auto font = Font::systemFont();
-    int gh = font ? font->getGlyphRowCount() : 16;
-    return std::max(8, gh + 4);
-}
-void PaginatedCollectionView::setArrowThickness(int value) { sArrowThickness = value; }
-
-int PaginatedCollectionView::getFooterThickness() {
-    if (sFooterThickness >= 0) return sFooterThickness;
-    auto font = Font::systemFont();
-    int gh = font ? font->getGlyphRowCount() : 16;
-    return std::max(10, gh + 4);
-}
-void PaginatedCollectionView::setFooterThickness(int value) { sFooterThickness = value; }
-
-int PaginatedCollectionView::getFooterGap() {
-    if (sFooterGap >= 0) return sFooterGap;
-    auto font = Font::systemFont();
-    int gh = font ? font->getGlyphRowCount() : 16;
-    return std::max(2, gh / 4);
-}
-void PaginatedCollectionView::setFooterGap(int value) { sFooterGap = value; }
-
-int PaginatedCollectionView::getFooterButtonWidth() {
-    if (sFooterButtonWidth >= 0) return sFooterButtonWidth;
-    auto font = Font::systemFont();
-    int gh = font ? font->getGlyphRowCount() : 16;
-    return std::max(30, gh * 5);
-}
-void PaginatedCollectionView::setFooterButtonWidth(int value) { sFooterButtonWidth = value; }
 
 PaginatedCollectionView::PaginatedCollectionView(Rect rect) : View(rect) {
     this->collectionView = std::make_shared<CollectionView>(MakeRect(0, 0, rect.size.width, rect.size.height));
@@ -230,7 +192,7 @@ void PaginatedCollectionView::rebuildLayout() {
         }
 
         case PaginationStyle::Arrows: {
-            int arrowThickness = getArrowThickness();
+            int arrowThickness = FocusMetrics::get().arrowThickness;
             if (isVertical) {
                 // Top arrow strip, collection, bottom arrow strip
                 this->beforeIndicator = std::make_shared<CanvasView>(
@@ -270,8 +232,8 @@ void PaginatedCollectionView::rebuildLayout() {
 
         case PaginationStyle::Footer: {
             // Collection view fills most of the space; footer strip at bottom
-            int footerThickness = getFooterThickness();
-            int footerGap = getFooterGap();
+            int footerThickness = FocusMetrics::get().footerThickness;
+            int footerGap = FocusMetrics::get().footerGap;
             int collectionH = h - footerGap - footerThickness;
             this->collectionView->setFrame(MakeRect(0, 0, w, collectionH));
 
@@ -281,7 +243,7 @@ void PaginatedCollectionView::rebuildLayout() {
             this->footerContainer->setOpaque(false);
             this->footerContainer->setDirectionalAffinity(DirectionalAffinityHorizontal);
 
-            int buttonWidth = getFooterButtonWidth();
+            int buttonWidth = FocusMetrics::get().footerButtonWidth;
             int gap = footerGap;
             int labelWidth = std::max(0, w - 2 * buttonWidth - 2 * gap);
 

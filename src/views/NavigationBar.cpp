@@ -29,10 +29,7 @@
 #include "Display.hpp"
 #include "Font.hpp"
 #include "Locale.hpp"
-#include <algorithm>
-
-static int sNavBarHeight = -1;
-static int sNavBarPadding = -1;
+#include "FocusMetrics.hpp"
 
 NavigationBar::NavigationBar(int width) : View(MakeRect(0, 0, width, getHeight())) {
     this->opaque = true;
@@ -42,8 +39,8 @@ std::shared_ptr<NavigationBar> NavigationBar::create(int width) {
     auto bar = std::shared_ptr<NavigationBar>(new NavigationBar(width));
 
     int height = getHeight();
-    int padding = getPadding();
-    int buttonWidth = std::max(20, padding * 10);
+    int padding = FocusMetrics::get().navBarPadding;
+    int buttonWidth = FocusMetrics::get().navBarButtonWidth;
 
     // HStack handles horizontal layout and d-pad navigation
     auto layout = std::make_shared<HStack>(
@@ -85,21 +82,8 @@ std::shared_ptr<NavigationBar> NavigationBar::create(int width) {
 }
 
 int NavigationBar::getHeight() {
-    if (sNavBarHeight >= 0) return sNavBarHeight;
-    auto font = Font::systemFont();
-    int gh = font ? font->getGlyphRowCount() : 16;
-    int padding = getPadding();
-    return gh + 2 * padding + 1; // +1 for bottom border
+    return FocusMetrics::get().navBarHeight;
 }
-void NavigationBar::setHeight(int value) { sNavBarHeight = value; }
-
-int NavigationBar::getPadding() {
-    if (sNavBarPadding >= 0) return sNavBarPadding;
-    auto font = Font::systemFont();
-    int gh = font ? font->getGlyphRowCount() : 16;
-    return std::max(2, gh / 2);
-}
-void NavigationBar::setPadding(int value) { sNavBarPadding = value; }
 
 void NavigationBar::setTitle(const std::string& title) {
     this->titleLabel->setText(title);
