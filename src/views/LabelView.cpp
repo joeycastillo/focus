@@ -32,6 +32,14 @@ LabelView::LabelView(Rect rect, std::string text) : View(rect) {
     this->text = text;
 }
 
+void LabelView::setFrame(Rect rect) {
+    if (rect.size.width != this->frame.size.width || rect.size.height != this->frame.size.height) {
+        this->canvas = nullptr;
+        this->canvasValid = false;
+    }
+    View::setFrame(rect);
+}
+
 void LabelView::renderCanvas() {
     if (!this->canvas) {
         this->canvas = std::make_shared<CanvasView>(

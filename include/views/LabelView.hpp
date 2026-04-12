@@ -55,6 +55,7 @@ public:
      * @param text The UTF-8 text to display.
      */
     LabelView(Rect rect, std::string text);
+    void setFrame(Rect rect) override;
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
     void appearanceDidChange() override;
 
