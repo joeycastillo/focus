@@ -163,7 +163,10 @@ public:
     virtual void movedToWindow();
 
     /// @name Focus Lifecycle Callbacks
-    /// @brief Override these to respond to focus changes (e.g. redraw highlights).
+    /// @brief Override these to update visual state in response to focus changes
+    /// (e.g., redraw highlights, show/hide a cursor). These are called
+    /// synchronously during event dispatch. Do not modify the view hierarchy,
+    /// present modals, or post notifications from these hooks.
     /// @{
     virtual void willBecomeFocused();
     virtual void didBecomeFocused();
