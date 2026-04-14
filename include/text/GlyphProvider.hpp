@@ -50,6 +50,7 @@
  * Subclasses must implement all pure virtual methods to supply glyph data
  * for text rendering and layout. The Font class wraps a GlyphProvider and
  * provides caching and factory methods.
+ * @ingroup text
  */
 class GlyphProvider {
 public:

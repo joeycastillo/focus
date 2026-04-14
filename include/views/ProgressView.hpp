@@ -44,6 +44,7 @@ class CanvasView;
  *
  * Renders an outlined track with a filled portion. The filled width is
  * proportional to the progress value (0.0 = empty, 1.0 = full).
+ * @ingroup views
  */
 class ProgressView : public View {
 public:

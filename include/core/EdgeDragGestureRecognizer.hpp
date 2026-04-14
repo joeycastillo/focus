@@ -40,6 +40,7 @@
 
 #include "GestureRecognizer.hpp"
 
+/// @ingroup core
 class EdgeDragGestureRecognizer final : public GestureRecognizer {
 public:
     /// @brief Construct a recognizer for drags starting in a specific region.

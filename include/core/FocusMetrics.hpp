@@ -9,6 +9,7 @@
 /// Layout metrics for Focus UI components. Apps select a preset at startup
 /// or construct a custom struct. Components read from the active metrics
 /// via FocusMetrics::get().
+/// @ingroup core
 struct FocusMetrics {
     // Navigation bar
     int navBarHeight = 25;

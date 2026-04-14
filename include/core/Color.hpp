@@ -45,6 +45,7 @@
 /// **IMPORTANT:** GrayscaleColor values are designed for grayscale displays.
 /// Do not use them on RGB displays — they will render incorrectly. Use
 /// RGB565Color for RGB/TFT displays instead.
+/// @ingroup core
 struct GrayscaleColor {
     static constexpr uint16_t Black()     { return 0x0000; }  // 0/255 intensity
     static constexpr uint16_t DarkGray()  { return 0x5555; }  // 85/255 intensity
@@ -65,6 +66,7 @@ struct GrayscaleColor {
 /// **IMPORTANT:** RGB565Color values are designed for RGB/TFT displays.
 /// Do not use them on grayscale e-paper displays — they will render incorrectly.
 /// Use GrayscaleColor for grayscale displays instead.
+/// @ingroup core
 struct RGB565Color {
     // Primary colors
     static constexpr uint16_t Black()   { return 0x0000; }

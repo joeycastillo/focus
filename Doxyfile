@@ -8,7 +8,7 @@ OUTPUT_DIRECTORY       = docs
 # --- Input ---
 INPUT                  = include/
 RECURSIVE              = YES
-FILE_PATTERNS          = *.hpp
+FILE_PATTERNS          = *.hpp *.dox
 EXCLUDE_PATTERNS       = */doxygen-awesome-css/*
 
 # --- Extraction ---

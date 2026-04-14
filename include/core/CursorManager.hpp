@@ -20,6 +20,7 @@
  * Processes TOUCH_DOWN, TOUCH_MOVED, and TOUCH_UP events to track
  * relative motion with configurable gain. Fires callbacks for position
  * changes, tracking start, and tracking end.
+ * @ingroup core
  */
 class CursorManager {
 public:

@@ -1,0 +1,4 @@
+/// @defgroup locale Locale
+/// @brief Localized string tables with placeholder substitution and plurals.
+///
+/// Locale loads key-value string files and provides _LS (simple lookup), _LF (formatted with positional arguments), and _LP (plural forms) convenience functions.

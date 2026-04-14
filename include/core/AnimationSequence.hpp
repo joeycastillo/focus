@@ -37,6 +37,7 @@ class View;
  *
  * Call cancel() to abort a running sequence. The completion callback
  * is NOT fired on cancellation.
+ * @ingroup core
  */
 class AnimationSequence {
 public:

@@ -55,6 +55,7 @@ class HStack;
  *
  * Child view controllers can access their TabViewController via
  * ViewController::getTabViewController().
+ * @ingroup viewcontrollers
  */
 class TabViewController : public ViewController {
 public:

@@ -44,6 +44,7 @@ class CanvasView;
  *
  * Uses an internal CanvasView for rendering. The button border and text are
  * drawn in the foreground color, with colors inverted when focused.
+ * @ingroup controls
  */
 class Button : public Control {
 public:

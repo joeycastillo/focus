@@ -64,6 +64,7 @@
  * axis). For more complex layouts, nest VStack and HStack within each
  * other, or subclass View directly and position children manually in a
  * setFrame() override.
+ * @ingroup views
  */
 class StackView : public View {
 public:
@@ -118,6 +119,7 @@ private:
  *
  * Children with frame height > 0 get fixed height. Children with frame
  * height == 0 share the remaining space equally.
+ * @ingroup views
  */
 class VStack final : public StackView {
 public:
@@ -129,6 +131,7 @@ public:
  *
  * Children with frame width > 0 get fixed width. Children with frame
  * width == 0 share the remaining space equally.
+ * @ingroup views
  */
 class HStack final : public StackView {
 public:

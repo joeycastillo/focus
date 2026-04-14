@@ -45,6 +45,7 @@ class RadioButton;
  * Add RadioButtons via addButton(). When any button in the group is selected,
  * all others are deselected and the selectionChangedCallback is invoked with
  * the index of the newly selected button.
+ * @ingroup controls
  */
 class RadioGroup : public std::enable_shared_from_this<RadioGroup> {
 public:

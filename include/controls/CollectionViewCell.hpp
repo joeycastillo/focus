@@ -48,6 +48,7 @@
  * CollectionViewDelegate on the owning CollectionView and implement
  * didFocusItemAtIndex / didUnfocusItemAtIndex to customize the visual
  * feedback for focused cells.
+ * @ingroup controls
  */
 class CollectionViewCell : public Control {
 public:

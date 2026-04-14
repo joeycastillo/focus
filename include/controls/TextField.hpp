@@ -46,6 +46,7 @@ class CanvasView;
  * Renders the current text (or placeholder when empty) in a bordered box.
  * When touched, presents an on-screen keyboard for editing. Subclass
  * getDisplayText() to customize rendering (e.g. PasswordField masks characters).
+ * @ingroup controls
  */
 class TextField : public Control {
 public:

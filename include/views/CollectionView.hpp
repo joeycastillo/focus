@@ -54,6 +54,7 @@ enum class CollectionViewLayout {
  *
  * Set a data source, item size, and layout, then call reloadData() to
  * populate the view. Use goToPage() to navigate between pages.
+ * @ingroup views
  */
 class CollectionView : public View {
 public:

@@ -50,6 +50,7 @@
 /// active and fallback locales; all other cached locales are freed.
 /// Any Locale* previously obtained via withIdentifier() (other than
 /// the active/fallback) is invalidated by clearCache().
+/// @ingroup locale
 ///
 class Locale {
 public:

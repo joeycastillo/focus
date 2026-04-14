@@ -46,6 +46,7 @@ class CanvasView;
  *
  * Used internally by TabViewController. When a TabItem receives focus via d-pad
  * navigation, TabViewController switches to that tab's content immediately.
+ * @ingroup views
  */
 class TabItem : public Control {
 public:

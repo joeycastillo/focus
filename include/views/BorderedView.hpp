@@ -44,6 +44,7 @@ class CanvasView;
  *
  * The border is rendered to an internal CanvasView and cached. The
  * interior is filled with the view's background color.
+ * @ingroup views
  */
 class BorderedView : public View {
 public:

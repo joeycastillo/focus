@@ -42,6 +42,7 @@
  *
  * Implementations must support string, 32-bit integer, and boolean value types,
  * as well as key existence checking and deletion.
+ * @ingroup settings
  */
 class SettingsBackend {
 public:

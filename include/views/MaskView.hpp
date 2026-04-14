@@ -41,6 +41,7 @@
  *
  * The mask data is not owned by this view — it must remain valid for the
  * lifetime of the MaskView.
+ * @ingroup views
  */
 class MaskView : public View {
 public:

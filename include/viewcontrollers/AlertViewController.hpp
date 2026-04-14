@@ -45,6 +45,7 @@
  *
  * Present via Application::presentViewController(). The dialog auto-dismisses
  * when any button is pressed.
+ * @ingroup viewcontrollers
  */
 class AlertViewController final : public ViewController {
 public:

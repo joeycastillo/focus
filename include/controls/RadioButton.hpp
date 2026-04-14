@@ -46,6 +46,7 @@ class RadioGroup;
  *
  * Use with RadioGroup for automatic mutual exclusion. Register a
  * FOCUS_EVENT_VALUE_CHANGED action to respond to selection changes.
+ * @ingroup controls
  */
 class RadioButton : public Control {
 public:

@@ -54,6 +54,7 @@ class CollectionViewCell;
  * automatically in viewDidLayoutSubviews() after the container has set the frame.
  * The current page is saved across view destruction so that navigating back
  * in a NavigationViewController restores the scroll position.
+ * @ingroup viewcontrollers
  */
 class CollectionViewController : public ViewController,
                                   public CollectionViewDataSource,

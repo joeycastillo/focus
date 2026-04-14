@@ -42,6 +42,7 @@
  *
  * Diagonal lines are drawn in the specified color, creating a ~50% density
  * hatched overlay. The mask is pre-computed on construction.
+ * @ingroup views
  */
 class HatchedView : public View {
 public:

@@ -1,0 +1,4 @@
+/// @defgroup controls Controls
+/// @brief Interactive UI elements: buttons, text fields, sliders, checkboxes.
+///
+/// Controls are views that respond to user input and fire action callbacks. All controls inherit from Control, which adds enabled/disabled state and the action callback pattern.

@@ -1,0 +1,4 @@
+/// @defgroup settings Settings
+/// @brief Platform-agnostic key-value settings with pluggable backends.
+///
+/// UserSettings provides typed get/set operations backed by a SettingsBackend interface. Applications implement the backend for their platform's persistent storage.

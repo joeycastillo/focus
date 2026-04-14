@@ -66,6 +66,7 @@
  * auto clock = Timer::scheduledTimerForNextMinute(app,
  *     [this](Timer&) { updateTimeDisplay(); }, true);
  * @endcode
+ * @ingroup core
  */
 class Timer final : public Task {
 public:

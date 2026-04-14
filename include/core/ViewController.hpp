@@ -55,6 +55,7 @@ class TabViewController;
  * 4. viewWillDisappear() — called before the view is removed.
  * 5. viewDidDisappear() — called after the view is removed.
  *    The base implementation calls destroyView() to release the view.
+ * @ingroup core
  */
 class ViewController : public std::enable_shared_from_this<ViewController> {
 public:

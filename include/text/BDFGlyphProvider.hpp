@@ -72,6 +72,7 @@ struct BDFGlyph {
  * @todo Lazy loading: load glyph bitmaps on demand rather than all at
  * construction. The const query interface already supports this via mutable
  * caching (see UnifontGlyphProvider for the pattern).
+ * @ingroup text
  */
 class BDFGlyphProvider : public GlyphProvider {
 public:

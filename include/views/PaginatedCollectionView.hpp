@@ -58,6 +58,7 @@ enum class PaginationStyle {
  * arrows appear at the top and bottom edges. For horizontal layouts, left/right
  * arrows appear at the left and right edges. The Footer style always places a
  * horizontal button strip at the bottom regardless of layout direction.
+ * @ingroup views
  */
 class PaginatedCollectionView : public View {
 public:

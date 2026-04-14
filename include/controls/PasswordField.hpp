@@ -37,6 +37,7 @@
 
 /**
  * @brief A text input control that hides its content with bullet characters.
+ * @ingroup controls
  */
 class PasswordField final : public TextField {
 public:

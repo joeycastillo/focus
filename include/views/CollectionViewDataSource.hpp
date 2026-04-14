@@ -42,6 +42,7 @@ class CollectionViewCell;
  * for each item. The CollectionView calls these methods when loading
  * a page of items, passing itself as the first argument so that a single
  * data source can serve multiple collection views.
+ * @ingroup views
  */
 class CollectionViewDataSource {
 public:

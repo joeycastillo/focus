@@ -49,6 +49,7 @@ class HatchedView;
  *
  * an Application owns a Window and manages the rootViewController, a stack of
  * modally presented ViewControllers and a set of cooperatively scheduled Tasks.
+ * @ingroup core
  */
 class Application : public std::enable_shared_from_this<Application> {
 public:

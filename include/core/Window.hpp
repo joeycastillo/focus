@@ -51,6 +51,7 @@ class KeyboardView;
  * Window tracks dirty regions and the focused view. When touch is enabled,
  * the window itself remains the focused view and touch events are dispatched
  * via hit-testing rather than focus traversal.
+ * @ingroup core
  */
 class Window : public View {
 public:

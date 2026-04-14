@@ -40,6 +40,7 @@
 ///       // Code to run after delay
 ///   }, 1);  // Wait 1 cycle before executing
 ///   application->addTask(task);
+/// @ingroup core
 class DeferredTask final : public Task {
 public:
     /// Create a deferred task.

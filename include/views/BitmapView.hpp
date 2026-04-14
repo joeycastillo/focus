@@ -41,6 +41,7 @@
  *
  * The bitmap data is not owned by this view — it must remain valid for
  * the lifetime of the BitmapView.
+ * @ingroup views
  */
 class BitmapView : public View {
 public:

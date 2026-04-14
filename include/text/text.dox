@@ -1,0 +1,4 @@
+/// @defgroup text Text
+/// @brief Font loading, glyph rendering, text layout, and Unicode support.
+///
+/// The text module handles the full pipeline from font files to rendered glyphs: font caching (Font), glyph providers (BDF, PackedFont, Unifont), text measurement and line wrapping (TextLayout), and Unicode support (bidi reordering, Arabic shaping).

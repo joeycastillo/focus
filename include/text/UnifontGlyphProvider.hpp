@@ -49,6 +49,7 @@
  * Unifont is a GNU project that aims to provide glyphs for every Unicode
  * codepoint. This provider reads from a simplified binary format optimized
  * for embedded systems.
+ * @ingroup text
  */
 class UnifontGlyphProvider : public GlyphProvider {
 public:

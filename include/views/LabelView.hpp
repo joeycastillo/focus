@@ -46,6 +46,7 @@ class CanvasView;
  *
  * Uses an internal CanvasView for off-screen text rendering. If no font is
  * set, falls back to Font::systemFont().
+ * @ingroup views
  */
 class LabelView : public View {
 public:

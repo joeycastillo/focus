@@ -53,6 +53,7 @@ class CanvasView;
  * The slider displays a label on the left and an interactive track bar on
  * the right. Register a FOCUS_EVENT_VALUE_CHANGED action to respond to
  * value changes. Colors invert when focused.
+ * @ingroup controls
  */
 class Slider : public Control {
 public:

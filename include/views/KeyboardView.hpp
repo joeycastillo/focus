@@ -45,6 +45,7 @@ class CanvasView;
 
 /**
  * @brief An on-screen touch keyboard with lowercase, uppercase, and symbol pages.
+ * @ingroup views
  */
 class KeyboardView : public View {
 public:

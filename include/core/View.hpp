@@ -53,6 +53,7 @@ class Timer;
  * Views form a tree rooted at a Window. Each view draws itself and its children,
  * handles events (touch, directional navigation, actions), and participates in
  * the focus system. Subclass View to create custom visual elements.
+ * @ingroup core
  */
 class View : public std::enable_shared_from_this<View> {
 public:

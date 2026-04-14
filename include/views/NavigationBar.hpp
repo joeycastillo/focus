@@ -46,6 +46,7 @@ class Button;
  * The back button is hidden by default and shown when the navigation stack
  * has more than one view controller. A 1px border is drawn at the bottom
  * of the bar.
+ * @ingroup views
  */
 class NavigationBar : public View {
 public:

@@ -42,6 +42,7 @@
  * Subclass Task and implement run() to perform periodic work such as
  * polling input devices, refreshing the display, or running background
  * computations.
+ * @ingroup core
  */
 class Task {
 public:

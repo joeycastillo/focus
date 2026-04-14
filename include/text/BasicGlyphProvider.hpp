@@ -41,6 +41,7 @@
  *
  * Always reports isValid() as true since the font data is compiled in.
  * Used as a fallback when BDF font files cannot be loaded.
+ * @ingroup text
  */
 class BasicGlyphProvider : public GlyphProvider {
 public:

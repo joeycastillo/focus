@@ -43,6 +43,7 @@ class CollectionViewCell;
  *
  * Methods have default empty implementations so that implementers only
  * need to override the callbacks they care about.
+ * @ingroup views
  */
 class CollectionViewDelegate {
 public:

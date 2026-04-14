@@ -43,6 +43,7 @@
 #include "Focus.hpp"
 #include <functional>
 
+/// @ingroup core
 class GestureRecognizer {
 public:
     /// @brief Possible states for a gesture recognizer.

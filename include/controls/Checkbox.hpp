@@ -44,6 +44,7 @@ class CanvasView;
  *
  * The checkbox inverts its appearance when focused (swaps fg/bg colors).
  * Register a FOCUS_EVENT_VALUE_CHANGED action to respond to state changes.
+ * @ingroup controls
  */
 class Checkbox : public Control {
 public:

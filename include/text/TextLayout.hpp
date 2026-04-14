@@ -64,6 +64,7 @@ struct WordWrapResult {
 /// Used by Display, CanvasView, and application-level pagination engines.
 /// All word-wrapping flows through measureLineWrap, ensuring that measurement
 /// during pagination and measurement during rendering always agree.
+/// @ingroup text
 class TextLayout {
 public:
     /// Calculate the UTF-8 byte count for a Unicode codepoint

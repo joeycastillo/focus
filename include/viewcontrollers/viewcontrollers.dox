@@ -1,0 +1,4 @@
+/// @defgroup viewcontrollers View Controllers
+/// @brief Container view controllers for navigation and modal presentation.
+///
+/// Higher-level controllers that manage child view controller lifecycles: NavigationViewController (push/pop stack), TabViewController (tabbed switching), and AlertViewController (modal dialogs).

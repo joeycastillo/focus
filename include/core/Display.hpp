@@ -59,6 +59,7 @@ enum class DisplayMode {
  * converting these 16-bit values to their native bit depth. Color.hpp
  * documents the standard bit-shift conversions (e.g. color >> 14 for 2-bit,
  * color >> 8 for 8-bit).
+ * @ingroup core
  */
 class Display {
 public:
