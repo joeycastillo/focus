@@ -93,6 +93,7 @@ Here is a minimal Focus application. You will need to provide a `Display` subcla
 #include "Application.hpp"
 #include "ViewController.hpp"
 #include "Window.hpp"
+#include "Color.hpp"
 #include "Button.hpp"
 #include "VStack.hpp"
 #include "LabelView.hpp"
