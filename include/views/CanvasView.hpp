@@ -65,6 +65,7 @@ struct WordPosition {
 class CanvasView : public View {
 public:
     CanvasView(Rect rect);
+    void setFrame(Rect rect) override;
 
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
 

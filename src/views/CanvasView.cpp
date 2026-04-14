@@ -45,6 +45,25 @@ CanvasView::CanvasView(Rect rect)
     this->opaque = true;
 }
 
+void CanvasView::setFrame(Rect rect) {
+    if (rect.size.width != this->frame.size.width || rect.size.height != this->frame.size.height) {
+        int w = (rect.size.width > 0) ? rect.size.width : 1;
+        int h = (rect.size.height > 0) ? rect.size.height : 1;
+        if (this->canvasMode == DisplayMode::Grayscale) {
+            this->rowBytes = w;
+            this->planeSize = w * h;
+        } else if (this->canvasMode == DisplayMode::RGB565) {
+            this->rowBytes = w * 2;
+            this->planeSize = w * 2 * h;
+        } else {
+            this->rowBytes = (w + 7) / 8;
+            this->planeSize = this->rowBytes * h;
+        }
+        this->buffer.assign(this->planeSize, 0xFF);
+    }
+    View::setFrame(rect);
+}
+
 void CanvasView::setCanvasMode(DisplayMode mode) {
     canvasMode = mode;
     if (mode == DisplayMode::Grayscale) {
