@@ -82,6 +82,18 @@ void Window::setNeedsDisplayInRect(Rect rect) {
         finalRect = rect;
     }
 
+    // Clamp to window bounds so downstream drawing never receives
+    // an oversized dirty rect from accumulated view offsets.
+    int right = finalRect.origin.x + finalRect.size.width;
+    int bottom = finalRect.origin.y + finalRect.size.height;
+    if (finalRect.origin.x < 0) finalRect.origin.x = 0;
+    if (finalRect.origin.y < 0) finalRect.origin.y = 0;
+    if (right > this->frame.size.width) right = this->frame.size.width;
+    if (bottom > this->frame.size.height) bottom = this->frame.size.height;
+    finalRect.size.width = right - finalRect.origin.x;
+    finalRect.size.height = bottom - finalRect.origin.y;
+    if (finalRect.size.width <= 0 || finalRect.size.height <= 0) return;
+
     this->dirty = true;
     this->dirtyRect = finalRect;
 }

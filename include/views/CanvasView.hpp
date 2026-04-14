@@ -59,9 +59,16 @@ struct WordPosition {
     uint32_t endOffset;
 };
 
-/// A view that owns its own 1bpp pixel buffer for programmatic drawing.
+/// A view that owns its own pixel buffer for programmatic drawing.
 /// Content is drawn to the internal buffer via drawPixel/drawRect/fillRect/drawText,
 /// then blitted to the Display during the normal view draw cycle.
+///
+/// @par Memory
+/// The buffer is retained for the lifetime of the view (or until setFrame()
+/// resizes it). Hiding a CanvasView with setHidden(true) prevents drawing
+/// but does not release the buffer — use this when the view will reappear
+/// (e.g., toggling an indicator). To release the buffer, remove the view
+/// from the hierarchy with removeSubview().
 class CanvasView : public View {
 public:
     /// Construct a canvas with the given frame. If either dimension is zero
