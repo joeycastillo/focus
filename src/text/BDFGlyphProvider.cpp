@@ -151,49 +151,9 @@ bool BDFGlyphProvider::parseBDFFile(const std::string& path) {
 }
 
 void BDFGlyphProvider::convertGlyphToDisplayFormat(BDFGlyph& glyph) {
-    // Display expects fixed-height glyphs based on fontAscent + fontDescent
-    // IMPORTANT: bytesPerRow must be based on ADVANCE width, not bitmap width!
-    // Display::drawGlyph uses metricsForCodepoint().size.width to calculate bytesPerRow,
-    // and we return advance as the width. So the bitmap must be sized for advance width.
-    uint8_t destBytesPerRow = (glyph.advance + 7) / 8;
-    if (destBytesPerRow == 0) destBytesPerRow = 1; // Minimum 1 byte per row
-
-    uint8_t totalRows = fontAscent + fontDescent;
-    std::vector<uint8_t> converted(destBytesPerRow * totalRows, 0);
-
-    // Calculate where this glyph sits within the totalRows space
-    // fontAscent is the baseline position from top
-    // yOffset is the glyph's offset from baseline (positive = above baseline)
-    // glyph.height is the number of rows in the glyph
-    //
-    // Example: fontAscent=20, yOffset=0, height=11 for lowercase 'x'
-    // The glyph's bottom is at baseline, top is at row (20 - 11) = 9
-    //
-    // For descenders like 'g' with yOffset=-4:
-    // Bottom is 4 pixels below baseline, top is at row (20 - (-4) - height) = (20 + 4 - height)
-    int startRow = fontAscent - glyph.yOffset - glyph.height;
-    if (startRow < 0) startRow = 0;
-
-    uint8_t srcBytesPerRow = (glyph.width + 7) / 8;
-
-    for (int row = 0; row < glyph.height && (startRow + row) < totalRows; row++) {
-        int destRow = startRow + row;
-
-        // Copy source bytes, padding with zeros if dest is wider
-        for (int b = 0; b < destBytesPerRow; b++) {
-            size_t destIdx = destRow * destBytesPerRow + b;
-
-            if (b < srcBytesPerRow) {
-                size_t srcIdx = row * srcBytesPerRow + b;
-                if (srcIdx < glyph.bitmap.size() && destIdx < converted.size()) {
-                    converted[destIdx] = glyph.bitmap[srcIdx];
-                }
-            }
-            // else: dest byte remains 0 (padding)
-        }
-    }
-
-    glyph.bitmap = std::move(converted);
+    convertBitmapToDisplayFormat(
+        glyph.bitmap, glyph.width, glyph.height, glyph.yOffset, glyph.advance,
+        this->fontAscent, this->fontDescent);
 }
 
 uint8_t BDFGlyphProvider::getPointSize() const {

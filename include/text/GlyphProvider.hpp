@@ -42,6 +42,7 @@
 #include "Focus.hpp"
 #include "utf8_decode.hpp"
 #include <string>
+#include <vector>
 
 /**
  * @brief Abstract base class for glyph bitmap and metric providers.
@@ -115,6 +116,28 @@ public:
      * @return Bounding box and advance metrics for the glyph.
      */
     virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) const = 0;
+
+protected:
+    /**
+     * @brief Convert a glyph bitmap to the padded display format.
+     *
+     * Repositions the glyph within a full-height (fontAscent + fontDescent)
+     * row buffer, sized to the advance width. Shared by BDF and PackedFont
+     * providers which use identical conversion logic.
+     *
+     * @param bitmap The source bitmap data (modified in place with the converted result).
+     * @param width Tight bitmap width in pixels.
+     * @param height Tight bitmap height in pixels.
+     * @param xOffset Horizontal offset from cursor.
+     * @param yOffset Vertical offset from baseline (positive = above).
+     * @param advance Advance width (cursor movement).
+     * @param fontAscent Pixels above the baseline for this font.
+     * @param fontDescent Pixels below the baseline for this font.
+     */
+    static void convertBitmapToDisplayFormat(
+        std::vector<uint8_t>& bitmap,
+        uint8_t width, uint8_t height, int8_t yOffset, uint8_t advance,
+        uint8_t fontAscent, uint8_t fontDescent);
 
 private:
     mutable Rect asciiMetricsCache[96];     ///< Cached metrics for codepoints 0x20..0x7F.

@@ -124,34 +124,9 @@ bool PackedFontGlyphProvider::loadBDPFile(const std::string& path) {
 }
 
 void PackedFontGlyphProvider::convertGlyphToDisplayFormat(BDPGlyph& glyph) {
-    // Same logic as BDFGlyphProvider::convertGlyphToDisplayFormat
-    uint8_t destBytesPerRow = (glyph.advance + 7) / 8;
-    if (destBytesPerRow == 0) destBytesPerRow = 1;
-
-    uint8_t totalRows = fontAscent + fontDescent;
-    std::vector<uint8_t> converted(destBytesPerRow * totalRows, 0);
-
-    int startRow = fontAscent - glyph.yOffset - glyph.height;
-    if (startRow < 0) startRow = 0;
-
-    uint8_t srcBytesPerRow = (glyph.width + 7) / 8;
-
-    for (int row = 0; row < glyph.height && (startRow + row) < totalRows; row++) {
-        int destRow = startRow + row;
-
-        for (int b = 0; b < destBytesPerRow; b++) {
-            size_t destIdx = destRow * destBytesPerRow + b;
-
-            if (b < srcBytesPerRow) {
-                size_t srcIdx = row * srcBytesPerRow + b;
-                if (srcIdx < glyph.bitmap.size() && destIdx < converted.size()) {
-                    converted[destIdx] = glyph.bitmap[srcIdx];
-                }
-            }
-        }
-    }
-
-    glyph.bitmap = std::move(converted);
+    convertBitmapToDisplayFormat(
+        glyph.bitmap, glyph.width, glyph.height, glyph.yOffset, glyph.advance,
+        this->fontAscent, this->fontDescent);
 }
 
 uint8_t PackedFontGlyphProvider::getPointSize() const {
