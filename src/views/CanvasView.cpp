@@ -950,7 +950,7 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
     // Direction is set by the run-based renderer in writeCodepoints;
     // writeCodepoint just renders in the current direction.
 
-    uint8_t *glyph = glyphProvider->glyphForCodepoint(codepoint);
+    const uint8_t *glyph = glyphProvider->glyphForCodepoint(codepoint);
     if (traits.is.nsm && this->hasLastGlyph) {
         drawGlyph(this->lastGlyphPosition.x, this->lastGlyphPosition.y, metrics, traits, glyph);
     } else {
@@ -973,7 +973,7 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
     // again right-aligned. Covers characters up to 2x the underscore width.
     if (this->pendingOverprintUnderline) {
         Rect uMetrics = glyphProvider->metricsForCodepoint('_');
-        uint8_t *uGlyph = glyphProvider->glyphForCodepoint('_');
+        const uint8_t *uGlyph = glyphProvider->glyphForCodepoint('_');
         unicode_info_t uTraits = {};
         int16_t charWidth = metrics.size.width;
         int16_t uWidth = uMetrics.size.width;
@@ -990,7 +990,7 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
     return 1;
 }
 
-int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, uint8_t *glyph) {
+int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, const uint8_t *glyph) {
     uint8_t width = glyphRect.size.width;
     uint8_t bytesPerRow = (width + 7) / 8;
     bool mirrored = (this->direction == -1) && traits.is.mirrored;

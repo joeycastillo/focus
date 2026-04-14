@@ -27,7 +27,7 @@
 GlyphProvider::GlyphProvider() {
 }
 
-const Rect* GlyphProvider::getAsciiMetricsCache() {
+const Rect* GlyphProvider::getAsciiMetricsCache() const {
     if (!asciiCachePopulated) {
         for (int i = 0; i < 96; i++) {
             asciiMetricsCache[i] = metricsForCodepoint(0x20 + i);

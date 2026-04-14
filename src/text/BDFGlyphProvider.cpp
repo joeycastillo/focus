@@ -196,24 +196,24 @@ void BDFGlyphProvider::convertGlyphToDisplayFormat(BDFGlyph& glyph) {
     glyph.bitmap = std::move(converted);
 }
 
-uint8_t BDFGlyphProvider::getPointSize() {
+uint8_t BDFGlyphProvider::getPointSize() const {
     return pixelSize;
 }
 
-Size BDFGlyphProvider::getMaxSize() {
+Size BDFGlyphProvider::getMaxSize() const {
     return maxSize;
 }
 
-Point BDFGlyphProvider::getOffset() {
+Point BDFGlyphProvider::getOffset() const {
     // Return baseline offset for proper text positioning
     return MakePoint(0, -static_cast<int>(fontAscent));
 }
 
-uint8_t BDFGlyphProvider::getGlyphRowCount() {
+uint8_t BDFGlyphProvider::getGlyphRowCount() const {
     return fontAscent + fontDescent;
 }
 
-uint8_t* BDFGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) {
+const uint8_t* BDFGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) const {
     auto it = glyphs.find(codepoint);
     if (it != glyphs.end()) {
         return it->second.bitmap.data();
@@ -234,7 +234,7 @@ uint8_t* BDFGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) {
     return nullptr;
 }
 
-Rect BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) {
+Rect BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) const {
     auto it = glyphs.find(codepoint);
     if (it == glyphs.end()) {
         // Try default character

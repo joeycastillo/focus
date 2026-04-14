@@ -45,12 +45,12 @@
 class BasicGlyphProvider : public GlyphProvider {
 public:
     BasicGlyphProvider();
-    uint8_t getPointSize() override;
-    Size getMaxSize() override;
-    Point getOffset() override;
-    uint8_t getGlyphRowCount() override;
+    uint8_t getPointSize() const override;
+    Size getMaxSize() const override;
+    Point getOffset() const override;
+    uint8_t getGlyphRowCount() const override;
     /// @brief Always returns true (built-in font data is always available).
     bool isValid() const override { return true; }
-    uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) override;
-    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) override;
+    const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) const override;
+    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) const override;
 };

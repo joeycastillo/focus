@@ -130,23 +130,23 @@ static uint8_t font5x8[97 * 8] = {
 BasicGlyphProvider::BasicGlyphProvider() {
 }
 
-uint8_t BasicGlyphProvider::getPointSize() {
+uint8_t BasicGlyphProvider::getPointSize() const {
     return 9;
 }
 
-Size BasicGlyphProvider::getMaxSize() {
+Size BasicGlyphProvider::getMaxSize() const {
     return MakeSize(6, 8);
 }
 
-Point BasicGlyphProvider::getOffset() {
+Point BasicGlyphProvider::getOffset() const {
     return MakePoint(0, 0);
 }
 
-uint8_t BasicGlyphProvider::getGlyphRowCount() {
+uint8_t BasicGlyphProvider::getGlyphRowCount() const {
     return 8;
 }
 
-uint8_t *BasicGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) {
+const uint8_t *BasicGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) const {
     if (codepoint >= 0x20 && codepoint <= 0x7E) {
         return font5x8 + (codepoint - 0x20) * 8;
     }
@@ -154,6 +154,6 @@ uint8_t *BasicGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) {
     return font5x8 + 96 * 8;
 }
 
-Rect BasicGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) {
+Rect BasicGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) const {
     return MakeRect(0, 0, 6, 8);
 }

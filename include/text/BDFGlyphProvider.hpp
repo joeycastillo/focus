@@ -71,12 +71,12 @@ public:
      */
     BDFGlyphProvider(const std::string& bdfFilePath);
 
-    uint8_t getPointSize() override;
-    Size getMaxSize() override;
-    Point getOffset() override;
-    uint8_t getGlyphRowCount() override;
-    uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) override;
-    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) override;
+    uint8_t getPointSize() const override;
+    Size getMaxSize() const override;
+    Point getOffset() const override;
+    uint8_t getGlyphRowCount() const override;
+    const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) const override;
+    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) const override;
 
     /// @brief Check if the BDF file was parsed successfully.
     bool isValid() const override { return valid; }

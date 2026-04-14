@@ -82,7 +82,7 @@ public:
         size_t len,
         int16_t layoutWidth,
         uint8_t textSize,
-        GlyphProvider* glyphProvider,
+        const GlyphProvider* glyphProvider,
         int16_t initialCursorX = 0
     );
 
@@ -90,26 +90,26 @@ public:
     /// @param glyphProvider Provider for font metrics
     /// @param textSize Text scaling factor
     /// @param lineSpacing Additional spacing between lines
-    static int16_t getLineHeight(GlyphProvider* glyphProvider, uint8_t textSize, int16_t lineSpacing);
+    static int16_t getLineHeight(const GlyphProvider* glyphProvider, uint8_t textSize, int16_t lineSpacing);
 
     /// Calculate paragraph height (line height + extra paragraph spacing)
     /// @param glyphProvider Provider for font metrics
     /// @param textSize Text scaling factor
     /// @param paragraphSpacing Total spacing after paragraph break
-    static int16_t getParagraphHeight(GlyphProvider* glyphProvider, uint8_t textSize, int16_t paragraphSpacing);
+    static int16_t getParagraphHeight(const GlyphProvider* glyphProvider, uint8_t textSize, int16_t paragraphSpacing);
 
     /// Calculate default line spacing (constant 2 pixels)
-    static int16_t calculateLineSpacing(GlyphProvider* glyphProvider);
+    static int16_t calculateLineSpacing(const GlyphProvider* glyphProvider);
 
     /// Calculate default paragraph spacing based on glyph row count
-    static int16_t calculateParagraphSpacing(GlyphProvider* glyphProvider);
+    static int16_t calculateParagraphSpacing(const GlyphProvider* glyphProvider);
 
     /// Measure the width of a UTF-8 text string in pixels.
     /// @param utf8String The UTF-8 encoded string to measure
     /// @param textSize Text scaling factor (1 = normal)
     /// @param glyphProvider Provider for glyph metrics
     /// @return Width of the text in pixels
-    static int16_t measureTextWidth(const char* utf8String, uint8_t textSize, GlyphProvider* glyphProvider);
+    static int16_t measureTextWidth(const char* utf8String, uint8_t textSize, const GlyphProvider* glyphProvider);
 
     /// Measure the total height of a UTF-8 text string when word-wrapped
     /// to a given layout width.
@@ -118,6 +118,6 @@ public:
     /// @param textSize Text scaling factor (1 = normal)
     /// @param glyphProvider Provider for glyph metrics
     /// @return Total height in pixels, including line and paragraph spacing
-    static int16_t measureTextHeight(const char* utf8String, int16_t layoutWidth, uint8_t textSize, GlyphProvider* glyphProvider);
+    static int16_t measureTextHeight(const char* utf8String, int16_t layoutWidth, uint8_t textSize, const GlyphProvider* glyphProvider);
 
 };

@@ -93,7 +93,7 @@ std::shared_ptr<UnifontGlyphProvider> UnifontGlyphProvider::fromMemory(
     return provider;
 }
 
-void UnifontGlyphProvider::readData(uint32_t offset, void* dest, size_t len) {
+void UnifontGlyphProvider::readData(uint32_t offset, void* dest, size_t len) const {
     if (data) {
         // Memory-mapped access
         if (offset + len <= dataSize) {
@@ -144,7 +144,7 @@ bool UnifontGlyphProvider::parseHeader() {
     return true;
 }
 
-uint32_t UnifontGlyphProvider::lookupGlyph(UNICODE_CODEPOINT cp, uint8_t& outWidth) {
+uint32_t UnifontGlyphProvider::lookupGlyph(UNICODE_CODEPOINT cp, uint8_t& outWidth) const {
     // Determine plane
     size_t planeIdx;
     uint16_t cpLow;
@@ -191,19 +191,19 @@ uint32_t UnifontGlyphProvider::lookupGlyph(UNICODE_CODEPOINT cp, uint8_t& outWid
     return glyphOffset;
 }
 
-uint8_t UnifontGlyphProvider::getPointSize() {
+uint8_t UnifontGlyphProvider::getPointSize() const {
     return nominalHeight;  // 16 for Unifont
 }
 
-Size UnifontGlyphProvider::getMaxSize() {
+Size UnifontGlyphProvider::getMaxSize() const {
     return MakeSize(16, 16);  // Maximum glyph size
 }
 
-Point UnifontGlyphProvider::getOffset() {
+Point UnifontGlyphProvider::getOffset() const {
     return PointZero;
 }
 
-uint8_t UnifontGlyphProvider::getGlyphRowCount() {
+uint8_t UnifontGlyphProvider::getGlyphRowCount() const {
     return nominalHeight;  // 16 rows
 }
 
@@ -211,7 +211,7 @@ bool UnifontGlyphProvider::isValid() const {
     return valid;
 }
 
-uint8_t* UnifontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) {
+const uint8_t* UnifontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) const {
     uint8_t width;
     uint32_t offset = lookupGlyph(codepoint, width);
 
@@ -234,7 +234,7 @@ uint8_t* UnifontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) {
     return glyphBuffer;
 }
 
-Rect UnifontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) {
+Rect UnifontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) const {
     uint8_t width;
     uint32_t offset = lookupGlyph(codepoint, width);
 

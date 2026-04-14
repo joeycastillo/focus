@@ -53,12 +53,12 @@ class PackedFontGlyphProvider : public GlyphProvider {
 public:
     PackedFontGlyphProvider(const std::string& bdpFilePath);
 
-    uint8_t getPointSize() override;
-    Size getMaxSize() override;
-    Point getOffset() override;
-    uint8_t getGlyphRowCount() override;
-    uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) override;
-    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) override;
+    uint8_t getPointSize() const override;
+    Size getMaxSize() const override;
+    Point getOffset() const override;
+    uint8_t getGlyphRowCount() const override;
+    const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) const override;
+    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) const override;
 
     bool isValid() const override { return valid; }
     std::string getTitle() const override { return title; }

@@ -62,16 +62,16 @@ public:
      * Populated lazily on first call from metricsForCodepoint().
      * Used by TextLayout to skip virtual dispatch and hash lookups in the hot loop.
      */
-    const Rect* getAsciiMetricsCache();
+    const Rect* getAsciiMetricsCache() const;
 
     /// @brief Get the font's point size (pixel height).
-    virtual uint8_t getPointSize() = 0;
+    virtual uint8_t getPointSize() const = 0;
 
     /// @brief Get the maximum glyph bounding box size across all glyphs.
-    virtual Size getMaxSize() = 0;
+    virtual Size getMaxSize() const = 0;
 
     /// @brief Get the global glyph offset (baseline adjustment).
-    virtual Point getOffset() = 0;
+    virtual Point getOffset() const = 0;
 
     /**
      * @brief Get the number of byte rows per glyph bitmap.
@@ -79,7 +79,7 @@ public:
      * Each glyph bitmap is stored as rows of bytes, packed MSB-first.
      * This returns the total height of the glyph storage area (ascent + descent).
      */
-    virtual uint8_t getGlyphRowCount() = 0;
+    virtual uint8_t getGlyphRowCount() const = 0;
 
     /// @brief Check whether the font was loaded successfully.
     virtual bool isValid() const = 0;
@@ -100,7 +100,7 @@ public:
      *         The pointer is valid only until the next call to
      *         glyphForCodepoint() on the same provider.
      */
-    virtual uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) = 0;
+    virtual const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) const = 0;
 
     /**
      * @brief Get the metrics (bounding box) for a Unicode codepoint.
@@ -114,9 +114,9 @@ public:
      * @param codepoint The Unicode codepoint to look up.
      * @return Bounding box and advance metrics for the glyph.
      */
-    virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) = 0;
+    virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) const = 0;
 
 private:
-    Rect asciiMetricsCache[96];     ///< Cached metrics for codepoints 0x20..0x7F.
-    bool asciiCachePopulated = false;
+    mutable Rect asciiMetricsCache[96];     ///< Cached metrics for codepoints 0x20..0x7F.
+    mutable bool asciiCachePopulated = false;
 };

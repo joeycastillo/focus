@@ -45,7 +45,7 @@ WordWrapResult TextLayout::measureLineWrap(
     size_t len,
     int16_t layoutWidth,
     uint8_t textSize,
-    GlyphProvider* glyphProvider,
+    const GlyphProvider* glyphProvider,
     int16_t initialCursorX
 ) {
     WordWrapResult result = {
@@ -156,23 +156,23 @@ WordWrapResult TextLayout::measureLineWrap(
     return result;
 }
 
-int16_t TextLayout::getLineHeight(GlyphProvider* glyphProvider, uint8_t textSize, int16_t lineSpacing) {
+int16_t TextLayout::getLineHeight(const GlyphProvider* glyphProvider, uint8_t textSize, int16_t lineSpacing) {
     return glyphProvider->getGlyphRowCount() * textSize + lineSpacing;
 }
 
-int16_t TextLayout::getParagraphHeight(GlyphProvider* glyphProvider, uint8_t textSize, int16_t paragraphSpacing) {
+int16_t TextLayout::getParagraphHeight(const GlyphProvider* glyphProvider, uint8_t textSize, int16_t paragraphSpacing) {
     return glyphProvider->getGlyphRowCount() * textSize + paragraphSpacing;
 }
 
-int16_t TextLayout::calculateLineSpacing(GlyphProvider* glyphProvider) {
+int16_t TextLayout::calculateLineSpacing(const GlyphProvider* glyphProvider) {
     return 2;
 }
 
-int16_t TextLayout::calculateParagraphSpacing(GlyphProvider* glyphProvider) {
+int16_t TextLayout::calculateParagraphSpacing(const GlyphProvider* glyphProvider) {
     return glyphProvider->getGlyphRowCount() / 3;
 }
 
-int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, GlyphProvider* glyphProvider) {
+int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, const GlyphProvider* glyphProvider) {
     if (utf8String == nullptr || glyphProvider == nullptr || strlen(utf8String) == 0) {
         return 0;
     }
@@ -205,7 +205,7 @@ int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, G
     return width;
 }
 
-int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidth, uint8_t textSize, GlyphProvider* glyphProvider) {
+int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidth, uint8_t textSize, const GlyphProvider* glyphProvider) {
     if (utf8String == nullptr || glyphProvider == nullptr || strlen(utf8String) == 0 || layoutWidth <= 0) {
         return 0;
     }

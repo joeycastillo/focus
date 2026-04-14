@@ -72,13 +72,13 @@ public:
     ~UnifontGlyphProvider();
 
     // GlyphProvider interface
-    uint8_t getPointSize() override;
-    Size getMaxSize() override;
-    Point getOffset() override;
-    uint8_t getGlyphRowCount() override;
+    uint8_t getPointSize() const override;
+    Size getMaxSize() const override;
+    Point getOffset() const override;
+    uint8_t getGlyphRowCount() const override;
     bool isValid() const override;
-    uint8_t* glyphForCodepoint(UNICODE_CODEPOINT codepoint) override;
-    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) override;
+    const uint8_t* glyphForCodepoint(UNICODE_CODEPOINT codepoint) const override;
+    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) const override;
 
 private:
     UnifontGlyphProvider();
@@ -87,7 +87,7 @@ private:
     const uint8_t* data = nullptr;
     size_t dataSize = 0;
     bool ownsData = false;
-    FILE* fileHandle = nullptr;
+    mutable FILE* fileHandle = nullptr;
 
     // Parsed header info
     bool valid = false;
@@ -104,7 +104,7 @@ private:
     PlaneInfo planes[3];
 
     // Glyph buffer for current lookup
-    uint8_t glyphBuffer[32];
+    mutable uint8_t glyphBuffer[32];
 
     // Offset to replacement character (U+FFFD) for fallback
     uint32_t replacementCharOffset = 0;
@@ -112,6 +112,6 @@ private:
 
     // Internal helpers
     bool parseHeader();
-    uint32_t lookupGlyph(UNICODE_CODEPOINT cp, uint8_t& outWidth);
-    void readData(uint32_t offset, void* dest, size_t len);
+    uint32_t lookupGlyph(UNICODE_CODEPOINT cp, uint8_t& outWidth) const;
+    void readData(uint32_t offset, void* dest, size_t len) const;
 };

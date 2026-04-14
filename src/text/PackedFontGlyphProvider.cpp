@@ -154,23 +154,23 @@ void PackedFontGlyphProvider::convertGlyphToDisplayFormat(BDPGlyph& glyph) {
     glyph.bitmap = std::move(converted);
 }
 
-uint8_t PackedFontGlyphProvider::getPointSize() {
+uint8_t PackedFontGlyphProvider::getPointSize() const {
     return pixelSize;
 }
 
-Size PackedFontGlyphProvider::getMaxSize() {
+Size PackedFontGlyphProvider::getMaxSize() const {
     return maxSize;
 }
 
-Point PackedFontGlyphProvider::getOffset() {
+Point PackedFontGlyphProvider::getOffset() const {
     return MakePoint(0, -static_cast<int>(fontAscent));
 }
 
-uint8_t PackedFontGlyphProvider::getGlyphRowCount() {
+uint8_t PackedFontGlyphProvider::getGlyphRowCount() const {
     return fontAscent + fontDescent;
 }
 
-uint8_t* PackedFontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) {
+const uint8_t* PackedFontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) const {
     auto it = glyphs.find(codepoint);
     if (it != glyphs.end()) {
         return it->second.bitmap.data();
@@ -189,7 +189,7 @@ uint8_t* PackedFontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint)
     return nullptr;
 }
 
-Rect PackedFontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) {
+Rect PackedFontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) const {
     auto it = glyphs.find(codepoint);
     if (it == glyphs.end()) {
         it = glyphs.find(defaultChar);
