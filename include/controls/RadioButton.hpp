@@ -74,15 +74,6 @@ public:
     void setFont(std::shared_ptr<Font> font);
     /// @brief Get the current font.
     std::shared_ptr<Font> getFont() const;
-    /**
-     * @brief Associate this radio button with a RadioGroup.
-     *
-     * The group ensures mutual exclusion: selecting this button deselects
-     * all others in the same group.
-     * @param group The RadioGroup to join.
-     */
-    void setGroup(std::shared_ptr<RadioGroup> group);
-
 protected:
     std::string text;                     ///< Label text.
     bool selected = false;                ///< Whether this button is selected.
@@ -93,6 +84,11 @@ protected:
     std::shared_ptr<RadioGroup> group;
 
 private:
+    friend class RadioGroup;
+
+    /// @brief Associate this radio button with a RadioGroup. Called by RadioGroup::addButton().
+    void setGroup(std::shared_ptr<RadioGroup> group);
+
     std::shared_ptr<CanvasView> canvas;
     bool canvasValid = false;
     void renderCanvas();

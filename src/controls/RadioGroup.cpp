@@ -26,6 +26,7 @@
 #include "RadioButton.hpp"
 
 void RadioGroup::addButton(std::shared_ptr<RadioButton> button) {
+    button->setGroup(this->shared_from_this());
     this->buttons.push_back(button);
 }
 

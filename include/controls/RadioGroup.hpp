@@ -46,7 +46,7 @@ class RadioButton;
  * all others are deselected and the selectionChangedCallback is invoked with
  * the index of the newly selected button.
  */
-class RadioGroup {
+class RadioGroup : public std::enable_shared_from_this<RadioGroup> {
 public:
     /// @brief Add a radio button to this group.
     void addButton(std::shared_ptr<RadioButton> button);
