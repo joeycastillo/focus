@@ -34,6 +34,7 @@ StackView::StackView(Rect rect, Axis axis) : View(rect), axis(axis) {
 
 void StackView::setSpacing(int spacing) {
     this->spacing = spacing;
+    this->layoutSubviews();
 }
 
 int StackView::getSpacing() const {
