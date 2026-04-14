@@ -77,8 +77,8 @@ public:
     Point getOffset() override;
     uint8_t getGlyphRowCount() override;
     bool isValid() const override;
-    uint8_t* glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char* font = nullptr) override;
-    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char* font = nullptr) override;
+    uint8_t* glyphForCodepoint(UNICODE_CODEPOINT codepoint) override;
+    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) override;
 
 private:
     UnifontGlyphProvider();

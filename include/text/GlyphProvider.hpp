@@ -96,10 +96,11 @@ public:
      * dimensions and positioning.
      *
      * @param codepoint The Unicode codepoint to look up.
-     * @param font Optional font name (unused by most providers).
      * @return Pointer to the glyph bitmap, or nullptr if not found.
+     *         The pointer is valid only until the next call to
+     *         glyphForCodepoint() on the same provider.
      */
-    virtual uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) = 0;
+    virtual uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) = 0;
 
     /**
      * @brief Get the metrics (bounding box) for a Unicode codepoint.
@@ -111,10 +112,9 @@ public:
      * - size.height = bitmap height
      *
      * @param codepoint The Unicode codepoint to look up.
-     * @param font Optional font name (unused by most providers).
      * @return Bounding box and advance metrics for the glyph.
      */
-    virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) = 0;
+    virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) = 0;
 
 private:
     Rect asciiMetricsCache[96];     ///< Cached metrics for codepoints 0x20..0x7F.

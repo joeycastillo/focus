@@ -51,6 +51,6 @@ public:
     uint8_t getGlyphRowCount() override;
     /// @brief Always returns true (built-in font data is always available).
     bool isValid() const override { return true; }
-    uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
-    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
+    uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) override;
+    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) override;
 };

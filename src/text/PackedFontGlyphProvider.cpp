@@ -170,7 +170,7 @@ uint8_t PackedFontGlyphProvider::getGlyphRowCount() {
     return fontAscent + fontDescent;
 }
 
-uint8_t* PackedFontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char* font) {
+uint8_t* PackedFontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) {
     auto it = glyphs.find(codepoint);
     if (it != glyphs.end()) {
         return it->second.bitmap.data();
@@ -189,7 +189,7 @@ uint8_t* PackedFontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint,
     return nullptr;
 }
 
-Rect PackedFontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char* font) {
+Rect PackedFontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) {
     auto it = glyphs.find(codepoint);
     if (it == glyphs.end()) {
         it = glyphs.find(defaultChar);

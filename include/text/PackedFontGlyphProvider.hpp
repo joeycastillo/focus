@@ -57,8 +57,8 @@ public:
     Size getMaxSize() override;
     Point getOffset() override;
     uint8_t getGlyphRowCount() override;
-    uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
-    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font = NULL) override;
+    uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) override;
+    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) override;
 
     bool isValid() const override { return valid; }
     std::string getTitle() const override { return title; }

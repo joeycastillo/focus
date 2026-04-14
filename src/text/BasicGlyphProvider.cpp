@@ -146,7 +146,7 @@ uint8_t BasicGlyphProvider::getGlyphRowCount() {
     return 8;
 }
 
-uint8_t *BasicGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, const char *font) {
+uint8_t *BasicGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) {
     if (codepoint >= 0x20 && codepoint <= 0x7E) {
         return font5x8 + (codepoint - 0x20) * 8;
     }
@@ -154,6 +154,6 @@ uint8_t *BasicGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, cons
     return font5x8 + 96 * 8;
 }
 
-Rect BasicGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, const char *font) {
+Rect BasicGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) {
     return MakeRect(0, 0, 6, 8);
 }
