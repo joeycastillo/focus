@@ -125,6 +125,7 @@ void Slider::drawContent(int x, int y, Rect clipRect) {
 }
 
 bool Slider::handleEvent(Event event) {
+    if (!this->enabled) return false;
     if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
         Point windowPoint = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
         Point localPoint = this->convertPointFromWindow(windowPoint);

@@ -110,6 +110,7 @@ void RadioButton::appearanceDidChange() {
 }
 
 bool RadioButton::handleEvent(Event event) {
+    if (!this->enabled) return false;
     if (event.type == FOCUS_EVENT_TOUCH_DOWN || event.type == FOCUS_EVENT_SELECT) {
         if (!this->selected) {
             this->selected = true;

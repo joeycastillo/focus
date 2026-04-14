@@ -188,6 +188,7 @@ KeyboardType TextField::keyboardType() {
 }
 
 bool TextField::handleEvent(Event event) {
+    if (!this->enabled) return false;
     if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
         this->becomeFocused();
         if (this->actions.count(FOCUS_EVENT_TOUCH_DOWN)) {
