@@ -61,7 +61,7 @@ std::shared_ptr<NavigationBar> NavigationBar::create(int width) {
 
     // Title label, flexible width, centered
     bar->titleLabel = std::make_shared<LabelView>(RectZero, "");
-    bar->titleLabel->setTextAlignment(TextAlignmentCenter);
+    bar->titleLabel->setTextAlignment(TextAlignment::Center);
     bar->titleLabel->setOpaque(false);
     layout->addSubview(bar->titleLabel);
 

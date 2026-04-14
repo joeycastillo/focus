@@ -52,11 +52,11 @@ void CollectionView::setDelegate(CollectionViewDelegate* delegate, std::weak_ptr
 void CollectionView::setLayout(CollectionViewLayout layout) {
     this->layout = layout;
     if (layout == CollectionViewLayout::HorizontalList) {
-        this->setDirectionalAffinity(DirectionalAffinityHorizontal);
+        this->setDirectionalAffinity(DirectionalAffinity::Horizontal);
     } else if (layout == CollectionViewLayout::Grid) {
-        this->setDirectionalAffinity(DirectionalAffinityNone);
+        this->setDirectionalAffinity(DirectionalAffinity::None);
     } else {
-        this->setDirectionalAffinity(DirectionalAffinityVertical);
+        this->setDirectionalAffinity(DirectionalAffinity::Vertical);
     }
 }
 

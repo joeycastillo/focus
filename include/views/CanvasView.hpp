@@ -92,7 +92,7 @@ public:
     /// layoutRect is in canvas-local coordinates.
     /// @return The Y position after the last line (for stacking content below).
     int drawText(Rect layoutRect, uint16_t color, int textSize, const char *utf8String,
-                 TextAlignment alignment = TextAlignmentLeft);
+                 TextAlignment alignment = TextAlignment::Left);
 
     // Font property — if null, drawText uses Font::systemFont().
     void setFont(std::shared_ptr<Font> font);
@@ -150,7 +150,7 @@ protected:
     bool lastGlyphWasUnderscore = false;     // Tracks _ for overprint underline detection
     bool pendingOverprintUnderline = false;  // Set when BS follows _, triggers underscore redraw
     bool lastWasNewline = false;  // Tracks consecutive newlines for paragraph detection
-    TextAlignment textAlignment = TextAlignmentLeft;
+    TextAlignment textAlignment = TextAlignment::Left;
 
     // Emphasis state (SO/SI control codes): 0=normal, 1=italic, 2=bold, 3=bold+italic
     int emphasisDepth = 0;

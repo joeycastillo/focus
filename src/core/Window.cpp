@@ -184,7 +184,7 @@ void Window::dismissKeyboard() {
 
     std::shared_ptr<KeyboardView> kb = this->keyboard;
     this->keyboard.reset();
-    this->currentKeyboardType = KeyboardTypeDefault;
+    this->currentKeyboardType = KeyboardType::Default;
     View::removeSubview(kb);
 }
 

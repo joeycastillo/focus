@@ -105,15 +105,15 @@
 /// @}
 
 /// @brief Device orientation as detected by accelerometer.
-typedef enum {
-    FOCUS_ORIENTATION_UNKNOWN = 0,            ///< Orientation could not be determined.
-    FOCUS_ORIENTATION_PORTRAIT = 1,           ///< Device upright (Y+ up).
-    FOCUS_ORIENTATION_PORTRAIT_UPSIDE_DOWN = 2, ///< Device upside down (Y- up).
-    FOCUS_ORIENTATION_LANDSCAPE_LEFT = 3,     ///< Left edge down (X- up).
-    FOCUS_ORIENTATION_LANDSCAPE_RIGHT = 4,    ///< Right edge down (X+ up).
-    FOCUS_ORIENTATION_FACE_UP = 5,            ///< Screen facing up (Z+ up).
-    FOCUS_ORIENTATION_FACE_DOWN = 6,          ///< Screen facing down (Z- up).
-} FocusOrientation;
+enum class FocusOrientation {
+    Unknown = 0,            ///< Orientation could not be determined.
+    Portrait = 1,           ///< Device upright (Y+ up).
+    PortraitUpsideDown = 2, ///< Device upside down (Y- up).
+    LandscapeLeft = 3,      ///< Left edge down (X- up).
+    LandscapeRight = 4,     ///< Right edge down (X+ up).
+    FaceUp = 5,             ///< Screen facing up (Z+ up).
+    FaceDown = 6,           ///< Screen facing down (Z- up).
+};
 
 class Application;
 class Display;
@@ -201,30 +201,30 @@ inline bool RectContains(Rect outer, Rect inner) {
 }
 
 /// @brief Controls horizontal text alignment within a layout rect.
-typedef enum {
-    TextAlignmentLeft,      ///< Align text to the left edge (default).
-    TextAlignmentCenter,    ///< Center text horizontally.
-    TextAlignmentRight,     ///< Align text to the right edge.
-    TextAlignmentJustified, ///< Distribute words evenly across the full width.
-} TextAlignment;
+enum class TextAlignment {
+    Left,      ///< Align text to the left edge (default).
+    Center,    ///< Center text horizontally.
+    Right,     ///< Align text to the right edge.
+    Justified, ///< Distribute words evenly across the full width.
+};
 
 /// @brief Controls how a view's subviews are navigated with directional events.
 ///
 /// When a view receives directional navigation events and the focused view is one
 /// of its children, it uses the affinity to decide which direction maps to
 /// "previous sibling" vs. "next sibling."
-typedef enum {
-    DirectionalAffinityNone,       ///< View handles its own navigation; no automatic sibling nav.
-    DirectionalAffinityVertical,   ///< Up/Down navigate between siblings.
-    DirectionalAffinityHorizontal, ///< Left/Right navigate between siblings.
-} DirectionalAffinity;
+enum class DirectionalAffinity {
+    None,       ///< View handles its own navigation; no automatic sibling nav.
+    Vertical,   ///< Up/Down navigate between siblings.
+    Horizontal, ///< Left/Right navigate between siblings.
+};
 
 /// @brief Type of on-screen keyboard to present for text input.
-typedef enum {
-    KeyboardTypeDefault,    ///< Standard QWERTY keyboard with letters and symbols.
-    KeyboardTypeNumberPad,  ///< Numeric keypad for integer input.
-    KeyboardTypeDecimalPad, ///< Numeric keypad with decimal point.
-} KeyboardType;
+enum class KeyboardType {
+    Default,    ///< Standard QWERTY keyboard with letters and symbols.
+    NumberPad,  ///< Numeric keypad for integer input.
+    DecimalPad, ///< Numeric keypad with decimal point.
+};
 
 /// @brief Semantic role of a UI element for accessibility consumers.
 ///

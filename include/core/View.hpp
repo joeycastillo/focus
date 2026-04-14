@@ -310,7 +310,7 @@ public:
     virtual void appearanceDidChange();
 
     /// @brief Get the directional affinity for focus navigation among subviews.
-    uint16_t getDirectionalAffinity();
+    DirectionalAffinity getDirectionalAffinity();
     /// @brief Set the directional affinity (vertical or horizontal) for subview navigation.
     void setDirectionalAffinity(DirectionalAffinity value);
 
@@ -462,7 +462,7 @@ protected:
     uint16_t foregroundColor;    ///< Foreground drawing color.
     Rect frame = {};             ///< Position and size in superview coordinates.
     Rect bounds = {};            ///< View's own coordinate system (origin usually 0,0).
-    DirectionalAffinity affinity = DirectionalAffinityVertical; ///< Focus navigation direction.
+    DirectionalAffinity affinity = DirectionalAffinity::Vertical; ///< Focus navigation direction.
     std::vector<std::shared_ptr<View>> subviews; ///< Child views, drawn in order (back to front).
     /// @brief An action callback with optional ownership tracking.
     struct OwnedAction {

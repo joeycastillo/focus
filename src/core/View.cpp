@@ -332,10 +332,10 @@ bool View::handleEvent(Event event) {
                 // Determine if this direction maps to "next" or "previous" for our affinity.
                 bool isNext = false;
                 bool isRelevant = false;
-                if (this->affinity == DirectionalAffinityVertical) {
+                if (this->affinity == DirectionalAffinity::Vertical) {
                     if (event.type == FOCUS_EVENT_DIRECTION_DOWN) { isNext = true; isRelevant = true; }
                     else if (event.type == FOCUS_EVENT_DIRECTION_UP) { isNext = false; isRelevant = true; }
-                } else if (this->affinity == DirectionalAffinityHorizontal) {
+                } else if (this->affinity == DirectionalAffinity::Horizontal) {
                     if (event.type == FOCUS_EVENT_DIRECTION_RIGHT) { isNext = true; isRelevant = true; }
                     else if (event.type == FOCUS_EVENT_DIRECTION_LEFT) { isNext = false; isRelevant = true; }
                 }
@@ -521,7 +521,7 @@ void View::appearanceDidChange() {
     // Default: nothing. Subclasses with rendering caches override this.
 }
 
-uint16_t View::getDirectionalAffinity() {
+DirectionalAffinity View::getDirectionalAffinity() {
     return this->affinity;
 }
 
@@ -651,7 +651,7 @@ void View::deleteBackward() {
 }
 
 KeyboardType View::keyboardType() {
-    return KeyboardTypeDefault;
+    return KeyboardType::Default;
 }
 
 bool View::_contains(Point point) {

@@ -47,8 +47,8 @@
  * To collapse a child's space, remove it with removeSubview() — layout
  * updates automatically.
  *
- * Focus navigation affinity is set automatically: DirectionalAffinityVertical
- * for VStack, DirectionalAffinityHorizontal for HStack.
+ * Focus navigation affinity is set automatically: DirectionalAffinity::Vertical
+ * for VStack, DirectionalAffinity::Horizontal for HStack.
  */
 
 #pragma once

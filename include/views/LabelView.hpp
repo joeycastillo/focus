@@ -84,7 +84,7 @@ protected:
     std::string text;              ///< The UTF-8 text content.
     uint8_t textScale = 1;         ///< Text rendering scale factor.
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
-    TextAlignment textAlignment = TextAlignmentLeft; ///< Text alignment.
+    TextAlignment textAlignment = TextAlignment::Left; ///< Text alignment.
     int canvasRotation = 0;        ///< Canvas rotation in degrees (0/90/180/270).
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendered text.
     bool canvasValid = false;           ///< Whether the canvas needs re-rendering.

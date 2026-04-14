@@ -85,7 +85,7 @@ void Button::renderCanvas() {
 
     int verticalOffset = (this->frame.size.height - totalTextHeight) / 2;
     Rect layoutRect = MakeRect(0, verticalOffset, this->frame.size.width, totalTextHeight);
-    this->canvas->drawText(layoutRect, 1, 1, this->text.c_str(), TextAlignmentCenter);
+    this->canvas->drawText(layoutRect, 1, 1, this->text.c_str(), TextAlignment::Center);
 
     this->canvasValid = true;
 }

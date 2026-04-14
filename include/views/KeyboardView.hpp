@@ -52,7 +52,7 @@ public:
     using KeyCallback = std::function<void(std::string key)>;
 
     /// @brief Construct a keyboard view with the given frame and layout type.
-    KeyboardView(Rect rect, KeyboardType type = KeyboardTypeDefault);
+    KeyboardView(Rect rect, KeyboardType type = KeyboardType::Default);
 
     /// @brief Set the callback invoked for each key press.
     void setKeyCallback(KeyCallback callback);

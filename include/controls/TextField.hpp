@@ -105,7 +105,7 @@ protected:
     size_t maxLength = 0;                ///< Max character count (0 = unlimited).
     std::shared_ptr<Font> font;          ///< Custom font, or nullptr for system font.
     std::function<void(std::string)> textChangedCallback; ///< Text change callback.
-    KeyboardType _keyboardType = KeyboardTypeDefault;    ///< Requested keyboard layout.
+    KeyboardType _keyboardType = KeyboardType::Default;    ///< Requested keyboard layout.
 
     std::shared_ptr<CanvasView> canvas;  ///< Internal canvas for rendering.
     bool canvasValid = false;             ///< Whether the canvas needs re-rendering.

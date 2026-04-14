@@ -63,7 +63,7 @@ void KeyboardView::buildKeyLayout(std::vector<KeyRect>& keys) const {
     int w = this->frame.size.width;
     int h = this->frame.size.height;
 
-    if (this->type == KeyboardTypeNumberPad || this->type == KeyboardTypeDecimalPad) {
+    if (this->type == KeyboardType::NumberPad || this->type == KeyboardType::DecimalPad) {
         int rows = 4;
         int cols = 3;
         int rowHeight = h / rows;

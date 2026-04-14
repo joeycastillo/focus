@@ -537,22 +537,22 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
     int16_t justifyMaxGaps = 0;
 
     // Apply text alignment offset for this line
-    if (this->textAlignment != TextAlignmentLeft) {
+    if (this->textAlignment != TextAlignment::Left) {
         int16_t lineWidth = measureCodepointsWidth(codepoints + lineStart, lineLen, glyphProvider);
         int16_t slack = effectiveWidth - lineWidth;
         if (slack > 0) {
-            if (this->textAlignment == TextAlignmentCenter) {
+            if (this->textAlignment == TextAlignment::Center) {
                 if (paragraphDir == 1) {
                     this->cursor.x = indentedOriginX + slack / 2;
                 } else {
                     this->cursor.x = indentedOriginX + effectiveWidth - slack / 2;
                 }
-            } else if (this->textAlignment == TextAlignmentRight) {
+            } else if (this->textAlignment == TextAlignment::Right) {
                 if (paragraphDir == 1) {
                     this->cursor.x = indentedOriginX + slack;
                 }
                 // RTL right-align is the default (cursor at right edge)
-            } else if (this->textAlignment == TextAlignmentJustified) {
+            } else if (this->textAlignment == TextAlignment::Justified) {
                 // Count word gaps (space codepoints)
                 int16_t numSpaces = 0;
                 for (size_t k = 0; k < lineLen; k++) {

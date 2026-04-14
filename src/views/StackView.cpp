@@ -26,9 +26,9 @@
 
 StackView::StackView(Rect rect, Axis axis) : View(rect), axis(axis) {
     if (axis == Axis::Vertical) {
-        this->setDirectionalAffinity(DirectionalAffinityVertical);
+        this->setDirectionalAffinity(DirectionalAffinity::Vertical);
     } else {
-        this->setDirectionalAffinity(DirectionalAffinityHorizontal);
+        this->setDirectionalAffinity(DirectionalAffinity::Horizontal);
     }
 }
 

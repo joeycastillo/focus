@@ -401,9 +401,9 @@ Touch coordinates are packed into `Event.userInfo` as `(x << 16) | y`.
 
 When touch is not enabled, directional events (LEFT, DOWN, UP, RIGHT) navigate focus between views. Each view has a **directional affinity** that controls how its children are traversed:
 
-- `DirectionalAffinityVertical` -- UP/DOWN navigate between siblings (VStack sets this automatically)
-- `DirectionalAffinityHorizontal` -- LEFT/RIGHT navigate between siblings (HStack sets this automatically)
-- `DirectionalAffinityNone` -- no automatic navigation
+- `DirectionalAffinity::Vertical` -- UP/DOWN navigate between siblings (VStack sets this automatically)
+- `DirectionalAffinity::Horizontal` -- LEFT/RIGHT navigate between siblings (HStack sets this automatically)
+- `DirectionalAffinity::None` -- no automatic navigation
 
 Events bubble up the view hierarchy until a view handles them.
 
@@ -464,7 +464,7 @@ Font rendering is abstracted behind the **GlyphProvider** interface. Focus inclu
 ```cpp
 auto label = std::make_shared<LabelView>(MakeRect(0, 0, 400, 100), "Some text");
 label->setFont(font);
-label->setTextAlignment(TextAlignmentJustified);
+label->setTextAlignment(TextAlignment::Justified);
 ```
 
 **CanvasView** provides lower-level text drawing alongside graphics primitives:
@@ -473,7 +473,7 @@ label->setTextAlignment(TextAlignmentJustified);
 canvas->setFont(font);
 canvas->drawText(MakeRect(10, 10, 460, 780),
                  GrayscaleColor::Black(), 1, "Hello, world!",
-                 TextAlignmentLeft);
+                 TextAlignment::Left);
 ```
 
 ### Arabic and Bidirectional Text

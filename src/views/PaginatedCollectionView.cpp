@@ -241,7 +241,7 @@ void PaginatedCollectionView::rebuildLayout() {
             this->footerContainer = std::make_shared<View>(
                 MakeRect(0, footerY, w, footerThickness));
             this->footerContainer->setOpaque(false);
-            this->footerContainer->setDirectionalAffinity(DirectionalAffinityHorizontal);
+            this->footerContainer->setDirectionalAffinity(DirectionalAffinity::Horizontal);
 
             int buttonWidth = FocusMetrics::get().footerButtonWidth;
             int gap = footerGap;
@@ -255,7 +255,7 @@ void PaginatedCollectionView::rebuildLayout() {
 
             this->pageLabel = std::make_shared<LabelView>(
                 MakeRect(buttonWidth + gap, 0, labelWidth, footerThickness), "");
-            this->pageLabel->setTextAlignment(TextAlignmentCenter);
+            this->pageLabel->setTextAlignment(TextAlignment::Center);
 
             this->nextButton = std::make_shared<Button>(
                 MakeRect(w - buttonWidth, 0, buttonWidth, footerThickness), _LS("pagination.next", "Next >"));
