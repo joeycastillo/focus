@@ -251,5 +251,3 @@ enum class AccessibilityRole {
 #include "Color.hpp"
 #include "FocusMetrics.hpp"
 #include "NotificationCenter.hpp"
-#include "UserSettings.hpp"
-#include "Locale.hpp"
