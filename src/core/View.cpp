@@ -614,9 +614,14 @@ std::shared_ptr<Timer> View::scheduledTimer(
 std::string View::description() {
     char buf[100];
     int status;
+    char *demangled = abi::__cxa_demangle(typeid(*this).name(), 0, 0, &status);
 
-    snprintf(buf, sizeof(buf), "<%s: %p; tag = %ld; frame = (%d, %d, %d, %d)>", abi::__cxa_demangle(typeid(*this).name(), 0, 0,&status), this, this->tag, this->frame.origin.x, this->frame.origin.y, this->frame.size.width, this->frame.size.height);
+    snprintf(buf, sizeof(buf), "<%s: %p; tag = %ld; frame = (%d, %d, %d, %d)>",
+        demangled ? demangled : "?", this, this->tag,
+        this->frame.origin.x, this->frame.origin.y,
+        this->frame.size.width, this->frame.size.height);
 
+    free(demangled);
     return std::string(buf);
 }
 
@@ -651,8 +656,8 @@ KeyboardType View::keyboardType() {
 
 bool View::_contains(Point point) {
     return (
-        (this->frame.origin.x <= point.x) && (point.x <= (this->frame.origin.x + this->frame.size.width)) &&
-        (this->frame.origin.y <= point.y) && (point.y <= (this->frame.origin.y + this->frame.size.height))
+        (this->frame.origin.x <= point.x) && (point.x < (this->frame.origin.x + this->frame.size.width)) &&
+        (this->frame.origin.y <= point.y) && (point.y < (this->frame.origin.y + this->frame.size.height))
     );
 }
 
