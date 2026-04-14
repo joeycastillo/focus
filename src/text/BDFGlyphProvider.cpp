@@ -23,10 +23,13 @@
  */
 
 #include "BDFGlyphProvider.hpp"
+#include "FocusLog.hpp"
 #include <fstream>
 #include <sstream>
 #include <cstring>
 #include <algorithm>
+
+static const char *TAG = "BDF";
 
 BDFGlyphProvider::BDFGlyphProvider(const std::string& bdfFilePath) {
     valid = parseBDFFile(bdfFilePath);
@@ -79,10 +82,22 @@ bool BDFGlyphProvider::parseBDFFile(const std::string& path) {
             } else if (keyword == "FONT_ASCENT") {
                 int value;
                 iss >> value;
+                if (value > 255) {
+                    FOCUS_LOGW(TAG, "FONT_ASCENT %d exceeds uint8_t, clamped to 255", value);
+                    value = 255;
+                } else if (value < 0) {
+                    value = 0;
+                }
                 fontAscent = static_cast<uint8_t>(value);
             } else if (keyword == "FONT_DESCENT") {
                 int value;
                 iss >> value;
+                if (value > 255) {
+                    FOCUS_LOGW(TAG, "FONT_DESCENT %d exceeds uint8_t, clamped to 255", value);
+                    value = 255;
+                } else if (value < 0) {
+                    value = 0;
+                }
                 fontDescent = static_cast<uint8_t>(value);
             } else if (keyword == "FONTBOUNDINGBOX") {
                 int w, h, xoff, yoff;
