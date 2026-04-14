@@ -64,6 +64,10 @@ struct WordPosition {
 /// then blitted to the Display during the normal view draw cycle.
 class CanvasView : public View {
 public:
+    /// Construct a canvas with the given frame. If either dimension is zero
+    /// or negative, buffer allocation is deferred until setFrame() assigns
+    /// positive dimensions (e.g., during a StackView layout pass). Drawing
+    /// operations on a zero-size canvas are safe no-ops.
     CanvasView(Rect rect);
     void setFrame(Rect rect) override;
 

@@ -32,34 +32,35 @@
 
 extern const uint16_t _unicode_info_0000_33FF[];
 
-static int clampPositive(int v) { return v > 0 ? v : 1; }
-
 CanvasView::CanvasView(Rect rect)
     : View(rect),
-      rowBytes((clampPositive(rect.size.width) + 7) / 8),
-      planeSize(((clampPositive(rect.size.width) + 7) / 8) * clampPositive(rect.size.height)),
-      buffer(((clampPositive(rect.size.width) + 7) / 8) * clampPositive(rect.size.height), 0xFF) {
-    if (rect.size.width <= 0 || rect.size.height <= 0) {
-        printf("WARN CanvasView: bad dimensions %d x %d\n", rect.size.width, rect.size.height);
-    }
+      rowBytes((rect.size.width > 0 && rect.size.height > 0) ? (rect.size.width + 7) / 8 : 0),
+      planeSize((rect.size.width > 0 && rect.size.height > 0) ? ((rect.size.width + 7) / 8) * rect.size.height : 0),
+      buffer((rect.size.width > 0 && rect.size.height > 0) ? ((rect.size.width + 7) / 8) * rect.size.height : 0, 0xFF) {
     this->opaque = true;
 }
 
 void CanvasView::setFrame(Rect rect) {
     if (rect.size.width != this->frame.size.width || rect.size.height != this->frame.size.height) {
-        int w = (rect.size.width > 0) ? rect.size.width : 1;
-        int h = (rect.size.height > 0) ? rect.size.height : 1;
-        if (this->canvasMode == DisplayMode::Grayscale) {
-            this->rowBytes = w;
-            this->planeSize = w * h;
-        } else if (this->canvasMode == DisplayMode::RGB565) {
-            this->rowBytes = w * 2;
-            this->planeSize = w * 2 * h;
+        int w = rect.size.width;
+        int h = rect.size.height;
+        if (w > 0 && h > 0) {
+            if (this->canvasMode == DisplayMode::Grayscale) {
+                this->rowBytes = w;
+                this->planeSize = w * h;
+            } else if (this->canvasMode == DisplayMode::RGB565) {
+                this->rowBytes = w * 2;
+                this->planeSize = w * 2 * h;
+            } else {
+                this->rowBytes = (w + 7) / 8;
+                this->planeSize = this->rowBytes * h;
+            }
+            this->buffer.assign(this->planeSize, 0xFF);
         } else {
-            this->rowBytes = (w + 7) / 8;
-            this->planeSize = this->rowBytes * h;
+            this->rowBytes = 0;
+            this->planeSize = 0;
+            this->buffer.clear();
         }
-        this->buffer.assign(this->planeSize, 0xFF);
     }
     View::setFrame(rect);
 }
