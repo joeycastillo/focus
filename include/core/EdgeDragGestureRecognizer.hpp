@@ -28,7 +28,7 @@
  *
  * EdgeDragGestureRecognizer activates when a touch begins inside its
  * activation region and moves beyond a threshold distance. Typical use:
- * attach to a window corner to recognize frontlight-adjustment drags.
+ * attach to a window edge to recognize brightness or slider adjustment drags.
  *
  * - Touch down inside region → Possible (buffering begins)
  * - Drag beyond threshold → Recognized (onRecognized + onMoved fire)

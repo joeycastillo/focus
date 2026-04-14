@@ -23,7 +23,6 @@ const FocusMetrics FocusMetrics::Compact = {
 };
 
 // Standard: 320x240 TFT, 5x8 font (gh=8)
-// The common hobbyist setup: ESP32 + ILI9341 QVGA display.
 const FocusMetrics FocusMetrics::Standard = {
     .navBarHeight = 25,
     .navBarPadding = 8,
@@ -35,8 +34,7 @@ const FocusMetrics FocusMetrics::Standard = {
     .footerButtonWidth = 50,
 };
 
-// Large: 480x800 EPD, 24-32px system font (Open Book Touch)
-// Restores the exact values from the original hardcoded constants.
+// Large: 480x800+ display, 24-32px system font
 const FocusMetrics FocusMetrics::Large = {
     .navBarHeight = 64,
     .navBarPadding = 8,

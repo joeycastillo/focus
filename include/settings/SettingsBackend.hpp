@@ -27,8 +27,9 @@
  * @brief Abstract interface for persistent key-value storage backends.
  *
  * SettingsBackend defines the storage contract used by UserSettings.
- * Implementations include InMemorySettingsBackend (in-memory, no persistence)
- * and NVSSettingsBackend (ESP32 NVS, in the application layer).
+ * Focus provides InMemorySettingsBackend (no persistence) and
+ * XMLSettingsBackend (file-based). Applications can implement this
+ * interface for their platform's persistent storage.
  */
 
 #pragma once

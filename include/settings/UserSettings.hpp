@@ -27,9 +27,9 @@
  * @brief Platform-agnostic key-value settings store with namespacing.
  *
  * UserSettings provides typed get/set operations (string, int, bool) backed
- * by a pluggable SettingsBackend. It's designed to pair well with the ESP32
- * NVS (non-volatile storage) key/value store, but the storage backing is
- * plarform agnostic; an XML backend is provided.
+ * by a pluggable SettingsBackend. The storage backing is platform-agnostic;
+ * an in-memory backend and an XML backend are provided, and applications
+ * can implement SettingsBackend for their platform's persistent storage.
  *
  * Instances are accessed by namespace (e.g. "MyApp") and cached — repeated
  * calls with the same namespace return the same instance. The backend factory

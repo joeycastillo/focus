@@ -125,7 +125,7 @@ public:
     /// @brief Stable programmatic identifier for this view controller.
     ///
     /// Used by test harnesses and accessibility tools to identify which
-    /// screen is currently active (e.g. "home-screen", "book-list").
+    /// screen is currently active (e.g. "home-screen", "settings").
     /// Set by application code; empty by default.
     std::string accessibilityIdentifier;
 
