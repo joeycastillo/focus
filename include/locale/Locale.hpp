@@ -28,7 +28,7 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include <sstream>
+#include <type_traits>
 
 /// Locale provides a Font-style cached factory for loading localized string tables.
 /// Locale files are simple key=value text files (UTF-8, .strings extension).
@@ -115,8 +115,10 @@ private:
 namespace detail {
     inline std::string toString(const std::string& v) { return v; }
     inline std::string toString(const char* v) { return v ? std::string(v) : std::string(); }
-    template<typename T>
-    inline std::string toString(const T& v) { std::ostringstream ss; ss << v; return ss.str(); }
+    template<size_t N>
+    inline std::string toString(const char (&v)[N]) { return std::string(v); }
+    template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, int>::type = 0>
+    inline std::string toString(const T& v) { return std::to_string(v); }
 
     inline std::string substitute(const std::string& templ, const std::vector<std::string>& args) {
         std::string result;
