@@ -291,6 +291,7 @@ bool CollectionView::handleEvent(Event event) {
 
                 int index = this->indexOfChildContaining(focusedView);
                 if (index < 0) return false;
+                if (this->itemSize.width <= 0) return View::handleEvent(event);
 
                 int columns = (this->frame.size.width + this->itemSpacing) / (this->itemSize.width + this->itemSpacing);
                 if (columns < 1) columns = 1;
