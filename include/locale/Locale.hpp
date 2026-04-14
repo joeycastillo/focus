@@ -27,7 +27,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <memory>
 #include <type_traits>
 
 /// Locale provides a Font-style cached factory for loading localized string tables.
@@ -48,20 +47,20 @@ public:
     /// Load a locale by identifier. Returns cached instance if already loaded.
     /// Searches all registered paths for a file named "{identifier}.strings".
     /// @param identifier Locale identifier (e.g., "en", "es", "fr")
-    static std::shared_ptr<Locale> withIdentifier(const std::string& identifier);
+    static Locale* withIdentifier(const std::string& identifier);
 
     /// Set the active locale for the application.
     /// Posts a "LocaleChanged" notification via NotificationCenter.
-    static void setCurrentLocale(std::shared_ptr<Locale> locale);
+    static void setCurrentLocale(Locale* locale);
 
     /// Get the current active locale.
-    static std::shared_ptr<Locale> currentLocale();
+    static Locale* currentLocale();
 
     /// Set the default/fallback locale (used when a key is missing from the active locale).
-    static void setDefaultLocale(std::shared_ptr<Locale> locale);
+    static void setDefaultLocale(Locale* locale);
 
     /// Get the default/fallback locale.
-    static std::shared_ptr<Locale> defaultLocale();
+    static Locale* defaultLocale();
 
     /// Set the locale search path (clears any existing paths).
     /// @param path Directory path (e.g., "/system/locale/")
@@ -99,12 +98,12 @@ private:
     std::map<std::string, std::string> strings;
     bool valid = false;
 
-    static std::map<std::string, std::shared_ptr<Locale>> localeCache;
+    static std::map<std::string, Locale*> localeCache;
     static std::vector<std::string> searchPaths;
-    static std::shared_ptr<Locale> activeLocale;
-    static std::shared_ptr<Locale> fallbackLocale;
+    static Locale* activeLocale;
+    static Locale* fallbackLocale;
 
-    static std::shared_ptr<Locale> loadLocaleFile(const std::string& identifier);
+    static Locale* loadLocaleFile(const std::string& identifier);
     static std::map<std::string, std::string> parseFile(const std::string& path);
 };
 

@@ -27,15 +27,15 @@
 #include <fstream>
 
 // Static member initialization
-std::map<std::string, std::shared_ptr<Locale>> Locale::localeCache;
+std::map<std::string, Locale*> Locale::localeCache;
 std::vector<std::string> Locale::searchPaths;
-std::shared_ptr<Locale> Locale::activeLocale = nullptr;
-std::shared_ptr<Locale> Locale::fallbackLocale = nullptr;
+Locale* Locale::activeLocale = nullptr;
+Locale* Locale::fallbackLocale = nullptr;
 
 Locale::Locale(const std::string& identifier, std::map<std::string, std::string> strings)
     : identifier(identifier), strings(std::move(strings)), valid(true) {}
 
-std::shared_ptr<Locale> Locale::withIdentifier(const std::string& identifier) {
+Locale* Locale::withIdentifier(const std::string& identifier) {
     auto it = localeCache.find(identifier);
     if (it != localeCache.end()) {
         return it->second;
@@ -50,20 +50,20 @@ std::shared_ptr<Locale> Locale::withIdentifier(const std::string& identifier) {
     return nullptr;
 }
 
-void Locale::setCurrentLocale(std::shared_ptr<Locale> locale) {
+void Locale::setCurrentLocale(Locale* locale) {
     activeLocale = locale;
     NotificationCenter::shared()->post("LocaleChanged");
 }
 
-std::shared_ptr<Locale> Locale::currentLocale() {
+Locale* Locale::currentLocale() {
     return activeLocale;
 }
 
-void Locale::setDefaultLocale(std::shared_ptr<Locale> locale) {
+void Locale::setDefaultLocale(Locale* locale) {
     fallbackLocale = locale;
 }
 
-std::shared_ptr<Locale> Locale::defaultLocale() {
+Locale* Locale::defaultLocale() {
     return fallbackLocale;
 }
 
@@ -108,12 +108,12 @@ bool Locale::isValid() const {
     return valid;
 }
 
-std::shared_ptr<Locale> Locale::loadLocaleFile(const std::string& identifier) {
+Locale* Locale::loadLocaleFile(const std::string& identifier) {
     for (const auto& path : searchPaths) {
         std::string filePath = path + identifier + ".strings";
         auto strings = parseFile(filePath);
         if (!strings.empty()) {
-            return std::shared_ptr<Locale>(new Locale(identifier, std::move(strings)));
+            return new Locale(identifier, std::move(strings));
         }
     }
     return nullptr;
