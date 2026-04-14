@@ -459,6 +459,8 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
     }
     if (glyphProvider == nullptr) return 0;
     if (strlen(utf8String) == 0) return 0;
+    if (text_size < 1) text_size = 1;
+    if (text_size > 16) text_size = 16;
 
     size_t len = utf8_codepoint_length((char *)utf8String);
 
