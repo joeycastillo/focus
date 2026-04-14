@@ -29,6 +29,7 @@
 #include "Task.hpp"
 #include "Display.hpp"
 #include <algorithm>
+#include <cassert>
 #include <typeinfo>
 #include <cstdlib>
 #include "FocusLog.hpp"
@@ -46,6 +47,7 @@ void Application::addTask(std::shared_ptr<Task> task) {
 }
 
 void Application::run() {
+    assert(!this->weak_from_this().expired() && "Application must be managed by std::shared_ptr (use std::make_shared)");
     this->setup();
     std::shared_ptr<Application> application = this->shared_from_this();
     this->window->application = application;

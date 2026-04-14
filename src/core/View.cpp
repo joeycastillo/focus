@@ -27,6 +27,7 @@
 #include "Timer.hpp"
 #include "Display.hpp"
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <cxxabi.h>
 
@@ -145,6 +146,7 @@ void View::drawContent(int x, int y, Rect clipRect) {
 }
 
 void View::addSubview(std::shared_ptr<View> view) {
+    assert(!this->weak_from_this().expired() && "View must be managed by std::shared_ptr (use std::make_shared)");
     view->superview = this;
     this->subviews.push_back(view);
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
