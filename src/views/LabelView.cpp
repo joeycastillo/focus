@@ -84,6 +84,9 @@ void LabelView::setText(std::string text) {
 void LabelView::setTextScale(uint8_t scale) {
     this->textScale = scale;
     this->canvasValid = false;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
+    }
 }
 
 void LabelView::setFont(std::shared_ptr<Font> font) {
