@@ -6,9 +6,10 @@ PROJECT_BRIEF          = "A C++ UI framework for resource-constrained devices"
 OUTPUT_DIRECTORY       = docs
 
 # --- Input ---
-INPUT                  = include/
+INPUT                  = README.md include/
 RECURSIVE              = YES
 FILE_PATTERNS          = *.hpp *.dox
+USE_MDFILE_AS_MAINPAGE = README.md
 EXCLUDE_PATTERNS       = */doxygen-awesome-css/*
 
 # --- Extraction ---

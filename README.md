@@ -36,7 +36,7 @@ Every view has two rectangles:
 - **frame** -- position and size in the superview's coordinate system.
 - **bounds** -- the view's own coordinate system (origin is normally 0,0 but can be offset for scrolling).
 
-Views have a foreground color and background color (`uint16_t` values -- see [Colors and Display](#colors-and-display)). If a view is **opaque**, it fills its frame with its background color before drawing content.
+Views have a foreground color and background color (`uint16_t` values -- see Colors and Display below). If a view is **opaque**, it fills its frame with its background color before drawing content.
 
 ### Window
 
