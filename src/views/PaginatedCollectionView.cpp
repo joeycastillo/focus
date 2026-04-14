@@ -25,6 +25,7 @@
 #include "PaginatedCollectionView.hpp"
 #include "CollectionViewDataSource.hpp"
 #include "CanvasView.hpp"
+#include "Color.hpp"
 #include "Button.hpp"
 #include "LabelView.hpp"
 #include "Locale.hpp"
