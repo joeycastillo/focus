@@ -51,6 +51,7 @@ public:
      * @param color The color to draw the hatched pixels in.
      */
     HatchedView(Rect rect, uint16_t color);
+    void setFrame(Rect rect) override;
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
 private:
     int maskRowBytes;             ///< Bytes per row in the mask buffer.

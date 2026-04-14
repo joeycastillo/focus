@@ -42,6 +42,21 @@ HatchedView::HatchedView(Rect rect, uint16_t color) : View(rect) {
     }
 }
 
+void HatchedView::setFrame(Rect rect) {
+    if (rect.size.width != this->frame.size.width || rect.size.height != this->frame.size.height) {
+        this->maskRowBytes = (rect.size.width + 7) / 8;
+        this->mask.assign(this->maskRowBytes * rect.size.height, 0);
+        for (int my = 0; my < rect.size.height; my++) {
+            for (int mx = 0; mx < rect.size.width; mx++) {
+                if ((mx + my) % 4) {
+                    this->mask[my * this->maskRowBytes + (mx >> 3)] |= (0x80 >> (mx & 7));
+                }
+            }
+        }
+    }
+    View::setFrame(rect);
+}
+
 void HatchedView::drawContent(int x, int y, Rect clipRect) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
         display->blitMasked(x + this->frame.origin.x, y + this->frame.origin.y,
