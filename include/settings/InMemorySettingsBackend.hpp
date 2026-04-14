@@ -31,16 +31,16 @@
 
 class InMemorySettingsBackend : public SettingsBackend {
 public:
-    bool hasKey(const std::string& key) override;
+    bool hasKey(const std::string& key) const override;
     void eraseKey(const std::string& key) override;
 
-    std::string getString(const std::string& key) override;
+    std::string getString(const std::string& key) const override;
     void setString(const std::string& key, const std::string& value) override;
 
-    int32_t getInt(const std::string& key) override;
+    int32_t getInt(const std::string& key) const override;
     void setInt(const std::string& key, int32_t value) override;
 
-    bool getBool(const std::string& key) override;
+    bool getBool(const std::string& key) const override;
     void setBool(const std::string& key, bool value) override;
 
 private:

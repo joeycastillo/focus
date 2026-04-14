@@ -58,11 +58,11 @@ UserSettings* UserSettings::withNamespace(const std::string& name) {
 UserSettings::UserSettings(std::unique_ptr<SettingsBackend> backend)
     : backend(std::move(backend)) {}
 
-bool UserSettings::hasKey(const std::string& key) {
+bool UserSettings::hasKey(const std::string& key) const {
     return backend->hasKey(key);
 }
 
-std::string UserSettings::getString(const std::string& key) {
+std::string UserSettings::getString(const std::string& key) const {
     return backend->getString(key);
 }
 
@@ -70,7 +70,7 @@ void UserSettings::setString(const std::string& key, const std::string& value) {
     backend->setString(key, value);
 }
 
-int32_t UserSettings::getInt(const std::string& key) {
+int32_t UserSettings::getInt(const std::string& key) const {
     return backend->getInt(key);
 }
 
@@ -78,7 +78,7 @@ void UserSettings::setInt(const std::string& key, int32_t value) {
     backend->setInt(key, value);
 }
 
-bool UserSettings::getBool(const std::string& key) {
+bool UserSettings::getBool(const std::string& key) const {
     return backend->getBool(key);
 }
 

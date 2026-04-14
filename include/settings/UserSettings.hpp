@@ -87,20 +87,20 @@ public:
     static UserSettings* withNamespace(const std::string& name);
 
     /// @brief Check whether a key exists in this namespace.
-    bool hasKey(const std::string& key);
+    bool hasKey(const std::string& key) const;
 
     /// @brief Get a string value. If the key doesn't exist, the backend should return an empty string.
-    std::string getString(const std::string& key);
+    std::string getString(const std::string& key) const;
     /// @brief Set a string value.
     void setString(const std::string& key, const std::string& value);
 
     /// @brief Get a 32-bit integer value. If the key doesn't exist, the backend should return 0.
-    int32_t getInt(const std::string& key);
+    int32_t getInt(const std::string& key) const;
     /// @brief Set a 32-bit integer value.
     void setInt(const std::string& key, int32_t value);
 
     /// @brief Get a boolean value. If the key doesn't exist, the backend should return false.
-    bool getBool(const std::string& key);
+    bool getBool(const std::string& key) const;
     /// @brief Set a boolean value.
     void setBool(const std::string& key, bool value);
 

@@ -24,7 +24,7 @@
 
 #include "InMemorySettingsBackend.hpp"
 
-bool InMemorySettingsBackend::hasKey(const std::string& key) {
+bool InMemorySettingsBackend::hasKey(const std::string& key) const {
     return store.count(key) > 0;
 }
 
@@ -32,7 +32,7 @@ void InMemorySettingsBackend::eraseKey(const std::string& key) {
     store.erase(key);
 }
 
-std::string InMemorySettingsBackend::getString(const std::string& key) {
+std::string InMemorySettingsBackend::getString(const std::string& key) const {
     auto it = store.find(key);
     if (it == store.end()) return "";
     auto* value = std::get_if<std::string>(&it->second);
@@ -43,7 +43,7 @@ void InMemorySettingsBackend::setString(const std::string& key, const std::strin
     store[key] = value;
 }
 
-int32_t InMemorySettingsBackend::getInt(const std::string& key) {
+int32_t InMemorySettingsBackend::getInt(const std::string& key) const {
     auto it = store.find(key);
     if (it == store.end()) return 0;
     auto* value = std::get_if<int32_t>(&it->second);
@@ -54,7 +54,7 @@ void InMemorySettingsBackend::setInt(const std::string& key, int32_t value) {
     store[key] = value;
 }
 
-bool InMemorySettingsBackend::getBool(const std::string& key) {
+bool InMemorySettingsBackend::getBool(const std::string& key) const {
     auto it = store.find(key);
     if (it == store.end()) return false;
     auto* value = std::get_if<bool>(&it->second);

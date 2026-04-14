@@ -47,22 +47,22 @@ public:
     virtual ~SettingsBackend() = default;
 
     /// @brief Check whether a key exists in storage.
-    virtual bool hasKey(const std::string& key) = 0;
+    virtual bool hasKey(const std::string& key) const = 0;
     /// @brief Remove a key and its value from storage.
     virtual void eraseKey(const std::string& key) = 0;
 
     /// @brief Read a string value for the given key.
-    virtual std::string getString(const std::string& key) = 0;
+    virtual std::string getString(const std::string& key) const = 0;
     /// @brief Write a string value for the given key.
     virtual void setString(const std::string& key, const std::string& value) = 0;
 
     /// @brief Read a 32-bit integer value for the given key.
-    virtual int32_t getInt(const std::string& key) = 0;
+    virtual int32_t getInt(const std::string& key) const = 0;
     /// @brief Write a 32-bit integer value for the given key.
     virtual void setInt(const std::string& key, int32_t value) = 0;
 
     /// @brief Read a boolean value for the given key.
-    virtual bool getBool(const std::string& key) = 0;
+    virtual bool getBool(const std::string& key) const = 0;
     /// @brief Write a boolean value for the given key.
     virtual void setBool(const std::string& key, bool value) = 0;
 };
