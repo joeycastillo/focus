@@ -97,6 +97,13 @@
 #define FOCUS_EVENT_BATTERY_VOLTAGE_CHANGED (2003) ///< Battery voltage changed (userInfo is millivolts).
 /// @}
 
+/// @name Application-Defined Events
+/// @{
+/// Event codes 0-9999 are reserved for the Focus framework.
+/// Application-defined events should start at FOCUS_EVENT_USER_BASE.
+#define FOCUS_EVENT_USER_BASE (10000)
+/// @}
+
 /// @brief Device orientation as detected by accelerometer.
 typedef enum {
     FOCUS_ORIENTATION_UNKNOWN = 0,            ///< Orientation could not be determined.
