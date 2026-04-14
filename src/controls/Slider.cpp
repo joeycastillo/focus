@@ -225,6 +225,7 @@ std::shared_ptr<Font> Slider::getFont() const {
 }
 
 void Slider::setStep(float step) {
+    if (step < 0.001f) step = 0.001f;
     this->step = step;
 }
 
