@@ -1,0 +1,42 @@
+/// @mainpage Focus Framework
+///
+/// Focus is a lightweight C++ UI framework for resource-constrained devices. It provides a view hierarchy with layout, event dispatch, touch and directional input, focus management, and text rendering — all in a cooperative single-threaded model with no OS dependencies beyond a display backend.
+///
+/// @section modules Modules
+///
+/// - @ref core — Application lifecycle, view hierarchy, event dispatch, and display.
+/// - @ref controls — Interactive UI elements: buttons, text fields, sliders, checkboxes.
+/// - @ref views — Concrete view implementations for layout, display, and content.
+/// - @ref viewcontrollers — Container view controllers for navigation and modal presentation.
+/// - @ref text — Font loading, glyph rendering, text layout, and Unicode support.
+/// - @ref settings — Platform-agnostic key-value settings with pluggable backends.
+/// - @ref locale — Localized string tables with placeholder substitution and plurals.
+///
+/// @section getting_started Getting Started
+///
+/// A minimal Focus application creates a Display backend, a Window, and an Application subclass:
+///
+/// @code
+/// class MyApp : public Application {
+/// public:
+///     MyApp(const std::shared_ptr<Window>& window) : Application(window) {}
+///     void setup() override {
+///         auto rootVC = std::make_shared<MyViewController>(this->shared_from_this());
+///         this->setRootViewController(rootVC);
+///     }
+/// };
+///
+/// // In main():
+/// auto display = std::make_shared<MyDisplay>(480, 800);
+/// auto window = std::make_shared<Window>(display, MakeSize(480, 800));
+/// auto app = std::make_shared<MyApp>(window);
+/// app->run();  // enters the cooperative run loop
+/// @endcode
+///
+/// @section threading Threading Model
+///
+/// Focus is single-threaded cooperative. All event dispatch, layout, drawing, and callbacks execute on the thread that calls Application::run(). There is no internal locking. If your application needs to communicate with Focus from another thread (e.g., a network callback), post a notification or enqueue a DeferredTask from the main thread.
+///
+/// @section memory Memory Management
+///
+/// Views are reference-counted via std::shared_ptr. The view hierarchy holds strong references from parent to child; back-references (superview, window) are raw pointers or weak_ptr. Font and Locale caches grow without bound; call Font::clearCache() and Locale::clearCache() from your platform's memory-pressure handler to reclaim memory. See the Font and Locale class documentation for details.
