@@ -236,7 +236,7 @@ bool View::becomeFocused() {
     if (this->canBecomeFocused()) {
         if (std::shared_ptr<Window> window = this->getWindow().lock()) {
             std::shared_ptr<View> oldResponder = window->getFocusedView().lock();
-            if (oldResponder != NULL) {
+            if (oldResponder != nullptr) {
                 // if the window has a focused view, let it know it's going out of focus.
                 oldResponder->willResignFocus();
                 oldResponder->focused = false;
@@ -295,13 +295,13 @@ void View::didResignFocus() {
 }
 
 bool View::handleEvent(Event event) {
-    std::shared_ptr<View> focusedView = NULL;
-    std::shared_ptr<Window> window = NULL;
+    std::shared_ptr<View> focusedView = nullptr;
+    std::shared_ptr<Window> window = nullptr;
     if ((window = this->getWindow().lock())) {
         focusedView = window->getFocusedView().lock();
     } else {
         focusedView = this->shared_from_this();
-        if (focusedView == NULL) return false;
+        if (focusedView == nullptr) return false;
         window = std::static_pointer_cast<Window, View>(focusedView);
     }
 
