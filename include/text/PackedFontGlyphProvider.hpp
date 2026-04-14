@@ -49,6 +49,16 @@ struct BDPGlyph {
 };
 
 /// @brief GlyphProvider that loads and serves glyphs from BDP font files.
+///
+/// @par Memory
+/// All glyphs are held in memory for the lifetime of the provider. This is
+/// efficient for small application-specific fonts (100-500 glyphs) but can
+/// use significant memory for full-Unicode fonts (10,000+ glyphs). For large
+/// character sets, prefer UnifontGlyphProvider, which streams glyphs on demand.
+///
+/// @todo Lazy loading: load glyph bitmaps on demand rather than all at
+/// construction. The const query interface already supports this via mutable
+/// caching (see UnifontGlyphProvider for the pattern).
 class PackedFontGlyphProvider : public GlyphProvider {
 public:
     PackedFontGlyphProvider(const std::string& bdpFilePath);
