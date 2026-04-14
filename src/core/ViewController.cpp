@@ -66,6 +66,9 @@ std::string ViewController::getTitle() const {
 
 void ViewController::setTitle(const std::string& title) {
     this->title = title;
+    if (auto navController = this->navigationController.lock()) {
+        navController->updateNavigationBar();
+    }
 }
 
 std::shared_ptr<NavigationViewController> ViewController::getNavigationController() const {

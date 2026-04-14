@@ -117,10 +117,12 @@ protected:
         std::shared_ptr<ViewController> newVC);
 
 private:
-    std::vector<std::shared_ptr<ViewController>> viewControllerStack;
-    std::string rightButtonTitle;
-    std::function<void()> rightButtonAction;
+    friend class ViewController;
 
     /// @brief Update the navigation bar title and back button visibility.
     void updateNavigationBar();
+
+    std::vector<std::shared_ptr<ViewController>> viewControllerStack;
+    std::string rightButtonTitle;
+    std::function<void()> rightButtonAction;
 };
