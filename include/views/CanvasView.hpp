@@ -91,6 +91,10 @@ public:
     /// UI text (labels, buttons) where layout and rendering happen together.
     /// layoutRect is in canvas-local coordinates.
     /// @return The Y position after the last line (for stacking content below).
+    /// @note Allocates temporary heap memory proportional to the input
+    ///       string length (approximately 8-9 bytes per codepoint).
+    ///       For long text, split the input across multiple drawText
+    ///       calls rather than passing the entire string at once.
     int drawText(Rect layoutRect, uint16_t color, int textSize, const char *utf8String,
                  TextAlignment alignment = TextAlignment::Left);
 
@@ -175,6 +179,7 @@ private:
     int rowBytes;                 // Monochrome: (width+7)/8; Grayscale: width; RGB565: width*2
     int planeSize;                // Monochrome buffer size = ((width+7)/8) * height
     std::vector<uint8_t> buffer;  // Monochrome: 1bpp; Grayscale: 8bpp; RGB565: 16bpp platform-native uint16_t
+    std::vector<uint8_t> bidiResolveBuffer; // Reusable buffer for bidi character class resolution
     DisplayMode canvasMode = DisplayMode::Monochrome;
     int canvasRotation = 0;       // rotation index: 0=0°, 1=90°, 2=180°, 3=270°
 

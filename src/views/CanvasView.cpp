@@ -581,7 +581,8 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
 
     // Simplified UAX#9 bidi algorithm: resolve each codepoint in this line
     // to a directional run (L or R), then render runs in visual order.
-    uint8_t resolved[lineLen];
+    this->bidiResolveBuffer.resize(lineLen);
+    uint8_t *resolved = this->bidiResolveBuffer.data();
     for (size_t i = 0; i < lineLen; i++) {
         resolved[i] = getTraitsForCodepoint(codepoints[lineStart + i]).is.bidi_class;
     }
