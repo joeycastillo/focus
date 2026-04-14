@@ -24,6 +24,7 @@
 
 #include "UserSettings.hpp"
 #include "SettingsBackend.hpp"
+#include "FocusLog.hpp"
 
 UserSettings::BackendFactory UserSettings::backendFactory;
 std::map<std::string, UserSettings*> UserSettings::instances;
@@ -38,7 +39,17 @@ UserSettings* UserSettings::withNamespace(const std::string& name) {
         return it->second;
     }
 
+    if (!backendFactory) {
+        FOCUS_LOGE("UserSettings", "withNamespace called before setBackendFactory");
+        return nullptr;
+    }
+
     auto backend = backendFactory(name);
+    if (!backend) {
+        FOCUS_LOGE("UserSettings", "backendFactory returned null for namespace '%s'", name.c_str());
+        return nullptr;
+    }
+
     auto* settings = new UserSettings(std::move(backend));
     instances[name] = settings;
     return settings;
