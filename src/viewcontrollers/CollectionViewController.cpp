@@ -65,8 +65,6 @@ void CollectionViewController::reloadData() {
 }
 
 void CollectionViewController::createView() {
-    ViewController::createView();
-
     auto app = this->application.lock();
     Size size = app ? app->getWindow()->getContentRect().size : MakeSize(480, 768);
 

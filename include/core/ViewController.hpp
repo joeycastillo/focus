@@ -107,11 +107,10 @@ protected:
     /**
      * @brief Create this controller's view hierarchy.
      *
-     * Subclasses must override this to build their view tree. The base
-     * implementation simply destroys any existing view. Assign the root
-     * of your view tree to this->view.
+     * Subclasses must override this to build their view tree. Assign the
+     * root of your view tree to this->view.
      */
-    virtual void createView();
+    virtual void createView() = 0;
 
     /// @brief Destroy the view hierarchy, releasing the root view.
     virtual void destroyView();

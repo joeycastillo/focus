@@ -55,12 +55,6 @@ void ViewController::generateEvent(int32_t eventType, int32_t userInfo) {
     }
 }
 
-void ViewController::createView() {
-    if (this->view) {
-        this->destroyView();
-    }
-    // subclasses must override to create view here
-}
 
 void ViewController::destroyView() {
     this->view.reset();

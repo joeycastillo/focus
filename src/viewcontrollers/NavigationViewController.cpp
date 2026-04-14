@@ -49,8 +49,6 @@ NavigationViewController::NavigationViewController(
 }
 
 void NavigationViewController::createView() {
-    ViewController::createView();
-
     auto app = this->application.lock();
     if (!app) return;
 
