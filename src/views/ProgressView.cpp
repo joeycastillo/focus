@@ -54,6 +54,8 @@ void ProgressView::drawContent(int x, int y, Rect clipRect) {
 }
 
 void ProgressView::setProgress(float value) {
+    if (value < 0.0f) value = 0.0f;
+    if (value > 1.0f) value = 1.0f;
     this->progress = value;
     this->canvasValid = false;
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
