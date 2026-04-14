@@ -246,17 +246,24 @@ void CollectionView::loadPage(size_t page) {
             if (liveDelegate) {
                 size_t globalIndex = i;
                 CollectionView* cv = this;
+                // Capture the delegate owner weak_ptr so lambdas can verify
+                // the delegate is still alive before invoking it.
+                std::weak_ptr<void> ownerWeak = this->delegateOwner.value_or(std::weak_ptr<void>{});
+                bool hasOwner = this->delegateOwner.has_value();
                 cell->setAction(
-                    [liveDelegate, cv, globalIndex](Event, std::weak_ptr<View>) {
+                    [liveDelegate, cv, globalIndex, ownerWeak, hasOwner](Event, std::weak_ptr<View>) {
+                        if (hasOwner && ownerWeak.expired()) return;
                         liveDelegate->didSelectItemAtIndex(cv, globalIndex);
                     },
                     FOCUS_EVENT_TOUCH_UP_INSIDE);
                 cell->setAction(
-                    [liveDelegate, cv, globalIndex](Event, std::weak_ptr<View>) {
+                    [liveDelegate, cv, globalIndex, ownerWeak, hasOwner](Event, std::weak_ptr<View>) {
+                        if (hasOwner && ownerWeak.expired()) return;
                         liveDelegate->didLongPressItemAtIndex(cv, globalIndex);
                     },
                     FOCUS_EVENT_LONG_PRESS);
-                cell->onFocusChanged = [liveDelegate, cv, globalIndex](CollectionViewCell& c, bool focused) {
+                cell->onFocusChanged = [liveDelegate, cv, globalIndex, ownerWeak, hasOwner](CollectionViewCell& c, bool focused) {
+                    if (hasOwner && ownerWeak.expired()) return;
                     if (focused) {
                         liveDelegate->didFocusItemAtIndex(cv, globalIndex, c);
                     } else {
