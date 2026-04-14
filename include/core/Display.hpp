@@ -69,6 +69,7 @@ public:
      * @param w Width in pixels.
      * @param h Height in pixels.
      * @param color Fill color. Use GrayscaleColor or RGB565Color factory values.
+     * @param clipRect Region to clip to. A zero-size rect means no clipping.
      */
     virtual void fillRect(int x, int y, int w, int h, uint16_t color,
                           Rect clipRect = {{0,0},{0,0}}) = 0;
@@ -96,6 +97,7 @@ public:
      * @param h Height of the bitmap in pixels.
      * @param data Pointer to the pixel data.
      * @param rowBytes Number of bytes per row in the source data.
+     * @param clipRect Region to clip to. A zero-size rect means no clipping.
      */
     virtual void blitOpaque(int x, int y, int w, int h,
                             const uint8_t* data, int rowBytes,
@@ -114,6 +116,7 @@ public:
      * @param color Color to write where mask bits are set.
      * @param mask Pointer to the 1bpp mask data (MSB-first, row-major).
      * @param rowBytes Number of bytes per row in the mask data.
+     * @param clipRect Region to clip to. A zero-size rect means no clipping.
      */
     virtual void blitMasked(int x, int y, int w, int h, uint16_t color,
                             const uint8_t* mask, int rowBytes,

@@ -1,0 +1,52 @@
+# Focus Framework — Doxygen Configuration
+# Run from components/focus/:  doxygen Doxyfile
+
+PROJECT_NAME           = "Focus"
+PROJECT_BRIEF          = "A C++ UI framework for resource-constrained devices"
+OUTPUT_DIRECTORY       = docs
+
+# --- Input ---
+INPUT                  = include/
+RECURSIVE              = YES
+FILE_PATTERNS          = *.hpp
+EXCLUDE_PATTERNS       = */doxygen-awesome-css/*
+
+# --- Extraction ---
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = NO
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_CLASSES     = YES
+
+# --- Source browsing ---
+SOURCE_BROWSER         = NO
+VERBATIM_HEADERS       = NO
+
+# --- Output formats ---
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+
+# --- HTML theme: doxygen-awesome-css ---
+HTML_EXTRA_STYLESHEET  = doxygen-awesome-css/doxygen-awesome.css
+HTML_COLORSTYLE        = LIGHT
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_HEADER            =
+HTML_FOOTER            =
+
+# --- Preprocessing ---
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = NO
+PREDEFINED             =
+
+# --- Warnings ---
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+WARN_AS_ERROR          = NO
+QUIET                  = YES
+
+# --- Diagrams ---
+HAVE_DOT               = NO

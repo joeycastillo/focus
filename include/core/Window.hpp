@@ -59,7 +59,7 @@ public:
      * @param display The display to render to.
      * @param size The window dimensions in pixels.
      */
-    Window(std::shared_ptr<Display>, Size size);
+    Window(std::shared_ptr<Display> display, Size size);
 
     /**
      * @brief Add a subview and auto-focus it if nothing is focused yet.

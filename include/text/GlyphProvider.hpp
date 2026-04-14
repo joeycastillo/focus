@@ -128,7 +128,6 @@ protected:
      * @param bitmap The source bitmap data (modified in place with the converted result).
      * @param width Tight bitmap width in pixels.
      * @param height Tight bitmap height in pixels.
-     * @param xOffset Horizontal offset from cursor.
      * @param yOffset Vertical offset from baseline (positive = above).
      * @param advance Advance width (cursor movement).
      * @param fontAscent Pixels above the baseline for this font.
