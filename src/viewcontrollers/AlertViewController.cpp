@@ -62,8 +62,13 @@ void AlertViewController::onButtonPressed(int index) {
     if (this->completion) {
         this->completion(index);
     }
+    // Guard against double-dismiss: the completion handler above may
+    // have already dismissed this alert. Only dismiss if we are still
+    // the topmost modal.
     if (auto app = this->application.lock()) {
-        app->dismissViewController();
+        if (app->activeViewController().get() == this) {
+            app->dismissViewController();
+        }
     }
 }
 
