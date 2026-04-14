@@ -35,6 +35,15 @@ KeyboardView::KeyboardView(Rect rect, KeyboardType type) : View(rect) {
     this->type = type;
 }
 
+void KeyboardView::setFrame(Rect rect) {
+    if (rect.size.width != this->frame.size.width || rect.size.height != this->frame.size.height) {
+        this->canvas = nullptr;
+        this->canvasValid = false;
+        this->keysCached = false;
+    }
+    View::setFrame(rect);
+}
+
 void KeyboardView::setKeyCallback(KeyCallback callback) {
     this->keyCallback = callback;
 }

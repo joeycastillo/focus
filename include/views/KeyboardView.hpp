@@ -59,6 +59,7 @@ public:
     /// @brief Set the font for key labels. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
 
+    void setFrame(Rect rect) override;
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
     /// @brief Handle touch events to detect key presses.
     bool handleEvent(Event event) override;
