@@ -57,6 +57,7 @@ public:
      *              does not go to 11.
      */
     void setProgress(float value);
+    void setFrame(Rect rect) override;
 
     /// @brief Get the current progress value.
     float getProgress();

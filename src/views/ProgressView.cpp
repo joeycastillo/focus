@@ -53,6 +53,14 @@ void ProgressView::drawContent(int x, int y, Rect clipRect) {
     }
 }
 
+void ProgressView::setFrame(Rect rect) {
+    if (rect.size.width != this->frame.size.width || rect.size.height != this->frame.size.height) {
+        this->canvas = nullptr;
+        this->canvasValid = false;
+    }
+    View::setFrame(rect);
+}
+
 void ProgressView::setProgress(float value) {
     if (value < 0.0f) value = 0.0f;
     if (value > 1.0f) value = 1.0f;
