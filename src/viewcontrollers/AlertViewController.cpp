@@ -147,44 +147,47 @@ void AlertViewController::createView() {
     contentStack->addSubview(messageLabel);
 
     // Buttons
-    if (buttonsHorizontal && numButtons > 0) {
-        auto buttonRow = std::make_shared<HStack>(
-            MakeRect(0, 0, 0, buttonHeight));
-        buttonRow->setSpacing(buttonSpacing);
-        for (int i = 0; i < numButtons; i++) {
-            auto button = std::make_shared<Button>(
-                RectZero, this->buttonLabels[i]);
-            int buttonIndex = i;
-            button->setAction(
-                [this, buttonIndex](Event, std::weak_ptr<View>) {
-                    this->onButtonPressed(buttonIndex);
-                },
-                FOCUS_EVENT_TOUCH_UP_INSIDE);
-            buttonRow->addSubview(button);
+    if (numButtons > 0) {
+        if (buttonsHorizontal) {
+            auto buttonRow = std::make_shared<HStack>(
+                MakeRect(0, 0, 0, buttonHeight));
+            buttonRow->setSpacing(buttonSpacing);
+            for (int i = 0; i < numButtons; i++) {
+                auto button = std::make_shared<Button>(
+                    RectZero, this->buttonLabels[i]);
+                int buttonIndex = i;
+                button->setAction(
+                    [this, buttonIndex](Event, std::weak_ptr<View>) {
+                        this->onButtonPressed(buttonIndex);
+                    },
+                    FOCUS_EVENT_TOUCH_UP_INSIDE);
+                buttonRow->addSubview(button);
+            }
+            contentStack->addSubview(buttonRow);
+        } else {
+            int verticalButtonHeight = numButtons * buttonHeight
+                + (numButtons - 1) * buttonSpacing;
+            auto buttonStack = std::make_shared<VStack>(
+                MakeRect(0, 0, 0, verticalButtonHeight));
+            buttonStack->setSpacing(buttonSpacing);
+            for (int i = 0; i < numButtons; i++) {
+                auto button = std::make_shared<Button>(
+                    MakeRect(0, 0, 0, buttonHeight), this->buttonLabels[i]);
+                int buttonIndex = i;
+                button->setAction(
+                    [this, buttonIndex](Event, std::weak_ptr<View>) {
+                        this->onButtonPressed(buttonIndex);
+                    },
+                    FOCUS_EVENT_TOUCH_UP_INSIDE);
+                buttonStack->addSubview(button);
+            }
+            contentStack->addSubview(buttonStack);
         }
-        contentStack->addSubview(buttonRow);
-    } else {
-        int buttonSectionHeight = numButtons * buttonHeight
-            + (numButtons - 1) * buttonSpacing;
-        auto buttonStack = std::make_shared<VStack>(
-            MakeRect(0, 0, 0, buttonSectionHeight));
-        buttonStack->setSpacing(buttonSpacing);
-        for (int i = 0; i < numButtons; i++) {
-            auto button = std::make_shared<Button>(
-                MakeRect(0, 0, 0, buttonHeight), this->buttonLabels[i]);
-            int buttonIndex = i;
-            button->setAction(
-                [this, buttonIndex](Event, std::weak_ptr<View>) {
-                    this->onButtonPressed(buttonIndex);
-                },
-                FOCUS_EVENT_TOUCH_UP_INSIDE);
-            buttonStack->addSubview(button);
-        }
-        contentStack->addSubview(buttonStack);
     }
 
     // Calculate total alert height
-    int buttonSectionHeight = buttonsHorizontal ? buttonHeight
+    int buttonSectionHeight = (numButtons == 0) ? 0
+        : buttonsHorizontal ? buttonHeight
         : (numButtons * buttonHeight + (numButtons - 1) * buttonSpacing);
     int contentHeight = titleHeight + sectionSpacing
         + messageHeight + sectionSpacing + buttonSectionHeight;
