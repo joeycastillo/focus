@@ -31,6 +31,14 @@ BorderedView::BorderedView(Rect rect) : View(rect) {
     this->opaque = true;
 }
 
+void BorderedView::setFrame(Rect rect) {
+    if (rect.size.width != this->frame.size.width || rect.size.height != this->frame.size.height) {
+        this->canvas = nullptr;
+        this->canvasValid = false;
+    }
+    View::setFrame(rect);
+}
+
 void BorderedView::renderCanvas() {
     if (!this->canvas) {
         this->canvas = std::make_shared<CanvasView>(
