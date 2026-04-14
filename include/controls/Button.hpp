@@ -58,6 +58,8 @@ public:
 
     /// @brief Set the button's label text.
     void setText(const std::string& text);
+    /// @brief Get the button's label text.
+    std::string getText() const { return this->text; }
     /// @brief Set the font for the button label. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
     /// @brief Get the current font.

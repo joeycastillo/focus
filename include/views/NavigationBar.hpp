@@ -33,12 +33,12 @@
 #pragma once
 
 #include "View.hpp"
+#include "LabelView.hpp"
 #include <string>
 #include <functional>
 #include <memory>
 
 class Button;
-class LabelView;
 
 /**
  * @brief A navigation bar with a back button and centered title.
@@ -55,6 +55,8 @@ public:
 
     /// @brief Set the title text displayed in the bar.
     void setTitle(const std::string& title);
+    /// @brief Get the title text displayed in the bar.
+    std::string getTitle() const { return this->titleLabel ? this->titleLabel->getText() : ""; }
 
     /// @brief Show or hide the back button.
     void setBackButtonVisible(bool visible);

@@ -85,6 +85,17 @@ public:
     /// @brief Set uniform margins on all four sides.
     void setMargins(int uniform);
 
+    /// @brief Get the layout axis.
+    Axis getAxis() const { return this->axis; }
+    /// @brief Get the top margin.
+    int getMarginTop() const { return this->marginTop; }
+    /// @brief Get the right margin.
+    int getMarginRight() const { return this->marginRight; }
+    /// @brief Get the bottom margin.
+    int getMarginBottom() const { return this->marginBottom; }
+    /// @brief Get the left margin.
+    int getMarginLeft() const { return this->marginLeft; }
+
     /// @brief Recalculate and apply frames for all children.
     virtual void layoutSubviews();
 

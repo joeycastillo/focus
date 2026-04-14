@@ -83,6 +83,13 @@ public:
     /// @brief Set the spacing between items (applied between items, not at edges).
     void setItemSpacing(int spacing);
 
+    /// @brief Get the layout mode.
+    CollectionViewLayout getLayout() const { return this->layout; }
+    /// @brief Get the item cell size.
+    Size getItemSize() const { return this->itemSize; }
+    /// @brief Get the spacing between items.
+    int getItemSpacing() const { return this->itemSpacing; }
+
     /// @brief Reload all items from the data source, showing the first page.
     void reloadData();
     /// @brief Navigate to a specific page (0-based).

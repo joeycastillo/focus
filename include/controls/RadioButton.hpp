@@ -68,6 +68,8 @@ public:
     void setSelected(bool value);
     /// @brief Set the label text.
     void setText(std::string text);
+    /// @brief Get the label text.
+    std::string getText() const { return this->text; }
     /// @brief Set the font for the label. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
     /// @brief Get the current font.

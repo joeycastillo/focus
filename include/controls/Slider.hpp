@@ -77,12 +77,16 @@ public:
     void setValue(float value);
     /// @brief Set the label text.
     void setLabel(std::string label);
+    /// @brief Get the label text.
+    std::string getLabel() const { return this->label; }
     /// @brief Set the font for the label. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
     /// @brief Get the current font.
     std::shared_ptr<Font> getFont() const;
     /// @brief Set the step size for d-pad LEFT/RIGHT adjustment (default 0.1).
     void setStep(float step);
+    /// @brief Get the step size for d-pad LEFT/RIGHT adjustment.
+    float getStep() const { return this->step; }
 
     /// @brief Returns AccessibilityRole::Slider.
     AccessibilityRole accessibilityRole() const override;

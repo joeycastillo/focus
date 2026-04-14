@@ -58,11 +58,15 @@ public:
     void setText(std::string text);
     /// @brief Set placeholder text shown when the field is empty.
     void setPlaceholder(std::string placeholder);
+    /// @brief Get the placeholder text.
+    std::string getPlaceholder() const { return this->placeholder; }
     /**
      * @brief Set the maximum number of characters allowed.
      * @param maxLength Maximum length, or 0 for no limit.
      */
     void setMaxLength(size_t maxLength);
+    /// @brief Get the maximum number of characters allowed (0 = unlimited).
+    size_t getMaxLength() const { return this->maxLength; }
     /// @brief Set the font. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
     /// @brief Get the current font.

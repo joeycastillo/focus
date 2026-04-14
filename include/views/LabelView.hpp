@@ -61,17 +61,25 @@ public:
 
     /// @brief Set the displayed text, invalidating the cached rendering.
     void setText(std::string text);
+    /// @brief Get the displayed text.
+    std::string getText() const { return this->text; }
     /// @brief Set the text scale factor (1 = normal, 2 = double size, etc.).
     void setTextScale(uint8_t scale);
+    /// @brief Get the text scale factor.
+    uint8_t getTextScale() const { return this->textScale; }
     /// @brief Set the font to use. Pass nullptr to use the system font.
     void setFont(std::shared_ptr<Font> font);
     /// @brief Get the currently assigned font (may be nullptr for system font).
     std::shared_ptr<Font> getFont() const;
     /// @brief Set the horizontal text alignment.
     void setTextAlignment(TextAlignment alignment);
+    /// @brief Get the horizontal text alignment.
+    TextAlignment getTextAlignment() const { return this->textAlignment; }
     /// @brief Set the canvas rotation for this label's text rendering.
     /// Rotates the text content within the view's frame (0, 90, 180, or 270).
     void setCanvasRotation(int degrees);
+    /// @brief Get the canvas rotation in degrees (0, 90, 180, or 270).
+    int getCanvasRotation() const { return this->canvasRotation; }
 
     /// @brief Returns the displayed text.
     std::string accessibilityLabel() const override;

@@ -76,6 +76,8 @@ public:
 
     /// @brief Set the visual style for pagination controls.
     void setPaginationStyle(PaginationStyle style);
+    /// @brief Get the visual style for pagination controls.
+    PaginationStyle getPaginationStyle() const { return this->paginationStyle; }
 
     /// @brief Reload all items from the data source, showing the first page.
     void reloadData();
