@@ -32,7 +32,7 @@
 #include <memory>
 
 /// Font provides a UIKit-style cached factory for loading and managing fonts.
-/// Fonts are automatically cached - requesting the same font name twice returns
+/// Fonts are automatically cached — requesting the same font name twice returns
 /// the same instance.
 ///
 /// Usage:
@@ -42,6 +42,16 @@
 ///
 ///   // In views
 ///   label->setFont(Font::withName("spleen-16x32"));
+///
+/// @par Memory management
+/// The font cache grows without bound as new fonts are loaded. On
+/// memory-constrained devices, call clearCache() when the platform
+/// signals memory pressure (e.g., a low-heap-watermark callback, a
+/// screen transition that retires a font set, or periodic maintenance).
+/// clearCache() is always safe to call: fonts actively held by views
+/// survive via shared_ptr, and the system fonts (systemFont(),
+/// systemLargeFont(), systemSmallFont()) are stored separately and
+/// are not affected.
 ///
 class Font {
 public:
@@ -98,7 +108,19 @@ public:
     /// @param font The font to use as the small font.
     static void setSystemSmallFont(std::shared_ptr<Font> font);
 
-    /// Clear the font cache. Useful for testing or memory pressure.
+    /// Clear the font cache, releasing all cached Font instances.
+    ///
+    /// Safe to call at any time. Fonts currently held by views (or any
+    /// other shared_ptr holder) remain valid — only the cache's own
+    /// reference is dropped. The next withName() call for a cleared font
+    /// will reload it from disk.
+    ///
+    /// System fonts (set via setSystemFont / setSystemLargeFont /
+    /// setSystemSmallFont) are stored separately and are not affected.
+    ///
+    /// Call this from your platform's memory-pressure handler, or at
+    /// natural transition points (e.g., changing themes or locales)
+    /// where the active font set changes.
     static void clearCache();
 
     /// Access the underlying GlyphProvider (for compatibility with existing code).

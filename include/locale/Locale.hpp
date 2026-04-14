@@ -42,6 +42,15 @@
 ///   label->setText(_LS("wifi_settings", "WiFi Settings"));
 ///   std::string page = _LF("page_of", "Page {0} of {1}", current, total);
 ///
+/// @par Memory management
+/// The locale cache grows without bound as new locales are loaded.
+/// On memory-constrained devices, call clearCache() when the platform
+/// signals memory pressure, or at natural transition points (e.g.,
+/// after changing the active locale). clearCache() preserves the
+/// active and fallback locales; all other cached locales are freed.
+/// Any Locale* previously obtained via withIdentifier() (other than
+/// the active/fallback) is invalidated by clearCache().
+///
 class Locale {
 public:
     /// Load a locale by identifier. Returns cached instance if already loaded.
@@ -77,7 +86,18 @@ public:
     /// Get the current list of search paths.
     static const std::vector<std::string>& getSearchPaths();
 
-    /// Clear the locale cache.
+    /// Clear the locale cache, freeing all cached locales except the
+    /// active and fallback locales (which are preserved and re-added
+    /// to the cache).
+    ///
+    /// Any Locale* previously obtained via withIdentifier() — other
+    /// than currentLocale() and defaultLocale() — is invalidated.
+    /// In practice this rarely matters, since application code
+    /// accesses locales through _LS / _LF / _LP, which look up
+    /// currentLocale() on every call.
+    ///
+    /// Call this from your platform's memory-pressure handler, or
+    /// after changing the active locale, to free unused locale data.
     static void clearCache();
 
     /// Look up a string by key in this locale.
