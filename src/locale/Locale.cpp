@@ -89,7 +89,19 @@ const std::vector<std::string>& Locale::getSearchPaths() {
 }
 
 void Locale::clearCache() {
+    for (auto& [id, locale] : localeCache) {
+        if (locale != activeLocale && locale != fallbackLocale) {
+            delete locale;
+        }
+    }
     localeCache.clear();
+    // Re-add active/fallback so the cache stays consistent
+    if (activeLocale) {
+        localeCache[activeLocale->getIdentifier()] = activeLocale;
+    }
+    if (fallbackLocale && fallbackLocale != activeLocale) {
+        localeCache[fallbackLocale->getIdentifier()] = fallbackLocale;
+    }
 }
 
 std::string Locale::getString(const std::string& key) const {
