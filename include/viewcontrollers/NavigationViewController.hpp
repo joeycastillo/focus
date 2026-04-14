@@ -125,4 +125,5 @@ private:
     std::vector<std::shared_ptr<ViewController>> viewControllerStack;
     std::string rightButtonTitle;
     std::function<void()> rightButtonAction;
+    bool inTransition = false;
 };

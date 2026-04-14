@@ -136,20 +136,25 @@ void NavigationViewController::viewDidDisappear() {
 
 void NavigationViewController::pushViewController(std::shared_ptr<ViewController> viewController) {
     if (!this->contentArea) return;
+    if (this->inTransition) return;
     FOCUS_LOGD(TAG, "push %s", typeid(*viewController).name());
 
+    this->inTransition = true;
     auto oldVC = this->viewControllerStack.back();
     viewController->navigationController = std::dynamic_pointer_cast<NavigationViewController>(
         this->shared_from_this());
     this->viewControllerStack.push_back(viewController);
     this->transitionFromViewController(oldVC, viewController);
     this->updateNavigationBar();
+    this->inTransition = false;
 }
 
 void NavigationViewController::popViewController() {
     if (this->viewControllerStack.size() <= 1) return;
     if (!this->contentArea) return;
+    if (this->inTransition) return;
 
+    this->inTransition = true;
     auto oldVC = this->viewControllerStack.back();
     FOCUS_LOGD(TAG, "pop %s", typeid(*oldVC).name());
     oldVC->navigationController.reset();
@@ -157,6 +162,7 @@ void NavigationViewController::popViewController() {
     auto newVC = this->viewControllerStack.back();
     this->transitionFromViewController(oldVC, newVC);
     this->updateNavigationBar();
+    this->inTransition = false;
 }
 
 void NavigationViewController::popToRootViewController() {
