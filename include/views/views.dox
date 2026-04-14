@@ -2,3 +2,5 @@
 /// @brief Concrete view implementations for layout, display, and content.
 ///
 /// Views that display content (LabelView, CanvasView, ProgressView), arrange children (StackView, CollectionView), or provide visual decoration (BorderedView, HatchedView).
+///
+/// @todo ProgressView: optional border around the progress bar.

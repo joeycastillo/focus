@@ -2,3 +2,6 @@
 /// @brief Container view controllers for navigation and modal presentation.
 ///
 /// Higher-level controllers that manage child view controller lifecycles: NavigationViewController (push/pop stack), TabViewController (tabbed switching), and AlertViewController (modal dialogs).
+///
+/// @todo AlertViewController: support adding text fields (e.g. for prompt/input dialogs).
+/// @todo FOCUS_EVENT_BACK should auto-dismiss modals. Requires defining cancel semantics — AlertViewController currently treats all buttons uniformly, with no way to designate one as the cancel action.
