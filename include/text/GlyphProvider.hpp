@@ -50,7 +50,7 @@
  * for text rendering and layout. The Font class wraps a GlyphProvider and
  * provides caching and factory methods.
  */
-class GlyphProvider : public std::enable_shared_from_this<GlyphProvider> {
+class GlyphProvider {
 public:
     GlyphProvider();
     virtual ~GlyphProvider() = default;
