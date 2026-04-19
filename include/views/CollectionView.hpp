@@ -103,6 +103,7 @@ public:
     /// @brief Get how many items fit on one page.
     size_t getItemsPerPage() const;
 
+    void setFrame(Rect rect) override;
     bool handleEvent(Event event) override;
 
     /// @brief Returns AccessibilityRole::List.
@@ -117,6 +118,7 @@ private:
     Size itemSize = {0, 0};
     int itemSpacing = 0;
     size_t currentPage = 0;
+    bool dataLoaded = false;
 
     bool variableItemSizes = false;
     std::vector<size_t> pageBoundaries;

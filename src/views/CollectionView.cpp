@@ -31,6 +31,19 @@
 CollectionView::CollectionView(Rect rect) : View(rect) {
 }
 
+void CollectionView::setFrame(Rect rect) {
+    Size oldSize = this->frame.size;
+    View::setFrame(rect);
+    if (this->dataLoaded &&
+        (rect.size.width != oldSize.width || rect.size.height != oldSize.height)) {
+        this->removeCurrentPageViews();
+        if (this->variableItemSizes) {
+            this->computePageBoundaries();
+        }
+        this->loadPage(this->currentPage);
+    }
+}
+
 void CollectionView::setDataSource(CollectionViewDataSource* dataSource, std::weak_ptr<void> owner) {
     this->dataSource = dataSource;
     if (owner.lock()) {
@@ -360,6 +373,7 @@ void CollectionView::reloadData() {
         }
     }
 
+    this->dataLoaded = true;
     this->loadPage(0);
 
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
