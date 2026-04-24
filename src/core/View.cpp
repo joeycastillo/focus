@@ -421,6 +421,19 @@ void View::removeAction(int32_t type) {
     this->actions.erase(type);
 }
 
+bool View::fireAction(int32_t eventType, Event event) {
+    auto it = this->actions.find(eventType);
+    if (it == this->actions.end()) return false;
+    if (it->second.owner.has_value()) {
+        if (it->second.owner->expired()) {
+            this->actions.erase(it);
+            return false;
+        }
+    }
+    it->second.callback(event, this->weak_from_this());
+    return true;
+}
+
 View* View::getSuperview() {
     return this->superview;
 }

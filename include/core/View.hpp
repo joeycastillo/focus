@@ -447,6 +447,9 @@ public:
     /// @}
 
 protected:
+    /// @brief Fire a registered action with owner lifetime checking. Returns true if fired.
+    bool fireAction(int32_t eventType, Event event);
+
     /// Returns the display if this view is attached to a window, nullptr otherwise.
     /// Use this in draw() methods to safely get the display for rendering.
     std::shared_ptr<Display> getDisplayIfAttached();
