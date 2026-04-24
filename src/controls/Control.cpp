@@ -42,6 +42,20 @@ void Control::setEnabled(bool value) {
     }
 }
 
+bool Control::isSelected() const {
+    return this->selected;
+}
+
+void Control::setSelected(bool value) {
+    if (this->selected != value) {
+        this->selected = value;
+        this->appearanceDidChange();
+        if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+            this->setNeedsDisplayInRect(this->frame);
+        }
+    }
+}
+
 bool Control::canBecomeFocused() {
     return this->enabled;
 }
