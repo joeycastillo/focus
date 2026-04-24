@@ -66,7 +66,7 @@ void Checkbox::renderCanvas() {
     this->canvas->drawRect(indicatorX, indicatorY, indicatorSize, indicatorSize, 1);
 
     // Fill indicator if checked
-    if (this->checked) {
+    if (this->selected) {
         int inset = 3;
         this->canvas->fillRect(indicatorX + inset, indicatorY + inset,
                                indicatorSize - 2 * inset, indicatorSize - 2 * inset, 1);
@@ -102,17 +102,9 @@ void Checkbox::drawContent(int x, int y, Rect clipRect) {
 bool Checkbox::handleEvent(Event event) {
     if (!this->enabled) return false;
     if (event.type == FOCUS_EVENT_TOUCH_DOWN || event.type == FOCUS_EVENT_SELECT) {
-        this->checked = !this->checked;
-        this->canvasValid = false;
-        if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-            this->setNeedsDisplayInRect(this->frame);
-        }
-        // Fire value changed action if registered
-        auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
-        if (it != this->actions.end()) {
-            Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, this->checked ? 1 : 0};
-            it->second.callback(valueEvent, this->weak_from_this());
-        }
+        this->setSelected(!this->selected);
+        Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, this->selected ? 1 : 0};
+        this->fireAction(FOCUS_EVENT_VALUE_CHANGED, valueEvent);
         return true;
     }
     return View::handleEvent(event);
@@ -130,18 +122,8 @@ void Checkbox::didResignFocus() {
     this->canvasValid = false;
 }
 
-bool Checkbox::isChecked() const {
-    return this->checked;
-}
-
-void Checkbox::setChecked(bool value) {
-    if (this->checked != value) {
-        this->checked = value;
-        this->canvasValid = false;
-        if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-            this->setNeedsDisplayInRect(this->frame);
-        }
-    }
+void Checkbox::appearanceDidChange() {
+    this->canvasValid = false;
 }
 
 void Checkbox::setText(std::string text) {
@@ -173,5 +155,5 @@ AccessibilityRole Checkbox::accessibilityRole() const {
 }
 
 std::string Checkbox::accessibilityValue() const {
-    return this->checked ? "checked" : "unchecked";
+    return this->selected ? "checked" : "unchecked";
 }

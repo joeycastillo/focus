@@ -59,11 +59,8 @@ public:
     bool handleEvent(Event event) override;
     void didBecomeFocused() override;
     void didResignFocus() override;
+    void appearanceDidChange() override;
 
-    /// @brief Check whether the checkbox is currently checked.
-    bool isChecked() const;
-    /// @brief Set the checked state programmatically.
-    void setChecked(bool value);
     /// @brief Set the label text.
     void setText(std::string text);
     /// @brief Get the label text.
@@ -82,7 +79,6 @@ public:
 
 protected:
     std::string text;              ///< Label text.
-    bool checked = false;          ///< Whether the checkbox is checked.
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendering.
     bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
