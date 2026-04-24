@@ -32,27 +32,23 @@
 TabItem::TabItem(Rect rect, std::string label) : Control(rect), label(label) {
 }
 
-void TabItem::setSelected(bool selected) {
-    if (this->selected != selected) {
+void TabItem::setSelected(bool value) {
+    if (this->selected != value) {
         bool wasHighlighted = this->selected || this->focused;
-        this->selected = selected;
+        Control::setSelected(value);
         bool isHighlighted = this->selected || this->focused;
         if (wasHighlighted != isHighlighted) {
             std::swap(this->backgroundColor, this->foregroundColor);
         }
-        this->canvasValid = false;
-        if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-            this->setNeedsDisplayInRect(this->frame);
-        }
     }
-}
-
-bool TabItem::isSelected() const {
-    return this->selected;
 }
 
 void TabItem::setFont(std::shared_ptr<Font> font) {
     this->font = font;
+    this->canvasValid = false;
+}
+
+void TabItem::appearanceDidChange() {
     this->canvasValid = false;
 }
 

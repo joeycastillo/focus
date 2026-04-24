@@ -52,8 +52,7 @@ class TabItem : public Control {
 public:
     TabItem(Rect rect, std::string label);
 
-    void setSelected(bool selected);
-    bool isSelected() const;
+    void setSelected(bool value) override;
 
     void setFont(std::shared_ptr<Font> font);
 
@@ -64,10 +63,10 @@ public:
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
     void didBecomeFocused() override;
     void didResignFocus() override;
+    void appearanceDidChange() override;
 
 protected:
     std::string label;                      ///< The tab label text.
-    bool selected = false;                  ///< Whether this tab is the active tab.
     std::shared_ptr<Font> font;             ///< Custom font, or nullptr for system font.
     std::shared_ptr<CanvasView> canvas;     ///< Internal canvas for rendering.
     bool canvasValid = false;               ///< Whether the canvas needs re-rendering.
