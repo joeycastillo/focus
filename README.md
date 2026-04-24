@@ -255,7 +255,7 @@ Configure layout with `setLayout()` (VerticalList, HorizontalList, or Grid), `se
 
 ## Controls
 
-All controls inherit from **Control**, which adds enabled/disabled state and focus behavior to View. Controls fire **actions** -- callbacks registered for specific event types.
+All controls inherit from **Control**, which adds enabled/disabled and selected/unselected state and focus behavior to View. Controls fire **actions** -- callbacks registered for specific event types.
 
 ### Action Callbacks
 
@@ -286,10 +286,10 @@ button->setAction(callback, FOCUS_EVENT_TOUCH_UP_INSIDE,
 
 | Control | Description |
 |---------|-------------|
-| **Button** | Tappable button with text label. Inverts colors when focused. |
+| **Button** | Tappable button with text label. Inverts colors when focused. Supports a `selected` visual state via `setSelected()` — when selected, renders inverted (filled, no border), same as focused. The caller manages toggle semantics in action handlers. |
 | **TextField** | Single-line text input. Presents an on-screen keyboard when focused. |
 | **PasswordField** | TextField that displays bullets instead of characters. |
-| **Checkbox** | Toggle with text label. Fires VALUE_CHANGED on toggle. |
+| **Checkbox** | Toggle with text label. Fires VALUE_CHANGED on toggle. Query state with `isSelected()` / `setSelected()`. |
 | **RadioButton** | Radio button. Use with **RadioGroup** for mutual exclusion. |
 | **Slider** | Horizontal slider (0.0 to 1.0). userInfo carries the float value bit-cast to int32_t. |
 
@@ -393,7 +393,7 @@ When touch is enabled (`window->setTouchEnabled()`), touch events are dispatched
 
 On TOUCH_UP, the framework checks:
 - **Swipe**: if the touch was short (<400ms) and moved far enough (>60px with a 2:1 axis ratio), a `FOCUS_EVENT_SWIPE_*` event is delivered instead.
-- **Long press**: if a LONG_PRESS was already fired (after 500ms of minimal movement), TOUCH_UP_OUTSIDE is delivered to suppress a tap.
+- **Long press**: if a LONG_PRESS was already fired (after 500ms of minimal movement), TOUCH_UP_OUTSIDE is delivered to suppress a tap. Currently touch-only; d-pad long-press SELECT is a planned future addition.
 - **Tap**: otherwise, TOUCH_UP_INSIDE or TOUCH_UP_OUTSIDE depending on whether the finger is still within the captured view's bounds.
 
 Touch coordinates are packed into `Event.userInfo` as `(x << 16) | y`.
