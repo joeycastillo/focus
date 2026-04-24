@@ -63,10 +63,6 @@ public:
     void didBecomeFocused() override;
     void didResignFocus() override;
 
-    /// @brief Check whether this radio button is currently selected.
-    bool isSelected() const;
-    /// @brief Set the selection state programmatically.
-    void setSelected(bool value);
     /// @brief Set the label text.
     void setText(std::string text);
     /// @brief Get the label text.
@@ -77,7 +73,6 @@ public:
     std::shared_ptr<Font> getFont() const;
 protected:
     std::string text;                     ///< Label text.
-    bool selected = false;                ///< Whether this button is selected.
     std::shared_ptr<Font> font;           ///< Custom font, or nullptr for system font.
     /// The RadioGroup this button belongs to. This is a shared_ptr (not weak)
     /// so the group stays alive as long as any button in it exists. There is no

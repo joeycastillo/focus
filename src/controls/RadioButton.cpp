@@ -113,21 +113,12 @@ bool RadioButton::handleEvent(Event event) {
     if (!this->enabled) return false;
     if (event.type == FOCUS_EVENT_TOUCH_DOWN || event.type == FOCUS_EVENT_SELECT) {
         if (!this->selected) {
-            this->selected = true;
-            this->canvasValid = false;
-            if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-                this->setNeedsDisplayInRect(this->frame);
-            }
-            // Notify group to deselect others
+            this->setSelected(true);
             if (this->group) {
                 this->group->_buttonSelected(this);
             }
-            // Fire value changed action if registered
-            auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
-            if (it != this->actions.end()) {
-                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, 1};
-                it->second.callback(valueEvent, this->weak_from_this());
-            }
+            Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, 1};
+            this->fireAction(FOCUS_EVENT_VALUE_CHANGED, valueEvent);
         }
         return true;
     }
@@ -144,20 +135,6 @@ void RadioButton::didResignFocus() {
     Control::didResignFocus();
     std::swap(this->backgroundColor, this->foregroundColor);
     this->canvasValid = false;
-}
-
-bool RadioButton::isSelected() const {
-    return this->selected;
-}
-
-void RadioButton::setSelected(bool value) {
-    if (this->selected != value) {
-        this->selected = value;
-        this->canvasValid = false;
-        if (std::shared_ptr<Window> window = this->getWindow().lock()) {
-            this->setNeedsDisplayInRect(this->frame);
-        }
-    }
 }
 
 void RadioButton::setText(std::string text) {
