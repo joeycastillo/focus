@@ -60,8 +60,9 @@ void Button::renderCanvas() {
     // Canvas is a shape mask: 0 = transparent, 1 = foreground
     this->canvas->clear(0);
 
-    // Draw border (only when not focused — focused buttons are filled solid)
-    if (!this->focused) {
+    // Draw border (only when not highlighted — highlighted buttons are filled solid)
+    bool highlighted = this->selected || this->focused;
+    if (!highlighted) {
         this->canvas->drawRect(0, 0, this->frame.size.width, this->frame.size.height, 1);
     }
 
@@ -104,18 +105,33 @@ void Button::drawContent(int x, int y, Rect clipRect) {
 
 void Button::didBecomeFocused() {
     Control::didBecomeFocused();
-    std::swap(this->backgroundColor, this->foregroundColor);
+    if (!this->selected) {
+        std::swap(this->backgroundColor, this->foregroundColor);
+    }
     this->canvasValid = false;
 }
 
 void Button::didResignFocus() {
     Control::didResignFocus();
-    std::swap(this->backgroundColor, this->foregroundColor);
+    if (!this->selected) {
+        std::swap(this->backgroundColor, this->foregroundColor);
+    }
     this->canvasValid = false;
 }
 
 void Button::appearanceDidChange() {
     this->canvasValid = false;
+}
+
+void Button::setSelected(bool value) {
+    if (this->selected != value) {
+        bool wasHighlighted = this->selected || this->focused;
+        Control::setSelected(value);
+        bool isHighlighted = this->selected || this->focused;
+        if (wasHighlighted != isHighlighted) {
+            std::swap(this->backgroundColor, this->foregroundColor);
+        }
+    }
 }
 
 void Button::setText(const std::string& text) {
@@ -144,4 +160,9 @@ std::string Button::accessibilityLabel() const {
 
 AccessibilityRole Button::accessibilityRole() const {
     return AccessibilityRole::Button;
+}
+
+std::string Button::accessibilityValue() const {
+    if (this->selected) return "selected";
+    return "";
 }

@@ -56,6 +56,8 @@ public:
     Button(Rect rect, std::string text);
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
     void appearanceDidChange() override;
+    void setSelected(bool value) override;
+    std::string accessibilityValue() const override;
 
     /// @brief Set the button's label text.
     void setText(const std::string& text);
