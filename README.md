@@ -219,7 +219,7 @@ Focus includes these built-in views:
 | View | Description |
 |------|-------------|
 | **LabelView** | Renders a text string with word wrapping and alignment. |
-| **CanvasView** | Pixel buffer with drawing primitives (rect, circle, text, invert). |
+| **CanvasView** | Pixel buffer with drawing primitives (rect, circle, text, drawMask, invert). |
 | **BitmapView** | Displays a 1bpp bitmap from an external data pointer. |
 | **ProgressView** | Horizontal progress bar (0.0 to 1.0). |
 | **BorderedView** | Container with a 1px border. |
@@ -286,7 +286,8 @@ button->setAction(callback, FOCUS_EVENT_TOUCH_UP_INSIDE,
 
 | Control | Description |
 |---------|-------------|
-| **Button** | Tappable button with text label. Inverts colors when focused. Supports a `selected` visual state via `setSelected()` — when selected, renders inverted (filled, no border), same as focused. The caller manages toggle semantics in action handlers. |
+| **Button** | Tappable button with text label. Inverts colors when focused. Supports a `selected` visual state via `setSelected()` — when selected, renders inverted (filled, no border), same as focused. The caller manages toggle semantics in action handlers. Supports state-keyed content: `setTitle(text, state)` and `setImage(mask, size, state)` register different content for Normal, Selected, or Disabled states. Content resolves with fallback to Normal. |
+| **CircularButton** | Circular icon button. Renders icon or text in a circle outline (normal) or filled circle with cutout content (highlighted). For toolbar and toggle button UIs. |
 | **TextField** | Single-line text input. Presents an on-screen keyboard when focused. |
 | **PasswordField** | TextField that displays bullets instead of characters. |
 | **Checkbox** | Toggle with text label. Fires VALUE_CHANGED on toggle. Query state with `isSelected()` / `setSelected()`. |
