@@ -376,6 +376,19 @@ void CanvasView::clear(uint16_t color) {
     }
 }
 
+void CanvasView::drawMask(int x, int y, int w, int h,
+                          const uint8_t* mask, int maskRowBytes, uint16_t color) {
+    for (int row = 0; row < h; row++) {
+        for (int col = 0; col < w; col++) {
+            int maskByte = row * maskRowBytes + (col >> 3);
+            uint8_t maskBit = 0x80 >> (col & 7);
+            if (mask[maskByte] & maskBit) {
+                this->drawPixel(x + col, y + row, color);
+            }
+        }
+    }
+}
+
 void CanvasView::drawLine(int x0, int y0, int x1, int y1, uint16_t color) {
     int dx = x1 - x0;
     int dy = y1 - y0;

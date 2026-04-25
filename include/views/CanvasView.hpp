@@ -90,6 +90,11 @@ public:
     void invertRect(int x, int y, int w, int h);
     void clear(uint16_t color);
 
+    /// @brief Stamp 1bpp mask data into the canvas. Where mask bits are set,
+    /// the specified color is drawn. Mask format: MSB-first, packed rows.
+    void drawMask(int x, int y, int w, int h,
+                  const uint8_t* mask, int maskRowBytes, uint16_t color);
+
     /// Apply a 1px checkerboard mask, setting every other pixel to the given color.
     /// Used to render a "disabled" appearance. The pattern alternates per pixel in
     /// both axes: even rows mask with 0xAA, odd rows with 0x55 (MSB-first).
