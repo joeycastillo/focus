@@ -37,6 +37,19 @@
 #include "View.hpp"
 
 /**
+ * @brief Control states for state-keyed content.
+ *
+ * Used with Button::setTitle() and Button::setImage() to register
+ * different content for different control states. Content resolution
+ * falls back to Normal when no content is registered for the current state.
+ */
+enum class ControlState : uint8_t {
+    Normal   = 0,
+    Selected = 1,
+    Disabled = 2,
+};
+
+/**
  * @brief Base class for focusable, interactive UI controls.
  *
  * Controls can be enabled or disabled. When enabled, they participate in
