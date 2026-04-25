@@ -25,8 +25,8 @@
 #pragma once
 
 // Focus-native logging macros. On ESP-IDF, delegate to its logging system.
-// On other platforms, errors and warnings go to stderr; lower levels are
-// compiled out to avoid noise without a log-level infrastructure.
+// On other platforms, E/W/I go to stderr (matching ESP-IDF's default INFO
+// threshold) and D/V are compiled out but still type-checked.
 
 #ifdef ESP_PLATFORM
 #include "esp_log.h"
@@ -39,16 +39,7 @@
 #include <cstdio>
 #define FOCUS_LOGE(tag, format, ...) fprintf(stderr, "E (%s) " format "\n", tag, ##__VA_ARGS__)
 #define FOCUS_LOGW(tag, format, ...) fprintf(stderr, "W (%s) " format "\n", tag, ##__VA_ARGS__)
-#define FOCUS_LOGI(tag, format, ...) do { if (0) fprintf(stderr, "I (%s) " format "\n", tag, ##__VA_ARGS__); } while(0)
+#define FOCUS_LOGI(tag, format, ...) fprintf(stderr, "I (%s) " format "\n", tag, ##__VA_ARGS__)
 #define FOCUS_LOGD(tag, format, ...) do { if (0) fprintf(stderr, "D (%s) " format "\n", tag, ##__VA_ARGS__); } while(0)
 #define FOCUS_LOGV(tag, format, ...) do { if (0) fprintf(stderr, "V (%s) " format "\n", tag, ##__VA_ARGS__); } while(0)
-#endif
-
-// Keep ESP_LOG* shims for existing code that uses them directly.
-#ifndef ESP_PLATFORM
-#define ESP_LOGE(tag, format, ...) FOCUS_LOGE(tag, format, ##__VA_ARGS__)
-#define ESP_LOGW(tag, format, ...) FOCUS_LOGW(tag, format, ##__VA_ARGS__)
-#define ESP_LOGI(tag, format, ...) FOCUS_LOGI(tag, format, ##__VA_ARGS__)
-#define ESP_LOGD(tag, format, ...) FOCUS_LOGD(tag, format, ##__VA_ARGS__)
-#define ESP_LOGV(tag, format, ...) FOCUS_LOGV(tag, format, ##__VA_ARGS__)
 #endif
