@@ -31,8 +31,8 @@
 #include <algorithm>
 #include <vector>
 
-Button::Button(Rect rect, std::string text) : Control(rect) {
-    this->text = text;
+Button::Button(Rect rect, std::string title) : Control(rect) {
+    this->titles[ControlState::Normal] = std::move(title);
 }
 
 void Button::renderCanvas() {
@@ -41,7 +41,6 @@ void Button::renderCanvas() {
             MakeRect(0, 0, this->frame.size.width, this->frame.size.height));
     }
 
-    // Resolve glyph provider from button's font or system font
     std::shared_ptr<Font> resolvedFont = this->font ? this->font : Font::systemFont();
     GlyphProvider* providerPtr = nullptr;
     std::shared_ptr<GlyphProvider> glyphProvider;
@@ -51,42 +50,77 @@ void Button::renderCanvas() {
     }
 
     int lineHeight = 16;
-    int textWidth = 0;
     if (providerPtr) {
         lineHeight = providerPtr->getGlyphRowCount();
-        textWidth = TextLayout::measureTextWidth(this->text.c_str(), 1, providerPtr);
     }
 
-    // Canvas is a shape mask: 0 = transparent, 1 = foreground
     this->canvas->clear(0);
 
-    // Draw border (only when not highlighted — highlighted buttons are filled solid)
     bool highlighted = this->selected || this->focused;
     if (!highlighted) {
         this->canvas->drawRect(0, 0, this->frame.size.width, this->frame.size.height, 1);
     }
 
-    // Set font on canvas for text rendering
-    if (resolvedFont) {
-        this->canvas->setFont(resolvedFont);
-    }
+    std::string title = this->getTitle();
+    const uint8_t* imgMask = this->getImage();
+    Size imgSize = this->getImageSize();
 
-    // Calculate total text height for vertical centering
-    int totalTextHeight = lineHeight;
-    if (textWidth > this->frame.size.width) {
-        int numLines = (textWidth + this->frame.size.width - 1) / this->frame.size.width;
-        int lineSpacing = providerPtr ? TextLayout::calculateLineSpacing(providerPtr) : 2;
-        totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
-    } else if (this->text.find('\n') != std::string::npos) {
-        int numLines = 1;
-        for (char c : this->text) if (c == '\n') numLines++;
-        int lineSpacing = providerPtr ? TextLayout::calculateLineSpacing(providerPtr) : 2;
-        totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
-    }
+    if (imgMask && !title.empty()) {
+        // Image + text: image on left, text to the right
+        int gap = 8;
+        int imgY = (this->frame.size.height - imgSize.height) / 2;
+        int contentWidth = imgSize.width + gap;
+        if (providerPtr) {
+            contentWidth += TextLayout::measureTextWidth(title.c_str(), 1, providerPtr);
+        }
+        int startX = (this->frame.size.width - contentWidth) / 2;
+        if (startX < 4) startX = 4;
 
-    int verticalOffset = (this->frame.size.height - totalTextHeight) / 2;
-    Rect layoutRect = MakeRect(0, verticalOffset, this->frame.size.width, totalTextHeight);
-    this->canvas->drawText(layoutRect, 1, 1, this->text.c_str(), TextAlignment::Center);
+        this->canvas->drawMask(startX, imgY, imgSize.width, imgSize.height,
+                               imgMask, (imgSize.width + 7) / 8, 1);
+
+        if (resolvedFont) {
+            this->canvas->setFont(resolvedFont);
+        }
+        int textX = startX + imgSize.width + gap;
+        int textY = (this->frame.size.height - lineHeight) / 2;
+        int textWidth = this->frame.size.width - textX;
+        if (textWidth > 0) {
+            Rect textRect = MakeRect(textX, textY, textWidth, lineHeight);
+            this->canvas->drawText(textRect, 1, 1, title.c_str());
+        }
+    } else if (imgMask) {
+        // Image only: center it
+        int imgX = (this->frame.size.width - imgSize.width) / 2;
+        int imgY = (this->frame.size.height - imgSize.height) / 2;
+        this->canvas->drawMask(imgX, imgY, imgSize.width, imgSize.height,
+                               imgMask, (imgSize.width + 7) / 8, 1);
+    } else if (!title.empty()) {
+        // Text only: existing behavior
+        if (resolvedFont) {
+            this->canvas->setFont(resolvedFont);
+        }
+        int textWidth = 0;
+        if (providerPtr) {
+            textWidth = TextLayout::measureTextWidth(title.c_str(), 1, providerPtr);
+        }
+
+        int totalTextHeight = lineHeight;
+        if (textWidth > this->frame.size.width) {
+            int numLines = (textWidth + this->frame.size.width - 1) / this->frame.size.width;
+            int lineSpacing = providerPtr ? TextLayout::calculateLineSpacing(providerPtr) : 2;
+            totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
+        } else if (title.find('\n') != std::string::npos) {
+            int numLines = 1;
+            for (char c : title) if (c == '\n') numLines++;
+            int lineSpacing = providerPtr ? TextLayout::calculateLineSpacing(providerPtr) : 2;
+            totalTextHeight = numLines * lineHeight + (numLines - 1) * lineSpacing;
+        }
+
+        int verticalOffset = (this->frame.size.height - totalTextHeight) / 2;
+        Rect layoutRect = MakeRect(0, verticalOffset, this->frame.size.width, totalTextHeight);
+        this->canvas->drawText(layoutRect, 1, 1, title.c_str(), TextAlignment::Center);
+    }
 
     this->canvasValid = true;
 }
@@ -134,12 +168,47 @@ void Button::setSelected(bool value) {
     }
 }
 
-void Button::setText(const std::string& text) {
-    this->text = text;
+void Button::setTitle(const std::string& title, ControlState state) {
+    this->titles[state] = title;
     this->canvasValid = false;
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);
     }
+}
+
+std::string Button::getTitle() const {
+    auto currentState = this->selected ? ControlState::Selected : ControlState::Normal;
+    auto it = this->titles.find(currentState);
+    if (it != this->titles.end()) return it->second;
+    it = this->titles.find(ControlState::Normal);
+    if (it != this->titles.end()) return it->second;
+    return "";
+}
+
+void Button::setImage(const uint8_t* mask, Size size, ControlState state) {
+    this->images[state] = {mask, size};
+    this->canvasValid = false;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
+    }
+}
+
+const uint8_t* Button::getImage() const {
+    auto currentState = this->selected ? ControlState::Selected : ControlState::Normal;
+    auto it = this->images.find(currentState);
+    if (it != this->images.end()) return it->second.mask;
+    it = this->images.find(ControlState::Normal);
+    if (it != this->images.end()) return it->second.mask;
+    return nullptr;
+}
+
+Size Button::getImageSize() const {
+    auto currentState = this->selected ? ControlState::Selected : ControlState::Normal;
+    auto it = this->images.find(currentState);
+    if (it != this->images.end()) return it->second.size;
+    it = this->images.find(ControlState::Normal);
+    if (it != this->images.end()) return it->second.size;
+    return {0, 0};
 }
 
 void Button::setFont(std::shared_ptr<Font> font) {
@@ -155,7 +224,7 @@ std::shared_ptr<Font> Button::getFont() const {
 }
 
 std::string Button::accessibilityLabel() const {
-    return this->text;
+    return this->getTitle();
 }
 
 AccessibilityRole Button::accessibilityRole() const {

@@ -24,45 +24,56 @@
 
 /**
  * @file Button.hpp
- * @brief A tappable button control with a text label.
+ * @brief A tappable button control with a title label and optional image.
  *
- * Renders a bordered rectangle with centered text. The appearance inverts
- * (swaps foreground/background) when the button has focus. Register a
+ * Renders a bordered rectangle with centered text and/or an image mask.
+ * Supports state-keyed content: different titles and images can be registered
+ * per ControlState, with fallback to Normal. The appearance inverts (swaps
+ * foreground/background) when the button has focus or is selected. Register a
  * FOCUS_EVENT_TOUCH_DOWN or FOCUS_EVENT_SELECT action to respond to presses.
  */
 
 #pragma once
 
 #include "Control.hpp"
+#include <map>
 #include <memory>
 
 class Font;
 class CanvasView;
 
 /**
- * @brief A button control that displays text and responds to tap/select events.
+ * @brief A button control that displays a title, image, or both, and responds to tap/select events.
  *
- * Uses an internal CanvasView for rendering. The button border and text are
- * drawn in the foreground color, with colors inverted when focused.
+ * Uses an internal CanvasView for rendering. The button border and content are
+ * drawn in the foreground color, with colors inverted when focused or selected.
  * @ingroup controls
  */
 class Button : public Control {
 public:
     /**
-     * @brief Construct a button with a text label.
+     * @brief Construct a button with a title label.
      * @param rect Frame rectangle.
-     * @param text The button's label text.
+     * @param title The button's label text.
      */
-    Button(Rect rect, std::string text);
+    Button(Rect rect, std::string title);
     void drawContent(int x, int y, Rect clipRect = {{0,0},{0,0}}) override;
     void appearanceDidChange() override;
     void setSelected(bool value) override;
     std::string accessibilityValue() const override;
 
-    /// @brief Set the button's label text.
-    void setText(const std::string& text);
-    /// @brief Get the button's label text.
-    std::string getText() const { return this->text; }
+    /// @brief Set the title for a given control state. Defaults to Normal.
+    void setTitle(const std::string& title, ControlState state = ControlState::Normal);
+    /// @brief Get the resolved title for the current state (falls back to Normal).
+    std::string getTitle() const;
+
+    /// @brief Set the image mask for a given control state. Defaults to Normal.
+    void setImage(const uint8_t* mask, Size size, ControlState state = ControlState::Normal);
+    /// @brief Get the resolved image mask for the current state (falls back to Normal).
+    const uint8_t* getImage() const;
+    /// @brief Get the resolved image size for the current state.
+    Size getImageSize() const;
+
     /// @brief Set the font for the button label. Pass nullptr for system font.
     void setFont(std::shared_ptr<Font> font);
     /// @brief Get the current font.
@@ -73,12 +84,17 @@ public:
     /// @brief Invalidate the canvas when focus is lost (restores colors).
     void didResignFocus() override;
 
-    /// @brief Returns the button's label text.
+    /// @brief Returns the resolved title for the current state.
     std::string accessibilityLabel() const override;
     /// @brief Returns AccessibilityRole::Button.
     AccessibilityRole accessibilityRole() const override;
 protected:
-    std::string text;              ///< The button's label text.
+    struct ImageData {
+        const uint8_t* mask = nullptr;
+        Size size = {0, 0};
+    };
+    std::map<ControlState, std::string> titles;
+    std::map<ControlState, ImageData> images;
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendering.
     bool canvasValid = false;           ///< Whether the canvas needs re-rendering.

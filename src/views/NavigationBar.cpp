@@ -102,7 +102,7 @@ void NavigationBar::setRightButton(const std::string& title, std::function<void(
     if (title.empty()) {
         this->rightButton->setHidden(true);
     } else {
-        this->rightButton->setText(title);
+        this->rightButton->setTitle(title);
         this->rightButton->setHidden(false);
     }
 }
