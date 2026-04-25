@@ -30,6 +30,7 @@
 #include <cassert>
 #include <chrono>
 #include <cxxabi.h>
+#include <inttypes.h>
 
 #include "FocusLog.hpp"
 static const char *VIEW_TAG = "View";
@@ -638,7 +639,7 @@ std::string View::description() {
     int status;
     char *demangled = abi::__cxa_demangle(typeid(*this).name(), 0, 0, &status);
 
-    snprintf(buf, sizeof(buf), "<%s: %p; tag = %ld; frame = (%d, %d, %d, %d)>",
+    snprintf(buf, sizeof(buf), "<%s: %p; tag = %" PRId32 "; frame = (%d, %d, %d, %d)>",
         demangled ? demangled : "?", this, this->tag,
         this->frame.origin.x, this->frame.origin.y,
         this->frame.size.width, this->frame.size.height);

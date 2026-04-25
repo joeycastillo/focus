@@ -607,7 +607,7 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
     for (size_t i = 0; i < lineLen; i++) {
         uint8_t bc = resolved[i];
         if (bc == BIDI_NSM) {
-            resolved[i] = (i > 0) ? resolved[i - 1] : (paragraphDir == -1 ? BIDI_R : BIDI_L);
+            resolved[i] = (i > 0) ? resolved[i - 1] : (uint8_t)(paragraphDir == -1 ? BIDI_R : BIDI_L);
         }
     }
     for (size_t i = 0; i < lineLen; i++) {

@@ -39,9 +39,9 @@
 #include <cstdio>
 #define FOCUS_LOGE(tag, format, ...) fprintf(stderr, "E (%s) " format "\n", tag, ##__VA_ARGS__)
 #define FOCUS_LOGW(tag, format, ...) fprintf(stderr, "W (%s) " format "\n", tag, ##__VA_ARGS__)
-#define FOCUS_LOGI(tag, format, ...)
-#define FOCUS_LOGD(tag, format, ...)
-#define FOCUS_LOGV(tag, format, ...)
+#define FOCUS_LOGI(tag, format, ...) do { if (0) fprintf(stderr, "I (%s) " format "\n", tag, ##__VA_ARGS__); } while(0)
+#define FOCUS_LOGD(tag, format, ...) do { if (0) fprintf(stderr, "D (%s) " format "\n", tag, ##__VA_ARGS__); } while(0)
+#define FOCUS_LOGV(tag, format, ...) do { if (0) fprintf(stderr, "V (%s) " format "\n", tag, ##__VA_ARGS__); } while(0)
 #endif
 
 // Keep ESP_LOG* shims for existing code that uses them directly.

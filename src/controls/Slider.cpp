@@ -146,7 +146,7 @@ bool Slider::handleEvent(Event event) {
             auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
             if (it != this->actions.end()) {
                 int32_t valueBits; memcpy(&valueBits, &this->value, sizeof(valueBits));
-                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, valueBits};
+                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, valueBits, 0};
                 it->second.callback(valueEvent, this->weak_from_this());
             }
         }
@@ -167,7 +167,7 @@ bool Slider::handleEvent(Event event) {
             auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
             if (it != this->actions.end()) {
                 int32_t valueBits; memcpy(&valueBits, &this->value, sizeof(valueBits));
-                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, valueBits};
+                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, valueBits, 0};
                 it->second.callback(valueEvent, this->weak_from_this());
             }
         }

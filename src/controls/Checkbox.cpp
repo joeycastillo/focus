@@ -103,7 +103,7 @@ bool Checkbox::handleEvent(Event event) {
     if (!this->enabled) return false;
     if (event.type == FOCUS_EVENT_TOUCH_DOWN || event.type == FOCUS_EVENT_SELECT) {
         this->setSelected(!this->selected);
-        Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, this->selected ? 1 : 0};
+        Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, this->selected ? 1 : 0, 0};
         this->fireAction(FOCUS_EVENT_VALUE_CHANGED, valueEvent);
         return true;
     }

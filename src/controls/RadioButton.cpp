@@ -117,7 +117,7 @@ bool RadioButton::handleEvent(Event event) {
             if (this->group) {
                 this->group->_buttonSelected(this);
             }
-            Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, 1};
+            Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, 1, 0};
             this->fireAction(FOCUS_EVENT_VALUE_CHANGED, valueEvent);
         }
         return true;
