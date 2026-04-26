@@ -58,21 +58,6 @@ AlertViewController::AlertViewController(
 {
 }
 
-void AlertViewController::onButtonPressed(int index) {
-    // Dismiss before calling the completion handler. The completion may
-    // present another modal, and dismissViewController only pops from
-    // the top of the stack. Dismissing first ensures the stack is clean
-    // before application code runs.
-    if (auto app = this->application.lock()) {
-        if (app->activeViewController().get() == this) {
-            app->dismissViewController();
-        }
-    }
-    if (this->completion) {
-        this->completion(index);
-    }
-}
-
 void AlertViewController::createView() {
     auto app = this->application.lock();
     if (!app) return;
@@ -162,9 +147,16 @@ void AlertViewController::createView() {
                 auto button = std::make_shared<Button>(
                     RectZero, this->buttonLabels[i]);
                 int buttonIndex = i;
+                auto weakApp = this->application;
+                auto completion = this->completion;
                 button->setAction(
-                    [this, buttonIndex](Event, std::weak_ptr<View>) {
-                        this->onButtonPressed(buttonIndex);
+                    [weakApp, completion, buttonIndex](Event, std::weak_ptr<View>) {
+                        if (auto app = weakApp.lock()) {
+                            app->dismissViewController();
+                        }
+                        if (completion) {
+                            completion(buttonIndex);
+                        }
                     },
                     FOCUS_EVENT_TOUCH_UP_INSIDE);
                 buttonRow->addSubview(button);
@@ -180,9 +172,16 @@ void AlertViewController::createView() {
                 auto button = std::make_shared<Button>(
                     MakeRect(0, 0, 0, buttonHeight), this->buttonLabels[i]);
                 int buttonIndex = i;
+                auto weakApp = this->application;
+                auto completion = this->completion;
                 button->setAction(
-                    [this, buttonIndex](Event, std::weak_ptr<View>) {
-                        this->onButtonPressed(buttonIndex);
+                    [weakApp, completion, buttonIndex](Event, std::weak_ptr<View>) {
+                        if (auto app = weakApp.lock()) {
+                            app->dismissViewController();
+                        }
+                        if (completion) {
+                            completion(buttonIndex);
+                        }
                     },
                     FOCUS_EVENT_TOUCH_UP_INSIDE);
                 buttonStack->addSubview(button);

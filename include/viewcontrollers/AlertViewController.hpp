@@ -81,6 +81,4 @@ private:
     std::string alertMessage;
     std::vector<std::string> buttonLabels;
     CompletionHandler completion;
-
-    void onButtonPressed(int index);
 };
