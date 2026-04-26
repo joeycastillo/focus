@@ -53,6 +53,17 @@ class Timer;
  * Views form a tree rooted at a Window. Each view draws itself and its children,
  * handles events (touch, directional navigation, actions), and participates in
  * the focus system. Subclass View to create custom visual elements.
+ *
+ * **Subview rendering is not clipped to parent bounds.** A child view may
+ * draw outside its parent's frame (e.g. with a negative origin). There is
+ * currently no mechanism to opt into per-view clipping.
+ *
+ * A subview positioned outside its parent's bounds simply occupies
+ * different screen area — it tracks its own dirty state and redraws
+ * normally. drawContent(), however, should not paint outside the view's
+ * own frame: the dirty rect system tracks each view by its frame, so
+ * pixels drawn beyond it won't be refreshed when the view invalidates.
+ * If you need to render content outside a view's bounds, use a subview.
  * @ingroup core
  */
 class View : public std::enable_shared_from_this<View> {
@@ -76,6 +87,12 @@ public:
      * backgroundColor if opaque, calls drawContent(), then recursively draws
      * all non-hidden subviews. Subclasses should override drawContent() to
      * render their own visuals rather than overriding draw().
+     *
+     * @note Subviews are not clipped to their parent's bounds. A subview
+     * whose frame extends beyond its parent will draw into the surrounding
+     * area. The only hard clip boundary is the window's dirty rect
+     * (clipRect), not the parent's frame. See the class-level documentation
+     * for implications on dirty rect tracking.
      *
      * @param x Horizontal offset from the window origin to the superview's content area.
      * @param y Vertical offset from the window origin to the superview's content area.
