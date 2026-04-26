@@ -147,6 +147,9 @@ void View::drawContent(int x, int y, Rect clipRect) {
 }
 
 void View::addSubview(std::shared_ptr<View> view) {
+    if (view->superview) {
+        view->superview->removeSubview(view);
+    }
     view->superview = this;
     this->subviews.push_back(view);
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
