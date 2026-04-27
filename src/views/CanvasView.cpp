@@ -818,7 +818,10 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
 int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider) {
     int16_t width = 0;
     int16_t lastAdvance = 0;
+    uint8_t emphasis = (uint8_t)this->emphasisDepth;
     const Rect* asciiMetrics = glyphProvider->getAsciiMetricsCache();
+    bool emphasisAware = emphasis > 0 || glyphProvider->supportsEmphasis(1)
+                                      || glyphProvider->supportsEmphasis(2);
     for (size_t i = 0; i < len; i++) {
         UNICODE_CODEPOINT cp = codepoints[i];
         if (cp == 0x08) {
@@ -827,15 +830,21 @@ int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_
             lastAdvance = 0;
             continue;
         }
+        if (cp == 0x0E) { emphasis = emphasis < 3 ? emphasis + 1 : 3; continue; }
+        if (cp == 0x0F) { emphasis = emphasis > 0 ? emphasis - 1 : 0; continue; }
         if (cp < 0x20) continue;
         unicode_info_t traits;
         Rect metrics;
-        if (cp < 0x80) {
+        if (cp < 0x80 && (!emphasisAware || emphasis == 0)) {
             traits.packed = _unicode_info_0000_33FF[cp];
             metrics = asciiMetrics[cp - 0x20];
         } else {
-            traits = getTraitsForCodepoint(cp);
-            metrics = glyphProvider->metricsForCodepoint(cp);
+            if (cp < 0x80) {
+                traits.packed = _unicode_info_0000_33FF[cp];
+            } else {
+                traits = getTraitsForCodepoint(cp);
+            }
+            metrics = glyphProvider->metricsForCodepoint(cp, emphasis);
         }
         if (!(traits.is.nsm || traits.is.controlchar)) {
             int16_t advance = metrics.size.width * this->textSize;
@@ -962,12 +971,13 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
 
     this->lastWasNewline = false; // Visible character breaks consecutive newline tracking
 
-    Rect metrics = glyphProvider->metricsForCodepoint(codepoint);
+    uint8_t emphasis = (uint8_t)this->emphasisDepth;
+    Rect metrics = glyphProvider->metricsForCodepoint(codepoint, emphasis);
 
     // Direction is set by the run-based renderer in writeCodepoints;
     // writeCodepoint just renders in the current direction.
 
-    const uint8_t *glyph = glyphProvider->glyphForCodepoint(codepoint);
+    const uint8_t *glyph = glyphProvider->glyphForCodepoint(codepoint, emphasis);
     if (traits.is.nsm && this->hasLastGlyph) {
         drawGlyph(this->lastGlyphPosition.x, this->lastGlyphPosition.y, metrics, traits, glyph);
     } else {
@@ -1013,9 +1023,12 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t t
     bool mirrored = (this->direction == -1) && traits.is.mirrored;
     int bbxOffset = glyphRect.origin.x;
 
-    // .text emphasis: italic (depth 1 or 3) uses shear, bold (depth 2 or 3) draws twice
-    bool bold = (this->emphasisDepth == 2 || this->emphasisDepth == 3);
-    int shear = (this->emphasisDepth == 1 || this->emphasisDepth == 3)
+    // Emphasis rendering: use real variant glyphs from provider when available,
+    // fall back to synthetic doublestrike (bold) and shear (italic) when not.
+    uint8_t emphasis = (uint8_t)this->emphasisDepth;
+    bool realEmphasis = this->font && this->font->getGlyphProvider()->supportsEmphasis(emphasis);
+    bool bold = !realEmphasis && (this->emphasisDepth == 2 || this->emphasisDepth == 3);
+    int shear = (!realEmphasis && (this->emphasisDepth == 1 || this->emphasisDepth == 3))
                 ? this->glyphRowCount / 4 : 0;
 
     for (int row = 0; row < this->glyphRowCount; row++) {

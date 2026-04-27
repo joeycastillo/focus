@@ -77,6 +77,7 @@ public:
     /// @param textSize Text scaling factor (1 = normal)
     /// @param glyphProvider Provider for glyph metrics
     /// @param initialCursorX Starting X position (for continuing partial lines across chunks)
+    /// @param initialEmphasis Starting emphasis depth (0-3) for style-aware measurement
     /// @return WordWrapResult containing wrap position and metadata
     static WordWrapResult measureLineWrap(
         UNICODE_CODEPOINT* codepoints,
@@ -84,7 +85,8 @@ public:
         int16_t layoutWidth,
         uint8_t textSize,
         const GlyphProvider* glyphProvider,
-        int16_t initialCursorX = 0
+        int16_t initialCursorX = 0,
+        uint8_t initialEmphasis = 0
     );
 
     /// Calculate line height for wrapped lines

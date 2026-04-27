@@ -46,7 +46,8 @@ WordWrapResult TextLayout::measureLineWrap(
     int16_t layoutWidth,
     uint8_t textSize,
     const GlyphProvider* glyphProvider,
-    int16_t initialCursorX
+    int16_t initialCursorX,
+    uint8_t initialEmphasis
 ) {
     WordWrapResult result = {
         .codepointsConsumed = -1,
@@ -63,9 +64,14 @@ WordWrapResult TextLayout::measureLineWrap(
     size_t position = 0;
     int16_t cursorX = initialCursorX;
     int16_t lastAdvance = 0;
+    uint8_t emphasis = initialEmphasis;
 
-    // Pre-fetch ASCII metrics cache to avoid virtual dispatch in the hot loop
+    // Pre-fetch ASCII metrics cache for emphasis=0 fast path.
+    // When emphasis > 0 and the provider supports it, we go through
+    // metricsForCodepoint() instead to get style-accurate widths.
     const Rect* asciiMetrics = glyphProvider->getAsciiMetricsCache();
+    bool emphasisAware = initialEmphasis > 0 || glyphProvider->supportsEmphasis(1)
+                                             || glyphProvider->supportsEmphasis(2);
 
     while (cursorX <= layoutWidth) {
         // Check if we've consumed all input (no wrap needed)
@@ -107,7 +113,19 @@ WordWrapResult TextLayout::measureLineWrap(
             continue;
         }
 
-        // Skip other control characters (including SO/SI which have no width)
+        // Track SO/SI emphasis changes (no width, just state)
+        if (cp == 0x0E) {
+            emphasis = emphasis < 3 ? emphasis + 1 : 3;
+            position++;
+            continue;
+        }
+        if (cp == 0x0F) {
+            emphasis = emphasis > 0 ? emphasis - 1 : 0;
+            position++;
+            continue;
+        }
+
+        // Skip other control characters
         if (cp < 0x20) {
             position++;
             continue;
@@ -116,13 +134,18 @@ WordWrapResult TextLayout::measureLineWrap(
         unicode_info_t traits;
         Rect metrics;
 
-        if (cp < 0x80) {
-            // ASCII fast path: direct array lookups, no function calls
+        if (cp < 0x80 && (!emphasisAware || emphasis == 0)) {
+            // ASCII fast path: direct array lookups, no function calls.
+            // Only valid when emphasis is 0 (regular metrics cached).
             traits.packed = _unicode_info_0000_33FF[cp];
             metrics = asciiMetrics[cp - 0x20];
         } else {
-            traits = getTraitsForCodepoint(cp);
-            metrics = glyphProvider->metricsForCodepoint(cp);
+            if (cp < 0x80) {
+                traits.packed = _unicode_info_0000_33FF[cp];
+            } else {
+                traits = getTraitsForCodepoint(cp);
+            }
+            metrics = glyphProvider->metricsForCodepoint(cp, emphasis);
         }
 
         // Track potential wrap points (spaces, etc.)
