@@ -165,12 +165,12 @@ uint8_t Font::getPointSize() const {
     return provider ? provider->getPointSize() : 12;
 }
 
-Rect Font::metricsForCodepoint(UNICODE_CODEPOINT codepoint) const {
-    return provider ? provider->metricsForCodepoint(codepoint) : RectZero;
+Rect Font::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+    return provider ? provider->metricsForCodepoint(codepoint, emphasis) : RectZero;
 }
 
-const uint8_t* Font::glyphForCodepoint(UNICODE_CODEPOINT codepoint) const {
-    return provider ? provider->glyphForCodepoint(codepoint) : nullptr;
+const uint8_t* Font::glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+    return provider ? provider->glyphForCodepoint(codepoint, emphasis) : nullptr;
 }
 
 bool Font::isValid() const {

@@ -188,7 +188,7 @@ uint8_t BDFGlyphProvider::getGlyphRowCount() const {
     return fontAscent + fontDescent;
 }
 
-const uint8_t* BDFGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) const {
+const uint8_t* BDFGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
     auto it = glyphs.find(codepoint);
     if (it != glyphs.end()) {
         return it->second.bitmap.data();
@@ -209,7 +209,7 @@ const uint8_t* BDFGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint) 
     return nullptr;
 }
 
-Rect BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint) const {
+Rect BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
     auto it = glyphs.find(codepoint);
     if (it == glyphs.end()) {
         // Try default character

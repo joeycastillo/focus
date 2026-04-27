@@ -102,7 +102,7 @@ public:
      *         The pointer is valid only until the next call to
      *         glyphForCodepoint() on the same provider.
      */
-    virtual const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint) const = 0;
+    virtual const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const = 0;
 
     /**
      * @brief Get the metrics (bounding box) for a Unicode codepoint.
@@ -114,9 +114,15 @@ public:
      * - size.height = bitmap height
      *
      * @param codepoint The Unicode codepoint to look up.
+     * @param emphasis Style variant: 0=regular, 1=italic, 2=bold, 3=bold+italic.
      * @return Bounding box and advance metrics for the glyph.
      */
-    virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint) const = 0;
+    virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const = 0;
+
+    /// Query whether this provider has a real font for the given emphasis level.
+    /// @param emphasis 0=regular, 1=italic, 2=bold, 3=bold+italic
+    /// @return true if real variant glyphs are available (not synthetic).
+    virtual bool supportsEmphasis(uint8_t emphasis) const { return emphasis == 0; }
 
 protected:
     /**
