@@ -60,6 +60,21 @@ public:
     /// @param name Font name (e.g., "spleen-12x24" or "spleen-12x24.bdf")
     static std::shared_ptr<Font> withName(const std::string& name);
 
+    /// Load a font family by base name, auto-discovering style variants.
+    ///
+    /// Searches for font files matching the base name with suffixes:
+    ///   - (none)          -> regular
+    ///   - "-bold"         -> bold
+    ///   - "-italic"       -> italic
+    ///   - "-bolditalic"   -> bold+italic
+    ///
+    /// Returns a Font backed by StyledGlyphProvider if any variants are found,
+    /// or a regular Font if only the base font exists. Falls back to systemFont()
+    /// if the base font cannot be loaded.
+    ///
+    /// @param baseName Base font name (e.g., "lucida-bright-19")
+    static std::shared_ptr<Font> familyWithName(const std::string& baseName);
+
     /// Create a font from a custom GlyphProvider.
     /// Use this for fonts that don't come from files (e.g., Unifont, embedded fonts).
     /// @param provider The glyph provider to use.

@@ -25,6 +25,7 @@
 #include "Font.hpp"
 #include "PackedFontGlyphProvider.hpp"
 #include "BDFGlyphProvider.hpp"
+#include "StyledGlyphProvider.hpp"
 
 // Static member initialization
 std::map<std::string, std::shared_ptr<Font>> Font::fontCache;
@@ -52,6 +53,44 @@ std::shared_ptr<Font> Font::withName(const std::string& name) {
 
     // Fallback to system font
     return systemFont();
+}
+
+std::shared_ptr<Font> Font::familyWithName(const std::string& baseName) {
+    // Check cache first
+    std::string cacheKey = "family:" + baseName;
+    auto it = fontCache.find(cacheKey);
+    if (it != fontCache.end()) return it->second;
+
+    // Load the regular font (required)
+    auto regular = loadFontFile(baseName);
+    if (!regular || !regular->isValid()) {
+        return systemFont();
+    }
+
+    // Try loading variants
+    auto bold = loadFontFile(baseName + "-bold");
+    auto italic = loadFontFile(baseName + "-italic");
+    auto boldItalic = loadFontFile(baseName + "-bolditalic");
+
+    // If no variants found, return a plain font
+    bool hasVariants = (bold && bold->isValid()) ||
+                       (italic && italic->isValid()) ||
+                       (boldItalic && boldItalic->isValid());
+
+    std::shared_ptr<GlyphProvider> provider;
+    if (hasVariants) {
+        provider = std::make_shared<StyledGlyphProvider>(
+            regular,
+            (bold && bold->isValid()) ? bold : nullptr,
+            (italic && italic->isValid()) ? italic : nullptr,
+            (boldItalic && boldItalic->isValid()) ? boldItalic : nullptr);
+    } else {
+        provider = regular;
+    }
+
+    auto font = std::shared_ptr<Font>(new Font(provider));
+    fontCache[cacheKey] = font;
+    return font;
 }
 
 std::shared_ptr<Font> Font::withProvider(
