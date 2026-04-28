@@ -26,6 +26,7 @@
 #include "PackedFontGlyphProvider.hpp"
 #include "BDFGlyphProvider.hpp"
 #include "StyledGlyphProvider.hpp"
+#include "FallbackGlyphProvider.hpp"
 
 // Static member initialization
 std::map<std::string, std::shared_ptr<Font>> Font::fontCache;
@@ -33,6 +34,7 @@ std::vector<std::string> Font::searchPaths;
 std::shared_ptr<Font> Font::defaultSystemFont = nullptr;
 std::shared_ptr<Font> Font::defaultLargeFont = nullptr;
 std::shared_ptr<Font> Font::defaultSmallFont = nullptr;
+std::function<FallbackFont(const GlyphProvider*)> Font::fallbackResolver;
 
 Font::Font(std::shared_ptr<GlyphProvider> provider) : provider(provider) {}
 
@@ -86,6 +88,14 @@ std::shared_ptr<Font> Font::familyWithName(const std::string& baseName) {
             (boldItalic && boldItalic->isValid()) ? boldItalic : nullptr);
     } else {
         provider = regular;
+    }
+
+    // Apply fallback resolver if registered
+    if (fallbackResolver) {
+        FallbackFont fb = fallbackResolver(provider.get());
+        if (fb.provider) {
+            provider = std::make_shared<FallbackGlyphProvider>(provider, fb.provider, fb.ascent);
+        }
     }
 
     auto font = std::shared_ptr<Font>(new Font(provider));
@@ -166,6 +176,10 @@ void Font::setSystemSmallFont(std::shared_ptr<Font> font) {
 
 void Font::clearCache() {
     fontCache.clear();
+}
+
+void Font::setFallbackResolver(std::function<FallbackFont(const GlyphProvider*)> resolver) {
+    fallbackResolver = std::move(resolver);
 }
 
 std::shared_ptr<GlyphProvider> Font::loadFontFile(const std::string& name) {

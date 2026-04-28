@@ -30,6 +30,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <functional>
 
 /// Font provides a UIKit-style cached factory for loading and managing fonts.
 /// Fonts are automatically cached — requesting the same font name twice returns
@@ -53,6 +54,14 @@
 /// systemLargeFont(), systemSmallFont()) are stored separately and
 /// are not affected.
 ///
+
+/// Return type for the fallback font resolver callback.
+/// @see Font::setFallbackResolver
+struct FallbackFont {
+    std::shared_ptr<GlyphProvider> provider;  ///< The fallback glyph provider, or nullptr for no fallback.
+    uint8_t ascent = 0;  ///< Number of ascent rows in the fallback font (for baseline alignment).
+};
+
 class Font {
 public:
     /// Get a font by name. Returns cached instance if already loaded.
@@ -138,6 +147,19 @@ public:
     /// where the active font set changes.
     static void clearCache();
 
+    /// Register an application-defined callback for automatic font fallback.
+    ///
+    /// When set, familyWithName() calls the resolver with the primary provider.
+    /// If the resolver returns a non-null provider, the result is automatically
+    /// wrapped with FallbackGlyphProvider. This enables per-glyph fallback to
+    /// a secondary font (e.g., Unifont) for codepoints the primary lacks.
+    ///
+    /// Pass nullptr to clear the resolver and disable automatic fallback.
+    ///
+    /// @param resolver A function that maps a primary provider to a fallback
+    ///        font, or nullptr to disable.
+    static void setFallbackResolver(std::function<FallbackFont(const GlyphProvider*)> resolver);
+
     /// Access the underlying GlyphProvider (for compatibility with existing code).
     GlyphProvider* getGlyphProvider() const { return provider.get(); }
 
@@ -164,6 +186,7 @@ private:
     static std::shared_ptr<Font> defaultSystemFont;
     static std::shared_ptr<Font> defaultLargeFont;
     static std::shared_ptr<Font> defaultSmallFont;
+    static std::function<FallbackFont(const GlyphProvider*)> fallbackResolver;
 
     // Helper to load a font file
     static std::shared_ptr<GlyphProvider> loadFontFile(const std::string& name);
