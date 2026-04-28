@@ -23,13 +23,15 @@
  */
 
 #include "StyledGlyphProvider.hpp"
+#include <cassert>
 
 StyledGlyphProvider::StyledGlyphProvider(
     std::shared_ptr<GlyphProvider> regular,
-    std::shared_ptr<GlyphProvider> bold,
     std::shared_ptr<GlyphProvider> italic,
+    std::shared_ptr<GlyphProvider> bold,
     std::shared_ptr<GlyphProvider> boldItalic)
 {
+    assert(regular != nullptr && "StyledGlyphProvider requires a non-null regular provider");
     this->providers[0] = std::move(regular);
     this->providers[1] = std::move(italic);
     this->providers[2] = std::move(bold);

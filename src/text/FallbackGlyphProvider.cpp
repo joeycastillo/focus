@@ -24,6 +24,7 @@
 
 #include "FallbackGlyphProvider.hpp"
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 
 FallbackGlyphProvider::FallbackGlyphProvider(
@@ -34,6 +35,8 @@ FallbackGlyphProvider::FallbackGlyphProvider(
     , fallback(std::move(fallback))
     , fallbackAscent(fallbackAscent)
 {
+    assert(this->primary != nullptr && "FallbackGlyphProvider requires a non-null primary provider");
+    assert(this->fallback != nullptr && "FallbackGlyphProvider requires a non-null fallback provider");
     // Pre-allocate enough for 48px wide * 48 rows (generous for any reasonable glyph).
     this->glyphBuffer.resize(288, 0);
 }

@@ -68,15 +68,19 @@ class StyledGlyphProvider : public GlyphProvider {
 public:
     /**
      * @brief Create a styled provider from up to four single-font providers.
+     *
+     * Parameter order matches emphasis values: 0=regular, 1=italic, 2=bold,
+     * 3=bold+italic.
+     *
      * @param regular The regular (emphasis=0) provider. Must not be nullptr.
-     * @param bold The bold (emphasis=2) provider, or nullptr if unsupported.
      * @param italic The italic (emphasis=1) provider, or nullptr if unsupported.
+     * @param bold The bold (emphasis=2) provider, or nullptr if unsupported.
      * @param boldItalic The bold+italic (emphasis=3) provider, or nullptr if unsupported.
      */
     StyledGlyphProvider(
         std::shared_ptr<GlyphProvider> regular,
-        std::shared_ptr<GlyphProvider> bold = nullptr,
         std::shared_ptr<GlyphProvider> italic = nullptr,
+        std::shared_ptr<GlyphProvider> bold = nullptr,
         std::shared_ptr<GlyphProvider> boldItalic = nullptr);
 
     // GlyphProvider interface — font-level metadata delegates to regular provider

@@ -83,8 +83,8 @@ std::shared_ptr<Font> Font::familyWithName(const std::string& baseName) {
     if (hasVariants) {
         provider = std::make_shared<StyledGlyphProvider>(
             regular,
-            (bold && bold->isValid()) ? bold : nullptr,
             (italic && italic->isValid()) ? italic : nullptr,
+            (bold && bold->isValid()) ? bold : nullptr,
             (boldItalic && boldItalic->isValid()) ? boldItalic : nullptr);
     } else {
         provider = regular;
