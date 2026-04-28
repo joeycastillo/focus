@@ -94,7 +94,7 @@ public:
     bool hasGlyph(UNICODE_CODEPOINT codepoint) const override;
 
 private:
-    uint8_t reformatFallbackGlyph(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const;
+    void reformatFallbackGlyph(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const;
 
     std::shared_ptr<GlyphProvider> primary;
     std::shared_ptr<GlyphProvider> fallback;

@@ -80,6 +80,18 @@ GlyphMetrics FallbackGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepo
     uint8_t fallbackRowCount = this->fallback->getGlyphRowCount();
     fbMetrics.height = std::max(primaryRowCount, fallbackRowCount);
 
+    // Adjust bitmapWidth for synthetic emphasis applied by reformatFallbackGlyph
+    int extraWidth = 0;
+    if ((emphasis & 2) && this->primary->supportsEmphasis(2)) {
+        extraWidth += 1;
+    }
+    if ((emphasis & 1) && this->primary->supportsEmphasis(1)) {
+        extraWidth += fbMetrics.height / 4; // shear amount
+    }
+    if (extraWidth > 0) {
+        fbMetrics.bitmapWidth += extraWidth;
+    }
+
     // Bold adds 1px to advance when the primary supports bold
     bool wantBold = (emphasis & 2) != 0;
     if (wantBold && this->primary->supportsEmphasis(2)) {
@@ -98,7 +110,7 @@ const uint8_t* FallbackGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepo
     return this->glyphBuffer.data();
 }
 
-uint8_t FallbackGlyphProvider::reformatFallbackGlyph(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+void FallbackGlyphProvider::reformatFallbackGlyph(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
     // 1. Get fallback metrics and glyph data
     GlyphMetrics fbMetrics = this->fallback->metricsForCodepoint(codepoint);
     const uint8_t* fbGlyph = this->fallback->glyphForCodepoint(codepoint);
@@ -169,6 +181,4 @@ uint8_t FallbackGlyphProvider::reformatFallbackGlyph(UNICODE_CODEPOINT codepoint
     if (wantBold && primarySupportsBold) {
         applyBoldToBitmap(this->glyphBuffer.data(), outputBytesPerRow, outputRowCount);
     }
-
-    return outputBytesPerRow;
 }
