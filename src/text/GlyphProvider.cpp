@@ -69,3 +69,43 @@ void GlyphProvider::convertBitmapToDisplayFormat(
 
     bitmap = std::move(converted);
 }
+
+void GlyphProvider::applyBoldToBitmap(uint8_t* bitmap, uint8_t bytesPerRow, uint8_t rowCount) {
+    for (int row = 0; row < rowCount; row++) {
+        uint8_t* rowPtr = bitmap + row * bytesPerRow;
+        uint8_t carry = 0;
+        for (int b = 0; b < bytesPerRow; b++) {
+            uint8_t orig = rowPtr[b];
+            rowPtr[b] = orig | (orig >> 1) | carry;
+            carry = (orig & 1) << 7;
+        }
+    }
+}
+
+void GlyphProvider::applyShearToBitmap(uint8_t* bitmap, uint8_t bytesPerRow, uint8_t rowCount, int shearPixels) {
+    if (shearPixels <= 0 || rowCount <= 1) return;
+
+    for (int row = 0; row < rowCount; row++) {
+        int shift = shearPixels * (rowCount - 1 - row) / (rowCount - 1);
+        if (shift == 0) continue;
+
+        uint8_t* rowPtr = bitmap + row * bytesPerRow;
+
+        // Shift the entire row right by 'shift' pixels in MSB-first bitmap.
+        // Process from rightmost byte to leftmost to avoid overwriting source data.
+        int byteShift = shift / 8;
+        int bitShift = shift % 8;
+
+        for (int b = bytesPerRow - 1; b >= 0; b--) {
+            uint8_t val = 0;
+            int srcByte = b - byteShift;
+            if (srcByte >= 0) {
+                val = rowPtr[srcByte] >> bitShift;
+            }
+            if (srcByte - 1 >= 0 && bitShift > 0) {
+                val |= rowPtr[srcByte - 1] << (8 - bitShift);
+            }
+            rowPtr[b] = val;
+        }
+    }
+}

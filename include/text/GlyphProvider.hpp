@@ -161,6 +161,38 @@ protected:
         uint8_t width, uint8_t height, int8_t yOffset, uint8_t advance,
         uint8_t fontAscent, uint8_t fontDescent);
 
+    /**
+     * @brief Apply synthetic bold to a display-format bitmap in place.
+     *
+     * For each row, ORs the bitmap with itself shifted right by one pixel.
+     * Carries the rightmost bit of each byte into the leftmost bit of the
+     * next byte. This is the bitmap-level equivalent of the renderer's
+     * doublestrike (drawing the glyph at x+1).
+     *
+     * @param bitmap The display-format bitmap to modify in place.
+     * @param bytesPerRow Number of bytes per row.
+     * @param rowCount Number of rows in the bitmap.
+     */
+    static void applyBoldToBitmap(uint8_t* bitmap, uint8_t bytesPerRow, uint8_t rowCount);
+
+    /**
+     * @brief Apply synthetic italic shear to a display-format bitmap in place.
+     *
+     * Shifts each row rightward by a linearly interpolated amount: top rows
+     * shift by shearPixels, bottom rows shift by zero. This is the same
+     * algorithm used by the renderers for synthetic italic.
+     *
+     * The bitmap must be wide enough to accommodate the shift without
+     * clipping — the caller should allocate (bitmapWidth + shearPixels)
+     * worth of bytesPerRow.
+     *
+     * @param bitmap The display-format bitmap to modify in place.
+     * @param bytesPerRow Number of bytes per row (must accommodate shear).
+     * @param rowCount Number of rows in the bitmap.
+     * @param shearPixels Maximum shift in pixels (typically rowCount / 4).
+     */
+    static void applyShearToBitmap(uint8_t* bitmap, uint8_t bytesPerRow, uint8_t rowCount, int shearPixels);
+
 private:
     mutable GlyphMetrics asciiMetricsCache[96]; ///< Cached metrics for codepoints 0x20..0x7F.
     mutable bool asciiCachePopulated = false;
