@@ -148,16 +148,18 @@ WordWrapResult TextLayout::measureLineWrap(
             metrics = glyphProvider->metricsForCodepoint(cp, emphasis);
         }
 
-        // Track potential wrap points (spaces, etc.)
-        if (traits.is.linebreak) {
-            wrapCandidate = position;
-        }
-
         // Advance cursor for non-combining characters
         if (!(traits.is.nsm || traits.is.controlchar)) {
             int16_t advance = metrics.advance * textSize;
             cursorX += advance;
             lastAdvance = advance;
+        }
+
+        // Track potential wrap points — only if this character fits on the line.
+        // Must come AFTER the advance so we don't register an overflowing
+        // character as a wrap candidate (causes CJK right-edge clipping).
+        if (traits.is.linebreak && cursorX <= layoutWidth) {
+            wrapCandidate = position;
         }
 
         position++;
