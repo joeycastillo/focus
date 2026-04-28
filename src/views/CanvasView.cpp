@@ -1022,6 +1022,7 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_
     uint8_t bytesPerRow = (renderWidth + 7) / 8;
     bool mirrored = (this->direction == -1) && traits.is.mirrored;
     int bbxOffset = glyphRect.xOffset;
+    int bbyOffset = glyphRect.yOffset;
     int drawRowCount = glyphRect.height > this->glyphRowCount ? glyphRect.height : this->glyphRowCount;
 
     // Synthetic effects are needed only for emphasis components the provider lacks.
@@ -1045,12 +1046,12 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_
                 if (line & 1) {
                     int pixelX = mirrored ? (glyphRect.bitmapWidth - 1 - (xOffset + j)) : (xOffset + j);
                     if (this->textSize == 1) {
-                        drawPixel(x + bbxOffset + pixelX + shift, y + row, this->textColor);
-                        if (bold) drawPixel(x + bbxOffset + pixelX + shift + 1, y + row, this->textColor);
+                        drawPixel(x + bbxOffset + pixelX + shift, y + bbyOffset + row, this->textColor);
+                        if (bold) drawPixel(x + bbxOffset + pixelX + shift + 1, y + bbyOffset + row, this->textColor);
                     } else {
-                        fillRect((x + bbxOffset + pixelX + shift) * this->textSize, y + row * this->textSize,
+                        fillRect((x + bbxOffset + pixelX + shift) * this->textSize, (y + bbyOffset + row) * this->textSize,
                                  this->textSize, this->textSize, this->textColor);
-                        if (bold) fillRect((x + bbxOffset + pixelX + shift + 1) * this->textSize, y + row * this->textSize,
+                        if (bold) fillRect((x + bbxOffset + pixelX + shift + 1) * this->textSize, (y + bbyOffset + row) * this->textSize,
                                           this->textSize, this->textSize, this->textColor);
                     }
                 }

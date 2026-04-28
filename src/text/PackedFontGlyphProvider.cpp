@@ -181,7 +181,7 @@ GlyphMetrics PackedFontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT code
     }
 
     const BDPGlyph& glyph = it->second;
-    return GlyphMetrics{glyph.advance, glyph.width, glyph.height, glyph.xOffset, glyph.yOffset};
+    return GlyphMetrics{glyph.advance, glyph.width, glyph.height, glyph.xOffset, 0};
 }
 
 std::string PackedFontGlyphProvider::readTitle(const std::string& path) {

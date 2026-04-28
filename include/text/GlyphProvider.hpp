@@ -54,8 +54,9 @@ struct GlyphMetrics {
     uint8_t advance;      ///< Cursor movement after rendering (DWIDTH).
     uint8_t bitmapWidth;  ///< Actual bitmap width in pixels (BBX width). May exceed advance for overhanging glyphs.
     uint8_t height;       ///< Bitmap height in pixels (BBX height).
-    int8_t xOffset;       ///< Horizontal offset from cursor position (BBX x).
-    int8_t yOffset;       ///< Vertical offset from baseline, positive = above (BBX y).
+    int8_t xOffset;       ///< Horizontal render adjustment in pixels.
+    int8_t yOffset;       ///< Vertical render adjustment in pixels. Negative values shift
+                          ///< the glyph upward.
 };
 
 /**

@@ -229,5 +229,5 @@ GlyphMetrics BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, 
 
     const BDFGlyph& glyph = it->second;
 
-    return GlyphMetrics{glyph.advance, glyph.width, glyph.height, glyph.xOffset, glyph.yOffset};
+    return GlyphMetrics{glyph.advance, glyph.width, glyph.height, glyph.xOffset, 0};
 }

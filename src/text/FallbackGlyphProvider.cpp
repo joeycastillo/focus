@@ -98,6 +98,14 @@ GlyphMetrics FallbackGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepo
         fbMetrics.advance += 1;
     }
 
+    // Vertical render adjustment: when the fallback has more ascent than the
+    // primary, shift the glyph upward so baselines align. The renderer applies
+    // this as an offset to the y draw position.
+    int primaryAscent = -this->primary->getOffset().y;
+    if (this->fallbackAscent > primaryAscent) {
+        fbMetrics.yOffset = static_cast<int8_t>(primaryAscent - this->fallbackAscent);
+    }
+
     return fbMetrics;
 }
 
