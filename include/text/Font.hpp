@@ -55,15 +55,15 @@
 /// are not affected.
 ///
 
-/// Return type for the fallback font resolver callback.
-/// @see Font::setFallbackResolver
-struct FallbackFont {
-    std::shared_ptr<GlyphProvider> provider;  ///< The fallback glyph provider, or nullptr for no fallback.
-    uint8_t ascent = 0;  ///< Number of ascent rows in the fallback font (for baseline alignment).
-};
-
 class Font {
 public:
+    /// Return type for the fallback font resolver callback.
+    /// @see Font::setFallbackResolver
+    struct FallbackFont {
+        std::shared_ptr<GlyphProvider> provider;  ///< The fallback glyph provider, or nullptr for no fallback.
+        uint8_t ascent = 0;  ///< Number of ascent rows in the fallback font (for baseline alignment).
+    };
+
     /// Get a font by name. Returns cached instance if already loaded.
     /// Falls back to systemFont() if the font cannot be loaded.
     /// @param name Font name (e.g., "spleen-12x24" or "spleen-12x24.bdf")

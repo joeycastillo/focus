@@ -34,7 +34,7 @@ std::vector<std::string> Font::searchPaths;
 std::shared_ptr<Font> Font::defaultSystemFont = nullptr;
 std::shared_ptr<Font> Font::defaultLargeFont = nullptr;
 std::shared_ptr<Font> Font::defaultSmallFont = nullptr;
-std::function<FallbackFont(const GlyphProvider*)> Font::fallbackResolver;
+std::function<Font::FallbackFont(const GlyphProvider*)> Font::fallbackResolver;
 
 Font::Font(std::shared_ptr<GlyphProvider> provider) : provider(provider) {}
 
@@ -178,7 +178,7 @@ void Font::clearCache() {
     fontCache.clear();
 }
 
-void Font::setFallbackResolver(std::function<FallbackFont(const GlyphProvider*)> resolver) {
+void Font::setFallbackResolver(std::function<Font::FallbackFont(const GlyphProvider*)> resolver) {
     fallbackResolver = std::move(resolver);
 }
 
