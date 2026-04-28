@@ -860,19 +860,13 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
     size_t pos = 0;
     this->cursor = this->textLayoutRect.origin;
 
-    // Pre-detect paragraph direction from first strongly-directional character
-    int paragraphDir = 1; // default LTR
-    for (size_t i = 0; i < len; i++) {
-        uint8_t bc = getTraitsForCodepoint(codepoints[i]).is.bidi_class;
-        if (bidiIsRTL(bc)) {
-            paragraphDir = -1;
-            this->direction = -1;
-            this->cursor.x = this->textLayoutRect.origin.x + this->textLayoutRect.size.width;
-            break;
-        } else if (bidiIsLTR(bc)) {
-            break;
-        }
-    }
+    // Paragraph direction: default LTR. The bidi algorithm still handles
+    // individual RTL runs correctly within an LTR paragraph — Arabic text
+    // renders right-to-left within its runs. This only affects how neutrals
+    // (punctuation, spaces) between R and L runs resolve, and where the
+    // line starts. Callers needing RTL paragraph direction should set it
+    // explicitly via document metadata (not yet implemented).
+    int paragraphDir = 1;
 
     while (pos < len) {
         int16_t effectiveWidth = this->textLayoutRect.size.width;
