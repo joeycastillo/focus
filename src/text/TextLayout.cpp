@@ -69,7 +69,7 @@ WordWrapResult TextLayout::measureLineWrap(
     // Pre-fetch ASCII metrics cache for emphasis=0 fast path.
     // When emphasis > 0 and the provider supports it, we go through
     // metricsForCodepoint() instead to get style-accurate widths.
-    const Rect* asciiMetrics = glyphProvider->getAsciiMetricsCache();
+    const GlyphMetrics* asciiMetrics = glyphProvider->getAsciiMetricsCache();
     bool emphasisAware = initialEmphasis > 0 || glyphProvider->supportsEmphasis(1)
                                              || glyphProvider->supportsEmphasis(2);
 
@@ -132,7 +132,7 @@ WordWrapResult TextLayout::measureLineWrap(
         }
 
         unicode_info_t traits;
-        Rect metrics;
+        GlyphMetrics metrics;
 
         if (cp < 0x80 && (!emphasisAware || emphasis == 0)) {
             // ASCII fast path: direct array lookups, no function calls.
@@ -155,7 +155,7 @@ WordWrapResult TextLayout::measureLineWrap(
 
         // Advance cursor for non-combining characters
         if (!(traits.is.nsm || traits.is.controlchar)) {
-            int16_t advance = metrics.size.width * textSize;
+            int16_t advance = metrics.advance * textSize;
             cursorX += advance;
             lastAdvance = advance;
         }
@@ -219,8 +219,8 @@ int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, c
 
         // Only count non-combining characters
         if (!(traits.is.nsm || traits.is.controlchar)) {
-            Rect metrics = glyphProvider->metricsForCodepoint(cp);
-            width += metrics.size.width * textSize;
+            GlyphMetrics metrics = glyphProvider->metricsForCodepoint(cp);
+            width += metrics.advance * textSize;
         }
     }
 

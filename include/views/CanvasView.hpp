@@ -208,5 +208,5 @@ private:
     // Text rendering internals (mirror Display's pipeline)
     size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
     size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
-    int drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, const uint8_t *glyph);
+    int drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_info_t traits, const uint8_t *glyph);
 };

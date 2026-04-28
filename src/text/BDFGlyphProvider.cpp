@@ -209,7 +209,7 @@ const uint8_t* BDFGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, 
     return nullptr;
 }
 
-Rect BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+GlyphMetrics BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
     auto it = glyphs.find(codepoint);
     if (it == glyphs.end()) {
         // Try default character
@@ -218,14 +218,12 @@ Rect BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t 
             // Try space
             it = glyphs.find(32);
             if (it == glyphs.end()) {
-                return RectZero;
+                return GlyphMetrics{};
             }
         }
     }
 
     const BDFGlyph& glyph = it->second;
 
-    // Return metrics compatible with TextLayout expectations
-    // width field is used for cursor advancement, so return advance
-    return MakeRect(glyph.xOffset, glyph.yOffset, glyph.advance, glyph.height);
+    return GlyphMetrics{glyph.advance, glyph.width, glyph.height, glyph.xOffset, glyph.yOffset};
 }

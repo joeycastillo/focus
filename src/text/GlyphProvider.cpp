@@ -27,7 +27,7 @@
 GlyphProvider::GlyphProvider() {
 }
 
-const Rect* GlyphProvider::getAsciiMetricsCache() const {
+const GlyphMetrics* GlyphProvider::getAsciiMetricsCache() const {
     if (!asciiCachePopulated) {
         for (int i = 0; i < 96; i++) {
             asciiMetricsCache[i] = metricsForCodepoint(0x20 + i);
@@ -42,7 +42,8 @@ void GlyphProvider::convertBitmapToDisplayFormat(
     uint8_t width, uint8_t height, int8_t yOffset, uint8_t advance,
     uint8_t fontAscent, uint8_t fontDescent)
 {
-    uint8_t destBytesPerRow = (advance + 7) / 8;
+    uint8_t renderWidth = width > advance ? width : advance;
+    uint8_t destBytesPerRow = (renderWidth + 7) / 8;
     if (destBytesPerRow == 0) destBytesPerRow = 1;
 
     uint8_t totalRows = fontAscent + fontDescent;

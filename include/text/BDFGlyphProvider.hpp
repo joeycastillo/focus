@@ -87,7 +87,7 @@ public:
     Point getOffset() const override;
     uint8_t getGlyphRowCount() const override;
     const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
-    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
+    GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
 
     /// @brief Check if the BDF file was parsed successfully.
     bool isValid() const override { return valid; }

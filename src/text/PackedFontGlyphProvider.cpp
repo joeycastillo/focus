@@ -164,20 +164,20 @@ const uint8_t* PackedFontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT code
     return nullptr;
 }
 
-Rect PackedFontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+GlyphMetrics PackedFontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
     auto it = glyphs.find(codepoint);
     if (it == glyphs.end()) {
         it = glyphs.find(defaultChar);
         if (it == glyphs.end()) {
             it = glyphs.find(32);
             if (it == glyphs.end()) {
-                return RectZero;
+                return GlyphMetrics{};
             }
         }
     }
 
     const BDPGlyph& glyph = it->second;
-    return MakeRect(glyph.xOffset, glyph.yOffset, glyph.advance, glyph.height);
+    return GlyphMetrics{glyph.advance, glyph.width, glyph.height, glyph.xOffset, glyph.yOffset};
 }
 
 std::string PackedFontGlyphProvider::readTitle(const std::string& path) {

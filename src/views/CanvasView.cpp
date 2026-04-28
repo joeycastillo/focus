@@ -819,7 +819,7 @@ int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_
     int16_t width = 0;
     int16_t lastAdvance = 0;
     uint8_t emphasis = (uint8_t)this->emphasisDepth;
-    const Rect* asciiMetrics = glyphProvider->getAsciiMetricsCache();
+    const GlyphMetrics* asciiMetrics = glyphProvider->getAsciiMetricsCache();
     bool emphasisAware = emphasis > 0 || glyphProvider->supportsEmphasis(1)
                                       || glyphProvider->supportsEmphasis(2);
     for (size_t i = 0; i < len; i++) {
@@ -834,7 +834,7 @@ int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_
         if (cp == 0x0F) { emphasis = emphasis > 0 ? emphasis - 1 : 0; continue; }
         if (cp < 0x20) continue;
         unicode_info_t traits;
-        Rect metrics;
+        GlyphMetrics metrics;
         if (cp < 0x80 && (!emphasisAware || emphasis == 0)) {
             traits.packed = _unicode_info_0000_33FF[cp];
             metrics = asciiMetrics[cp - 0x20];
@@ -847,7 +847,7 @@ int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_
             metrics = glyphProvider->metricsForCodepoint(cp, emphasis);
         }
         if (!(traits.is.nsm || traits.is.controlchar)) {
-            int16_t advance = metrics.size.width * this->textSize;
+            int16_t advance = metrics.advance * this->textSize;
             width += advance;
             lastAdvance = advance;
         }
@@ -972,7 +972,7 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
     this->lastWasNewline = false; // Visible character breaks consecutive newline tracking
 
     uint8_t emphasis = (uint8_t)this->emphasisDepth;
-    Rect metrics = glyphProvider->metricsForCodepoint(codepoint, emphasis);
+    GlyphMetrics metrics = glyphProvider->metricsForCodepoint(codepoint, emphasis);
 
     // Direction is set by the run-based renderer in writeCodepoints;
     // writeCodepoint just renders in the current direction.
@@ -985,7 +985,7 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
         // In RTL mode, cursor.x is the right boundary — subtract glyph width
         // before drawing so the glyph fits within the canvas.
         if (this->direction == -1) {
-            this->cursor.x -= metrics.size.width * this->textSize;
+            this->cursor.x -= metrics.advance * this->textSize;
         }
         this->lastGlyphPosition = this->cursor;
         int advance = drawGlyph(this->cursor.x, this->cursor.y, metrics, traits, glyph);
@@ -999,11 +999,11 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
     // left-aligned, and if the character is wider than the underscore, draw
     // again right-aligned. Covers characters up to 2x the underscore width.
     if (this->pendingOverprintUnderline) {
-        Rect uMetrics = glyphProvider->metricsForCodepoint('_');
+        GlyphMetrics uMetrics = glyphProvider->metricsForCodepoint('_');
         const uint8_t *uGlyph = glyphProvider->glyphForCodepoint('_');
         unicode_info_t uTraits = {};
-        int16_t charWidth = metrics.size.width;
-        int16_t uWidth = uMetrics.size.width;
+        int16_t charWidth = metrics.advance;
+        int16_t uWidth = uMetrics.advance;
         drawGlyph(this->lastGlyphPosition.x, this->lastGlyphPosition.y, uMetrics, uTraits, uGlyph);
         if (charWidth > uWidth) {
             int16_t rightAlignedX = this->lastGlyphPosition.x + (charWidth - uWidth);
@@ -1017,11 +1017,11 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
     return 1;
 }
 
-int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t traits, const uint8_t *glyph) {
-    uint8_t width = glyphRect.size.width;
-    uint8_t bytesPerRow = (width + 7) / 8;
+int CanvasView::drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_info_t traits, const uint8_t *glyph) {
+    uint8_t renderWidth = glyphRect.bitmapWidth > glyphRect.advance ? glyphRect.bitmapWidth : glyphRect.advance;
+    uint8_t bytesPerRow = (renderWidth + 7) / 8;
     bool mirrored = (this->direction == -1) && traits.is.mirrored;
-    int bbxOffset = glyphRect.origin.x;
+    int bbxOffset = glyphRect.xOffset;
 
     // Emphasis rendering: use real variant glyphs from provider when available,
     // fall back to synthetic doublestrike (bold) and shear (italic) when not.
@@ -1041,7 +1041,7 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t t
 
             for (int8_t j = 7; j >= 0; j--, line >>= 1) {
                 if (line & 1) {
-                    int pixelX = mirrored ? (width - 1 - (xOffset + j)) : (xOffset + j);
+                    int pixelX = mirrored ? (glyphRect.bitmapWidth - 1 - (xOffset + j)) : (xOffset + j);
                     if (this->textSize == 1) {
                         drawPixel(x + bbxOffset + pixelX + shift, y + row, this->textColor);
                         if (bold) drawPixel(x + bbxOffset + pixelX + shift + 1, y + row, this->textColor);
@@ -1056,5 +1056,5 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, Rect glyphRect, unicode_info_t t
         }
     }
 
-    return width * this->textSize;
+    return glyphRect.advance * this->textSize;
 }

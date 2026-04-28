@@ -154,6 +154,6 @@ const uint8_t *BasicGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint
     return font5x8 + 96 * 8;
 }
 
-Rect BasicGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
-    return MakeRect(0, 0, 6, 8);
+GlyphMetrics BasicGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+    return GlyphMetrics{6, 5, 8, 0, 0};
 }

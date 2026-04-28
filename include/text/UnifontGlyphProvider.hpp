@@ -79,7 +79,7 @@ public:
     uint8_t getGlyphRowCount() const override;
     bool isValid() const override;
     const uint8_t* glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
-    Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
+    GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
 
 private:
     UnifontGlyphProvider();

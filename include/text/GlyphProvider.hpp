@@ -45,6 +45,20 @@
 #include <vector>
 
 /**
+ * @brief Metrics for a single glyph: advance, bitmap dimensions, and positioning.
+ *
+ * Returned by GlyphProvider::metricsForCodepoint(). All widths are in pixels.
+ * @ingroup text
+ */
+struct GlyphMetrics {
+    uint8_t advance;      ///< Cursor movement after rendering (DWIDTH).
+    uint8_t bitmapWidth;  ///< Actual bitmap width in pixels (BBX width). May exceed advance for overhanging glyphs.
+    uint8_t height;       ///< Bitmap height in pixels (BBX height).
+    int8_t xOffset;       ///< Horizontal offset from cursor position (BBX x).
+    int8_t yOffset;       ///< Vertical offset from baseline, positive = above (BBX y).
+};
+
+/**
  * @brief Abstract base class for glyph bitmap and metric providers.
  *
  * Subclasses must implement all pure virtual methods to supply glyph data
@@ -60,11 +74,11 @@ public:
     /**
      * @brief Get a pre-populated cache of metrics for ASCII codepoints 0x20..0x7F.
      *
-     * Returns a pointer to a 96-element Rect array. Index with (codepoint - 0x20).
+     * Returns a pointer to a 96-element GlyphMetrics array. Index with (codepoint - 0x20).
      * Populated lazily on first call from metricsForCodepoint().
      * Used by TextLayout to skip virtual dispatch and hash lookups in the hot loop.
      */
-    const Rect* getAsciiMetricsCache() const;
+    const GlyphMetrics* getAsciiMetricsCache() const;
 
     /// @brief Get the font's point size (pixel height).
     virtual uint8_t getPointSize() const = 0;
@@ -105,19 +119,13 @@ public:
     virtual const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const = 0;
 
     /**
-     * @brief Get the metrics (bounding box) for a Unicode codepoint.
-     *
-     * Returns a Rect where:
-     * - origin.x = horizontal offset from the cursor position
-     * - origin.y = vertical offset from the baseline (positive = up)
-     * - size.width = advance width (how far to move the cursor)
-     * - size.height = bitmap height
+     * @brief Get the metrics for a Unicode codepoint.
      *
      * @param codepoint The Unicode codepoint to look up.
      * @param emphasis Style variant: 0=regular, 1=italic, 2=bold, 3=bold+italic.
-     * @return Bounding box and advance metrics for the glyph.
+     * @return GlyphMetrics with advance, bitmap dimensions, and positioning.
      */
-    virtual Rect metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const = 0;
+    virtual GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const = 0;
 
     /// Query whether this provider has a real font for the given emphasis level.
     /// @param emphasis 0=regular, 1=italic, 2=bold, 3=bold+italic
@@ -146,6 +154,6 @@ protected:
         uint8_t fontAscent, uint8_t fontDescent);
 
 private:
-    mutable Rect asciiMetricsCache[96];     ///< Cached metrics for codepoints 0x20..0x7F.
+    mutable GlyphMetrics asciiMetricsCache[96]; ///< Cached metrics for codepoints 0x20..0x7F.
     mutable bool asciiCachePopulated = false;
 };

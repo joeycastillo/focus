@@ -71,7 +71,7 @@ const uint8_t* StyledGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoin
     return this->providerForEmphasis(emphasis)->glyphForCodepoint(codepoint);
 }
 
-Rect StyledGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+GlyphMetrics StyledGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
     return this->providerForEmphasis(emphasis)->metricsForCodepoint(codepoint);
 }
 

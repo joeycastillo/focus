@@ -234,16 +234,15 @@ const uint8_t* UnifontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoi
     return glyphBuffer;
 }
 
-Rect UnifontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+GlyphMetrics UnifontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
     uint8_t width;
     uint32_t offset = lookupGlyph(codepoint, width);
 
     if (offset == 0 || width == 0) {
-        // Use replacement character metrics
-        return MakeRect(0, 0, replacementCharWidth, nominalHeight);
+        // Use replacement character metrics (monospace: advance == bitmapWidth)
+        return GlyphMetrics{replacementCharWidth, replacementCharWidth, nominalHeight, 0, 0};
     }
 
-    // Unifont glyphs have no bearing offset, origin at (0, 0)
-    // Width is the advance width
-    return MakeRect(0, 0, width, nominalHeight);
+    // Unifont glyphs are monospace: advance equals bitmap width
+    return GlyphMetrics{width, width, nominalHeight, 0, 0};
 }
