@@ -157,3 +157,7 @@ const uint8_t *BasicGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint
 GlyphMetrics BasicGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
     return GlyphMetrics{6, 5, 8, 0, 0};
 }
+
+bool BasicGlyphProvider::hasGlyph(UNICODE_CODEPOINT codepoint) const {
+    return codepoint >= 0x20 && codepoint <= 0x7E;
+}
