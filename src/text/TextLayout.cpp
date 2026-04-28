@@ -211,17 +211,25 @@ int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, c
     utf8_parse((char*)utf8String, codepoints);
 
     int16_t width = 0;
+    uint8_t emphasis = 0;
+    bool emphasisAware = glyphProvider->supportsEmphasis(1) || glyphProvider->supportsEmphasis(2);
     for (size_t i = 0; i < len; i++) {
         UNICODE_CODEPOINT cp = codepoints[i];
 
-        // Skip control characters
+        // Track SO/SI emphasis changes
+        if (cp == 0x0E) { emphasis = emphasis < 3 ? emphasis + 1 : 3; continue; }
+        if (cp == 0x0F) { emphasis = emphasis > 0 ? emphasis - 1 : 0; continue; }
+
+        // Skip other control characters
         if (cp < 0x20) continue;
 
         unicode_info_t traits = getTraitsForCodepoint(cp);
 
         // Only count non-combining characters
         if (!(traits.is.nsm || traits.is.controlchar)) {
-            GlyphMetrics metrics = glyphProvider->metricsForCodepoint(cp);
+            GlyphMetrics metrics = emphasisAware
+                ? glyphProvider->metricsForCodepoint(cp, emphasis)
+                : glyphProvider->metricsForCodepoint(cp);
             width += metrics.advance * textSize;
         }
     }
@@ -250,6 +258,7 @@ int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidt
 
     int16_t totalHeight = 0;
     size_t offset = 0;
+    uint8_t emphasis = 0;
 
     while (offset < len) {
         WordWrapResult result = measureLineWrap(
@@ -257,12 +266,21 @@ int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidt
             len - offset,
             layoutWidth,
             textSize,
-            glyphProvider);
+            glyphProvider,
+            0,
+            emphasis);
 
         if (result.codepointsConsumed < 0) {
             // Remaining text fits on one line — this is the last line
             totalHeight += glyphProvider->getGlyphRowCount() * textSize;
             break;
+        }
+
+        // Track SO/SI emphasis changes through consumed codepoints
+        for (int32_t i = 0; i < result.codepointsConsumed; i++) {
+            UNICODE_CODEPOINT cp = codepoints[offset + i];
+            if (cp == 0x0E) emphasis = emphasis < 3 ? emphasis + 1 : 3;
+            else if (cp == 0x0F) emphasis = emphasis > 0 ? emphasis - 1 : 0;
         }
 
         if (result.isParagraphBreak) {

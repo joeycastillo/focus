@@ -883,7 +883,9 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             len - pos,
             effectiveWidth,
             this->textSize,
-            glyphProvider
+            glyphProvider,
+            0,
+            (uint8_t)this->emphasisDepth
         );
 
         int32_t numGlyphsToDraw;
