@@ -1023,12 +1023,13 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_
     bool mirrored = (this->direction == -1) && traits.is.mirrored;
     int bbxOffset = glyphRect.xOffset;
 
-    // Emphasis rendering: use real variant glyphs from provider when available,
-    // fall back to synthetic doublestrike (bold) and shear (italic) when not.
-    uint8_t emphasis = (uint8_t)this->emphasisDepth;
-    bool realEmphasis = this->font && this->font->getGlyphProvider()->supportsEmphasis(emphasis);
-    bool bold = !realEmphasis && (this->emphasisDepth == 2 || this->emphasisDepth == 3);
-    int shear = (!realEmphasis && (this->emphasisDepth == 1 || this->emphasisDepth == 3))
+    // Synthetic effects are needed only for emphasis components the provider lacks.
+    // The provider's smart fallback handles glyph selection (e.g., BI→I when BI is missing).
+    const GlyphProvider *provider = this->font ? this->font->getGlyphProvider() : nullptr;
+    bool bold = (this->emphasisDepth == 2 || this->emphasisDepth == 3)
+                && (!provider || !provider->supportsEmphasis(2));
+    int shear = ((this->emphasisDepth == 1 || this->emphasisDepth == 3)
+                && (!provider || !provider->supportsEmphasis(1)))
                 ? this->glyphRowCount / 4 : 0;
 
     for (int row = 0; row < this->glyphRowCount; row++) {

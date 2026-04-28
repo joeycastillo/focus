@@ -40,6 +40,12 @@ const GlyphProvider* StyledGlyphProvider::providerForEmphasis(uint8_t emphasis) 
     if (emphasis < 4 && this->providers[emphasis] != nullptr) {
         return this->providers[emphasis].get();
     }
+    // For bold+italic (3), try italic (1) then bold (2) before falling back to regular.
+    // Italic letterforms are harder to synthesize than bold weight, so prefer real italic.
+    if (emphasis == 3) {
+        if (this->providers[1] != nullptr) return this->providers[1].get();
+        if (this->providers[2] != nullptr) return this->providers[2].get();
+    }
     return this->providers[0].get();
 }
 
