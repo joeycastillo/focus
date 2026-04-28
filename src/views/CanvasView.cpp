@@ -971,6 +971,14 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
     unicode_info_t traits = getTraitsForCodepoint(codepoint);
     if (traits.is.controlchar) return 1;
 
+    // Variation selectors modify the preceding character's glyph variant, but
+    // we don't support variant selection. Skip entirely — don't look up a glyph
+    // (Unifont strips them) or draw a replacement character over the base glyph.
+    if ((codepoint >= 0xFE00 && codepoint <= 0xFE0F) ||    // VS1–VS16
+        (codepoint >= 0xE0100 && codepoint <= 0xE01FF)) {  // VS17–VS256 (IVS)
+        return 1;
+    }
+
     this->lastWasNewline = false; // Visible character breaks consecutive newline tracking
 
     uint8_t emphasis = (uint8_t)this->emphasisDepth;
