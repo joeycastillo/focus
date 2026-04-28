@@ -132,6 +132,14 @@ public:
     /// @return true if real variant glyphs are available (not synthetic).
     virtual bool supportsEmphasis(uint8_t emphasis) const { return emphasis == 0; }
 
+    /// Query whether this provider has a real glyph for the given codepoint.
+    /// Returns true if the provider can render this codepoint with its own font
+    /// data (not a fallback/replacement glyph). Used by FallbackGlyphProvider
+    /// to decide when to delegate to a fallback font.
+    /// @param codepoint The Unicode codepoint to check.
+    /// @return true if a real glyph exists. Default returns true (conservative).
+    virtual bool hasGlyph(UNICODE_CODEPOINT codepoint) const { return true; }
+
 protected:
     /**
      * @brief Convert a glyph bitmap to the padded display format.
