@@ -81,6 +81,10 @@ GlyphMetrics StyledGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoin
     return this->providerForEmphasis(emphasis)->metricsForCodepoint(codepoint);
 }
 
+bool StyledGlyphProvider::hasGlyph(UNICODE_CODEPOINT codepoint) const {
+    return this->providers[0]->hasGlyph(codepoint);
+}
+
 bool StyledGlyphProvider::supportsEmphasis(uint8_t emphasis) const {
     return emphasis < 4 && this->providers[emphasis] != nullptr;
 }

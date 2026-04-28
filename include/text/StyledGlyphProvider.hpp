@@ -90,6 +90,7 @@ public:
     // GlyphProvider interface — per-glyph queries dispatch on emphasis
     const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
     GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
+    bool hasGlyph(UNICODE_CODEPOINT codepoint) const override;
 
     /// Query whether this provider has a real font for the given emphasis level.
     /// Returns true only if a non-null provider was supplied for that level.

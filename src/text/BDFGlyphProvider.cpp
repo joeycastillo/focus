@@ -209,6 +209,10 @@ const uint8_t* BDFGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, 
     return nullptr;
 }
 
+bool BDFGlyphProvider::hasGlyph(UNICODE_CODEPOINT codepoint) const {
+    return this->glyphs.find(codepoint) != this->glyphs.end();
+}
+
 GlyphMetrics BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
     auto it = glyphs.find(codepoint);
     if (it == glyphs.end()) {

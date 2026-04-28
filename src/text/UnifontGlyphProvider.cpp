@@ -234,6 +234,12 @@ const uint8_t* UnifontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoi
     return glyphBuffer;
 }
 
+bool UnifontGlyphProvider::hasGlyph(UNICODE_CODEPOINT codepoint) const {
+    uint8_t width;
+    uint32_t offset = this->lookupGlyph(codepoint, width);
+    return offset != 0 && width != 0;
+}
+
 GlyphMetrics UnifontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
     uint8_t width;
     uint32_t offset = lookupGlyph(codepoint, width);
