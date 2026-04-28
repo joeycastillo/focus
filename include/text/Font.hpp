@@ -154,6 +154,11 @@ public:
     /// wrapped with FallbackGlyphProvider. This enables per-glyph fallback to
     /// a secondary font (e.g., Unifont) for codepoints the primary lacks.
     ///
+    /// @note The resolver must be set before any familyWithName() calls.
+    /// familyWithName() caches its results, and changing the resolver does not
+    /// invalidate already-cached fonts. Fonts loaded before the resolver was
+    /// set will not have fallback wrapping applied.
+    ///
     /// Pass nullptr to clear the resolver and disable automatic fallback.
     ///
     /// @param resolver A function that maps a primary provider to a fallback
