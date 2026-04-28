@@ -1022,6 +1022,7 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_
     uint8_t bytesPerRow = (renderWidth + 7) / 8;
     bool mirrored = (this->direction == -1) && traits.is.mirrored;
     int bbxOffset = glyphRect.xOffset;
+    int drawRowCount = glyphRect.height > this->glyphRowCount ? glyphRect.height : this->glyphRowCount;
 
     // Synthetic effects are needed only for emphasis components the provider lacks.
     // The provider's smart fallback handles glyph selection (e.g., BI→I when BI is missing).
@@ -1030,11 +1031,11 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_
                 && (!provider || !provider->supportsEmphasis(2));
     int shear = ((this->emphasisDepth == 1 || this->emphasisDepth == 3)
                 && (!provider || !provider->supportsEmphasis(1)))
-                ? this->glyphRowCount / 4 : 0;
+                ? drawRowCount / 4 : 0;
 
-    for (int row = 0; row < this->glyphRowCount; row++) {
-        int shift = (shear && this->glyphRowCount > 1)
-                    ? shear * (this->glyphRowCount - 1 - row) / (this->glyphRowCount - 1) : 0;
+    for (int row = 0; row < drawRowCount; row++) {
+        int shift = (shear && drawRowCount > 1)
+                    ? shear * (drawRowCount - 1 - row) / (drawRowCount - 1) : 0;
 
         for (int byteIdx = 0; byteIdx < bytesPerRow; byteIdx++) {
             uint8_t line = glyph[row * bytesPerRow + byteIdx];
