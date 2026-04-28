@@ -51,6 +51,10 @@ void shapeArabic(UNICODE_CODEPOINT* codepoints, size_t len) {
         // don't affect shaping connectivity — skip them
         if (getTraitsForCodepoint(cp).is.nsm) continue;
 
+        // Tatweel (kashida) is a baseline extender that preserves
+        // connectivity on both sides — skip it, don't break the chain
+        if (cp == 0x0640) continue;
+
         // Characters without presentation forms (numerals, punctuation)
         // also break connectivity
         if (!isShapeable(cp)) {
@@ -64,8 +68,9 @@ void shapeArabic(UNICODE_CODEPOINT* codepoints, size_t len) {
         size_t nextIndex = 0;
         for (size_t j = i + 1; j < len; j++) {
             UNICODE_CODEPOINT candidate = codepoints[j];
-            // Skip Arabic NSMs
-            if (isInArabicBlock(candidate) && getTraitsForCodepoint(candidate).is.nsm) {
+            // Skip Arabic NSMs and Tatweel
+            if (isInArabicBlock(candidate) &&
+                (getTraitsForCodepoint(candidate).is.nsm || candidate == 0x0640)) {
                 continue;
             }
             // Found the next non-NSM character
