@@ -41,6 +41,7 @@
 
 #include "Focus.hpp"
 #include "GlyphProvider.hpp"
+#include "Hyphenator.hpp"
 #include "UnicodeTraits.hpp"
 #include <cstdint>
 #include <cstddef>
@@ -57,6 +58,7 @@ struct WordWrapResult {
 
     bool wrapped;                ///< True if line was wrapped (false if ended at newline or end of text).
     bool isParagraphBreak;       ///< True if line ended with a newline character.
+    bool needsHyphen;            ///< True if a trailing hyphen should be rendered after this line.
     int16_t endCursorX;          ///< Horizontal cursor position after processing.
 };
 
@@ -86,7 +88,8 @@ public:
         uint8_t textSize,
         const GlyphProvider* glyphProvider,
         int16_t initialCursorX = 0,
-        uint8_t initialEmphasis = 0
+        uint8_t initialEmphasis = 0,
+        const Hyphenator* hyphenator = nullptr
     );
 
     /// Calculate line height for wrapped lines

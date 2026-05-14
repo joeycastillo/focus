@@ -47,12 +47,14 @@ WordWrapResult TextLayout::measureLineWrap(
     uint8_t textSize,
     const GlyphProvider* glyphProvider,
     int16_t initialCursorX,
-    uint8_t initialEmphasis
+    uint8_t initialEmphasis,
+    const Hyphenator* hyphenator
 ) {
     WordWrapResult result = {
         .codepointsConsumed = -1,
         .wrapped = false,
         .isParagraphBreak = false,
+        .needsHyphen = false,
         .endCursorX = initialCursorX
     };
 
@@ -169,6 +171,78 @@ WordWrapResult TextLayout::measureLineWrap(
     result.wrapped = true;
     result.isParagraphBreak = false;
     result.endCursorX = 0;
+
+    // Try hyphenation on the overflowing word before falling back to word wrap.
+    // The overflowing word starts after the last wrap candidate (space) and extends
+    // to the current position. We extract it, find legal break positions, and check
+    // if any prefix + hyphen fits within the layout width.
+    if (hyphenator != nullptr) {
+        // Identify the overflowing word boundaries in the codepoint array
+        size_t wordStart = (wrapCandidate > 0) ? wrapCandidate + 1 : 0;
+        // Skip any leading control characters (SO/SI/BS) that aren't part of the word
+        while (wordStart < position && codepoints[wordStart] < 0x20) {
+            wordStart++;
+        }
+        size_t wordEnd = position; // one past the last codepoint we processed
+        // Trim trailing control characters
+        while (wordEnd > wordStart && codepoints[wordEnd - 1] < 0x20) {
+            wordEnd--;
+        }
+        size_t wordLen = wordEnd - wordStart;
+
+        if (wordLen >= 4) {
+            size_t breakPositions[32];
+            size_t breakCount = hyphenator->findBreakPositions(
+                codepoints + wordStart, wordLen, breakPositions, 32);
+
+            if (breakCount > 0) {
+                // Measure the hyphen glyph width
+                int16_t hyphenAdvance = glyphProvider->metricsForCodepoint('-', emphasis).advance * textSize;
+
+                // Walk break positions from rightmost to leftmost (greedy: fill as much as possible)
+                for (int bi = (int)breakCount - 1; bi >= 0; bi--) {
+                    // breakPositions[bi] is the index within the word of the last codepoint in the prefix.
+                    // The split point in the full codepoint array is wordStart + breakPositions[bi] + 1.
+                    size_t splitCodepoint = wordStart + breakPositions[bi] + 1;
+
+                    // Measure width from line start to split point + hyphen
+                    int16_t prefixWidth = initialCursorX;
+                    uint8_t emph = initialEmphasis;
+                    for (size_t k = 0; k < splitCodepoint; k++) {
+                        UNICODE_CODEPOINT cp = codepoints[k];
+                        if (cp == 0x0E) { emph = emph < 3 ? emph + 1 : 3; continue; }
+                        if (cp == 0x0F) { emph = emph > 0 ? emph - 1 : 0; continue; }
+                        if (cp == 0x08) {
+                            // Backspace
+                            GlyphMetrics prevMetrics = glyphProvider->metricsForCodepoint(
+                                k > 0 ? codepoints[k-1] : ' ', emph);
+                            prefixWidth -= prevMetrics.advance * textSize;
+                            if (prefixWidth < initialCursorX) prefixWidth = initialCursorX;
+                            continue;
+                        }
+                        if (cp < 0x20) continue;
+
+                        unicode_info_t traits;
+                        if (cp < 0x80) {
+                            traits.packed = _unicode_info_0000_33FF[cp];
+                        } else {
+                            traits = getTraitsForCodepoint(cp);
+                        }
+                        if (!(traits.is.nsm || traits.is.controlchar)) {
+                            GlyphMetrics metrics = glyphProvider->metricsForCodepoint(cp, emph);
+                            prefixWidth += metrics.advance * textSize;
+                        }
+                    }
+
+                    if (prefixWidth + hyphenAdvance <= layoutWidth) {
+                        result.codepointsConsumed = splitCodepoint;
+                        result.needsHyphen = true;
+                        return result;
+                    }
+                }
+            }
+        }
+    }
 
     if (wrapCandidate > 0) {
         // Wrap at the last good break point (after the space)
