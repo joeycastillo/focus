@@ -196,9 +196,6 @@ WordWrapResult TextLayout::measureLineWrap(
                 codepoints + wordStart, wordLen, breakPositions, 32);
 
             if (breakCount > 0) {
-                // Measure the hyphen glyph width
-                int16_t hyphenAdvance = glyphProvider->metricsForCodepoint('-', emphasis).advance * textSize;
-
                 // Walk break positions from rightmost to leftmost (greedy: fill as much as possible)
                 for (int bi = (int)breakCount - 1; bi >= 0; bi--) {
                     // breakPositions[bi] is the index within the word of the last codepoint in the prefix.
@@ -233,6 +230,9 @@ WordWrapResult TextLayout::measureLineWrap(
                             prefixWidth += metrics.advance * textSize;
                         }
                     }
+
+                    // Measure hyphen at the emphasis state at this break position
+                    int16_t hyphenAdvance = glyphProvider->metricsForCodepoint('-', emph).advance * textSize;
 
                     if (prefixWidth + hyphenAdvance <= layoutWidth) {
                         result.codepointsConsumed = splitCodepoint;

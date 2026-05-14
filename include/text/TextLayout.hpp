@@ -58,7 +58,7 @@ struct WordWrapResult {
 
     bool wrapped;                ///< True if line was wrapped (false if ended at newline or end of text).
     bool isParagraphBreak;       ///< True if line ended with a newline character.
-    bool needsHyphen;            ///< True if a trailing hyphen should be rendered after this line.
+    bool needsHyphen = false;    ///< True if a trailing hyphen should be rendered after this line.
     int16_t endCursorX;          ///< Horizontal cursor position after processing.
 };
 
