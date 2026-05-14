@@ -38,6 +38,7 @@
 #pragma once
 
 #include "Focus.hpp"
+#include "utf8_decode.hpp"
 #include <cstddef>
 
 class Hyphenator {
