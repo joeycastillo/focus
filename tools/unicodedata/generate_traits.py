@@ -114,6 +114,7 @@ WORD_BREAK = {
 # Line break classes where a break is allowed AFTER the character
 LINEBREAK_AFTER = {
     'BA',   # Break After
+    'B2',   # Break Before and After (em dash U+2014)
     'SP',   # Space
     'HY',   # Hyphen
     'SY',   # Symbols allowing breaks (/)
