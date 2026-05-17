@@ -1053,6 +1053,14 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_
                         drawPixel(x + bbxOffset + pixelX + shift, y + bbyOffset + row, this->textColor);
                         if (bold) drawPixel(x + bbxOffset + pixelX + shift + 1, y + bbyOffset + row, this->textColor);
                     } else {
+                        /// FIXME: drawGlyph receives cursor coordinates that are already in scaled
+                        /// pixel space (cursor.x advances by metrics.advance * textSize). But the
+                        /// fillRect calls below multiply x and y by textSize again, double-scaling
+                        /// the position. This causes scaled text with Center/Right alignment to render
+                        /// offset to the right (the centering math positions cursor.x correctly, then
+                        /// drawGlyph multiplies it again). Left-aligned text at x=0 is unaffected
+                        /// (0 * N = 0). Fix: drawGlyph should use x directly (already scaled) and
+                        /// only scale the intra-glyph offsets (bbxOffset, pixelX, shift, row).
                         fillRect((x + bbxOffset + pixelX + shift) * this->textSize, (y + bbyOffset + row) * this->textSize,
                                  this->textSize, this->textSize, this->textColor);
                         if (bold) fillRect((x + bbxOffset + pixelX + shift + 1) * this->textSize, (y + bbyOffset + row) * this->textSize,
