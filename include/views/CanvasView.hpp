@@ -191,6 +191,9 @@ protected:
 
     /// @}
 
+    /// Emit a single glyph at the current cursor position and advance the cursor.
+    size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
+
 private:
     int rowBytes;                 // Monochrome: (width+7)/8; Grayscale: width; RGB565: width*2
     int planeSize;                // Monochrome buffer size = ((width+7)/8) * height
@@ -207,6 +210,5 @@ private:
 
     // Text rendering internals (mirror Display's pipeline)
     size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
-    size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
     int drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_info_t traits, const uint8_t *glyph);
 };
