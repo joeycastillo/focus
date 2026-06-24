@@ -157,6 +157,7 @@ std::map<std::string, std::string> Locale::parseFile(const std::string& path) {
                     case 'n': processed += '\n'; ++i; break;
                     case 't': processed += '\t'; ++i; break;
                     case '\\': processed += '\\'; ++i; break;
+                    case '"': processed += '"'; ++i; break;
                     default: processed += value[i]; break;
                 }
             } else {
