@@ -66,6 +66,13 @@ std::shared_ptr<Font> Font::familyWithName(const std::string& baseName) {
     // Load the regular font (required)
     auto regular = loadFontFile(baseName);
     if (!regular || !regular->isValid()) {
+        // No font file by this name. It may be a provider registered at runtime
+        // via withProvider (e.g. "unifont32"/"unifont48", used as per-book font
+        // overrides for non-Latin scripts). Resolve those directly so the
+        // override renders in the intended font instead of silently degrading to
+        // the system font. Registered providers are cached under their plain name.
+        auto registered = fontCache.find(baseName);
+        if (registered != fontCache.end()) return registered->second;
         return systemFont();
     }
 
