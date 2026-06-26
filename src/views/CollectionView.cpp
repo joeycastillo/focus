@@ -386,6 +386,19 @@ void CollectionView::goToPage(size_t page) {
     if (pageCount == 0) return;
     if (page >= pageCount) page = pageCount - 1;
 
+    // F2: if we are already on this page and it has been built, navigating to it
+    // again would tear down and rebuild identical cells. The clamp above runs
+    // first so goToPage(out-of-range) still no-ops when it resolves to the
+    // current page. This guard lives in the inner CollectionView (not the
+    // PaginatedCollectionView wrapper) so the wrapper's updateIndicators() still
+    // runs after a no-op — footer label and arrow visibility stay correct. The
+    // only same-page caller (CollectionViewController::viewDidLayoutSubviews ->
+    // goToPage(savedPageIndex)) always runs reloadData() first, which already
+    // built and invalidated this page, so the skipped rebuild is redundant.
+    if (page == this->currentPage && this->dataLoaded) {
+        return;
+    }
+
     this->removeCurrentPageViews();
     this->currentPage = page;
     this->loadPage(page);
