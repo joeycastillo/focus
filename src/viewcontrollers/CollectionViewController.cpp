@@ -78,6 +78,13 @@ void CollectionViewController::createView() {
     this->paginatedView->setPaginationStyle(this->configuredPaginationStyle);
 
     this->view = this->paginatedView;
+
+    // F3: this is a brand-new, empty paginatedView. Reset the size sentinel so
+    // the next viewDidLayoutSubviews always repopulates it — critical because
+    // this controller object can survive view destruction (nav stack / tabs),
+    // so lastLaidOutSize would otherwise still hold the previous view's size and
+    // wrongly skip the rebuild, leaving a blank collection.
+    this->lastLaidOutSize = SizeZero;
 }
 
 void CollectionViewController::viewDidLayoutSubviews() {
@@ -86,9 +93,24 @@ void CollectionViewController::viewDidLayoutSubviews() {
     // The container has finalized our root view's frame. Rebuild the internal
     // pagination layout with the actual dimensions and populate cells.
     if (this->paginatedView) {
+        // F3: the populate path (reloadData + goToPage) only needs to run when
+        // the laid-out size actually changed. viewDidLayoutSubviews can fire
+        // more than once per appearance (the container settling layout); rebuild-
+        // ing identical cells each time is pure waste. lastLaidOutSize is reset
+        // to SizeZero in createView(), so a freshly (re)created view — whose
+        // cells were destroyed on disappear while this controller survived —
+        // always rebuilds on its first layout. We compare the paginatedView's
+        // own frame (the geometry reloadData/goToPage consume), not this->view,
+        // because subclasses (HomeScreenViewController) wrap the paginatedView in
+        // a container of a different size.
+        Size currentSize = this->paginatedView->getFrame().size;
+        if (SizesEqual(currentSize, this->lastLaidOutSize)) {
+            return;
+        }
         this->paginatedView->setPaginationStyle(this->configuredPaginationStyle);
         this->paginatedView->reloadData();
         this->paginatedView->goToPage(this->savedPageIndex);
+        this->lastLaidOutSize = currentSize;
     }
 }
 
