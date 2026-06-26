@@ -24,11 +24,14 @@
 
 /**
  * @file CollectionView.hpp
- * @brief A paginated view that displays a list or grid of items from a data source.
+ * @brief Abstract base for views that display items from a CollectionViewDataSource.
  *
- * CollectionView requests views from a CollectionViewDataSource and arranges
- * them in a vertical list, horizontal list, or grid layout. Items are loaded
- * one page at a time, supporting pagination through large data sets.
+ * CollectionView is the type a CollectionViewDataSource and a CollectionViewDelegate
+ * reason about (it is the sender passed to their methods), and the type apps hold
+ * generically. It owns the data source/delegate wiring and the layout configuration
+ * but defines no presentation strategy of its own — concrete subclasses decide how
+ * items are realized. PagedCollectionView shows them one page at a time; a future
+ * ScrollingCollectionView would window a continuous scroll.
  */
 
 #pragma once
@@ -37,7 +40,6 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
-#include <vector>
 
 class CollectionViewDataSource;
 class CollectionViewDelegate;
@@ -50,10 +52,11 @@ enum class CollectionViewLayout {
 };
 
 /**
- * @brief A paginated collection of item views driven by a data source.
+ * @brief Abstract base for a collection of item views driven by a data source.
  *
- * Set a data source, item size, and layout, then call reloadData() to
- * populate the view. Use goToPage() to navigate between pages.
+ * Set a data source, item size, and layout, then call reloadData() to populate the
+ * view. CollectionView cannot be instantiated directly; construct a concrete
+ * subclass such as PagedCollectionView.
  * @ingroup views
  */
 class CollectionView : public View {
@@ -91,25 +94,14 @@ public:
     /// @brief Get the spacing between items.
     int getItemSpacing() const { return this->itemSpacing; }
 
-    /// @brief Reload all items from the data source, showing the first page.
-    void reloadData();
-    /// @brief Navigate to a specific page (0-based).
-    void goToPage(size_t page);
-
-    /// @brief Get the current page index (0-based).
-    size_t getCurrentPage() const;
-    /// @brief Get the total number of pages.
-    size_t getPageCount() const;
-    /// @brief Get how many items fit on one page.
-    size_t getItemsPerPage() const;
-
-    void setFrame(Rect rect) override;
-    bool handleEvent(Event event) override;
+    /// @brief Reload all items from the data source. Subclasses define how items
+    ///        are partitioned and realized.
+    virtual void reloadData() = 0;
 
     /// @brief Returns AccessibilityRole::List.
     AccessibilityRole accessibilityRole() const override;
 
-private:
+protected:
     CollectionViewDataSource* dataSource = nullptr;
     std::optional<std::weak_ptr<void>> dataSourceOwner;
     CollectionViewDelegate* delegate = nullptr;
@@ -117,14 +109,4 @@ private:
     CollectionViewLayout layout = CollectionViewLayout::VerticalList;
     Size itemSize = {0, 0};
     int itemSpacing = 0;
-    size_t currentPage = 0;
-    bool dataLoaded = false;
-
-    bool variableItemSizes = false;
-    std::vector<size_t> pageBoundaries;
-
-    size_t calculateItemsPerPage() const;
-    void computePageBoundaries();
-    void loadPage(size_t page);
-    void removeCurrentPageViews();
 };

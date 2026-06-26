@@ -35,6 +35,7 @@
 
 #include "View.hpp"
 #include "CollectionView.hpp"
+#include "PagedCollectionView.hpp"
 #include <memory>
 
 class CollectionViewDataSource;
@@ -100,7 +101,7 @@ public:
     bool handleEvent(Event event) override;
 
 protected:
-    std::shared_ptr<CollectionView> collectionView;
+    std::shared_ptr<PagedCollectionView> collectionView;
 
     // Arrows style
     std::shared_ptr<CanvasView> beforeIndicator;

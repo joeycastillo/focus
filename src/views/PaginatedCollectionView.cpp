@@ -34,7 +34,7 @@
 #include <algorithm>
 
 PaginatedCollectionView::PaginatedCollectionView(Rect rect) : View(rect) {
-    this->collectionView = std::make_shared<CollectionView>(MakeRect(0, 0, rect.size.width, rect.size.height));
+    this->collectionView = std::make_shared<PagedCollectionView>(MakeRect(0, 0, rect.size.width, rect.size.height));
     // Note: collectionView is added as a subview in rebuildLayout(), not here.
     // addSubview() calls shared_from_this(), which is invalid inside a constructor.
 }

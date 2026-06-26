@@ -62,7 +62,7 @@ public:
     AccessibilityRole accessibilityRole() const override;
 
 private:
-    /// Internal callback set by CollectionView to route focus events to the delegate.
+    /// Internal callback set by the collection view to route focus events to the delegate.
     std::function<void(CollectionViewCell&, bool)> onFocusChanged;
-    friend class CollectionView;
+    friend class PagedCollectionView;
 };
