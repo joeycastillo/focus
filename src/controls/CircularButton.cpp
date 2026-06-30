@@ -28,6 +28,8 @@
 #include "TextLayout.hpp"
 #include <algorithm>
 
+namespace focus {
+
 CircularButton::CircularButton(Rect rect, std::string title) : Button(rect, std::move(title)) {
 }
 
@@ -85,3 +87,5 @@ void CircularButton::renderCanvas() {
 
     this->canvasValid = true;
 }
+
+}  // namespace focus

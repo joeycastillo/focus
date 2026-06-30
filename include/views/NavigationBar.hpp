@@ -38,6 +38,8 @@
 #include <functional>
 #include <memory>
 
+namespace focus {
+
 class Button;
 
 /**
@@ -82,3 +84,5 @@ private:
     std::function<void()> backAction;
     std::function<void()> rightAction;
 };
+
+}  // namespace focus

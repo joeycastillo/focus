@@ -37,6 +37,8 @@
 #include "View.hpp"
 #include <vector>
 
+namespace focus {
+
 /**
  * @brief A view that draws a dither pattern for visual dimming.
  *
@@ -58,3 +60,5 @@ private:
     int maskRowBytes;             ///< Bytes per row in the mask buffer.
     std::vector<uint8_t> mask;    ///< Pre-computed checkerboard mask bitmap.
 };
+
+}  // namespace focus

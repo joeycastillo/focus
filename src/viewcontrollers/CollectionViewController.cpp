@@ -26,6 +26,8 @@
 #include "Application.hpp"
 #include "Window.hpp"
 
+namespace focus {
+
 CollectionViewController::CollectionViewController(std::shared_ptr<Application> application)
     : ViewController(application) {
 }
@@ -142,3 +144,5 @@ void CollectionViewController::viewWillDisappear() {
 std::shared_ptr<PaginatedCollectionView> CollectionViewController::getPaginatedView() const {
     return this->paginatedView;
 }
+
+}  // namespace focus

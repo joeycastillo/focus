@@ -43,6 +43,8 @@
 #include "GestureRecognizer.hpp"
 #include "CursorManager.hpp"
 
+namespace focus {
+
 class KeyboardView;
 
 /**
@@ -194,3 +196,5 @@ protected:
     friend class View;
     friend class ViewController;
 };
+
+}  // namespace focus

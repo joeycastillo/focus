@@ -36,6 +36,8 @@
 
 #include "Focus.hpp"
 
+namespace focus {
+
 /**
  * @brief Abstract base class for cooperatively scheduled tasks.
  *
@@ -62,4 +64,6 @@ public:
      */
     virtual bool run(std::shared_ptr<Application> application) = 0;
 };
+
+}  // namespace focus
 

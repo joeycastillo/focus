@@ -38,6 +38,8 @@
 #include "View.hpp"
 #include <memory>
 
+namespace focus {
+
 class Font;
 class CanvasView;
 
@@ -101,3 +103,5 @@ protected:
     /// Override to customize text rendering while reusing the canvas infrastructure.
     virtual void renderCanvas();
 };
+
+}  // namespace focus

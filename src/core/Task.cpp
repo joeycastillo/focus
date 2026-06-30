@@ -24,5 +24,9 @@
 
 #include "Task.hpp"
 
+namespace focus {
+
 Task::Task() {
 }
+
+}  // namespace focus

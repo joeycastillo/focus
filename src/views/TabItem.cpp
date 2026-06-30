@@ -29,6 +29,8 @@
 #include "TextLayout.hpp"
 #include <algorithm>
 
+namespace focus {
+
 TabItem::TabItem(Rect rect, std::string label) : Control(rect), label(label) {
 }
 
@@ -125,3 +127,5 @@ void TabItem::didResignFocus() {
     }
     this->canvasValid = false;
 }
+
+}  // namespace focus

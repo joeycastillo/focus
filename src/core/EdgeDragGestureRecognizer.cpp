@@ -25,6 +25,8 @@
 #include "EdgeDragGestureRecognizer.hpp"
 #include <cstdlib>
 
+namespace focus {
+
 EdgeDragGestureRecognizer::EdgeDragGestureRecognizer(Rect activationRegion, int moveThreshold)
     : activationRegion(activationRegion), moveThreshold(moveThreshold) {
 }
@@ -80,3 +82,5 @@ void EdgeDragGestureRecognizer::reset() {
     this->state = State::Possible;
     this->touchDownPoint = PointZero;
 }
+
+}  // namespace focus

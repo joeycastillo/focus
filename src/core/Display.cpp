@@ -24,6 +24,8 @@
 
 #include "Display.hpp"
 
+namespace focus {
+
 void Display::blitOpaque(int x, int y, int w, int h,
                          const uint8_t* data, int rowBytes,
                          Rect clipRect) {
@@ -54,3 +56,5 @@ void Display::blitOpaque(int x, int y, int w, int h,
         }
     }
 }
+
+}  // namespace focus

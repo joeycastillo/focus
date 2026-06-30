@@ -42,6 +42,8 @@
 #include "Focus.hpp"
 #include "Window.hpp"
 
+namespace focus {
+
 class HatchedView;
 
 /**
@@ -215,3 +217,5 @@ protected:
 
     std::atomic<uint32_t> loopCounter_{0}; ///< Completed run-loop iterations (readable from any thread).
 };
+
+}  // namespace focus

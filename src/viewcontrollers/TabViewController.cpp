@@ -31,6 +31,8 @@
 #include "FocusMetrics.hpp"
 #include <algorithm>
 
+namespace focus {
+
 std::shared_ptr<TabViewController> TabViewController::create(
     std::shared_ptr<Application> application)
 {
@@ -256,3 +258,5 @@ void TabViewController::setFont(std::shared_ptr<Font> font) {
         if (tab.tabItem) tab.tabItem->setFont(font);
     }
 }
+
+}  // namespace focus

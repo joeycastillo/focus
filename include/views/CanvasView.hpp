@@ -50,6 +50,8 @@
 #include <vector>
 #include <memory>
 
+namespace focus {
+
 /// A word's bounding box and byte range, recorded during text rendering.
 /// Byte offsets are relative to the start of the UTF-8 string passed to drawText().
 struct WordPosition {
@@ -212,3 +214,5 @@ private:
     size_t writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
     int drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_info_t traits, const uint8_t *glyph);
 };
+
+}  // namespace focus

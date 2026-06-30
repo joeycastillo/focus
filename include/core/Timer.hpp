@@ -43,6 +43,8 @@
 #include <chrono>
 #include <ctime>
 
+namespace focus {
+
 /**
  * @brief A cooperative timer that fires from the main run loop.
  *
@@ -172,3 +174,5 @@ private:
     /// boundary using the system clock. Null for fixed-interval timers.
     std::function<std::chrono::milliseconds()> recomputeInterval;
 };
+
+}  // namespace focus

@@ -47,6 +47,8 @@
 #include <memory>
 #include <array>
 
+namespace focus {
+
 /**
  * @brief GlyphProvider that dispatches to per-emphasis sub-providers.
  *
@@ -107,3 +109,5 @@ private:
     /// [0]=regular, [1]=italic, [2]=bold, [3]=bold+italic
     std::array<std::shared_ptr<GlyphProvider>, 4> providers;
 };
+
+}  // namespace focus

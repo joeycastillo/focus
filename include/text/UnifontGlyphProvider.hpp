@@ -43,6 +43,8 @@
 #include <cstdint>
 #include <cstdio>
 
+namespace focus {
+
 /**
  * @brief GlyphProvider for the Unifont bitmap font.
  *
@@ -117,3 +119,5 @@ private:
     uint32_t lookupGlyph(UNICODE_CODEPOINT cp, uint8_t& outWidth) const;
     void readData(uint32_t offset, void* dest, size_t len) const;
 };
+
+}  // namespace focus

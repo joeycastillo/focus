@@ -55,6 +55,8 @@
 
 #include "View.hpp"
 
+namespace focus {
+
 /**
  * @brief Base class for stack layout views.
  *
@@ -137,3 +139,5 @@ class HStack final : public StackView {
 public:
     HStack(Rect rect) : StackView(rect, Axis::Horizontal) {}
 };
+
+}  // namespace focus

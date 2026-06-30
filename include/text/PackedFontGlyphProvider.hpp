@@ -38,6 +38,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace focus {
+
 /// @brief Parsed data for a single BDP glyph.
 struct BDPGlyph {
     uint8_t width;       ///< Tight bitmap width in pixels.
@@ -94,3 +96,5 @@ private:
     uint32_t defaultChar = 0;
     bool valid = false;
 };
+
+}  // namespace focus

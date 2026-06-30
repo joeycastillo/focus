@@ -30,6 +30,8 @@
 #include "TextLayout.hpp"
 #include <algorithm>
 
+namespace focus {
+
 TextField::TextField(Rect rect) : Control(rect) {
 }
 
@@ -218,3 +220,5 @@ AccessibilityRole TextField::accessibilityRole() const {
 std::string TextField::accessibilityValue() const {
     return this->text;
 }
+
+}  // namespace focus

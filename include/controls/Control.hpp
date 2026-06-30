@@ -36,6 +36,8 @@
 #include "Focus.hpp"
 #include "View.hpp"
 
+namespace focus {
+
 /**
  * @brief Control states for state-keyed content.
  *
@@ -77,4 +79,6 @@ protected:
     bool enabled = true; ///< Whether this control accepts input.
     bool selected = false; ///< Whether this control is in the selected state.
 };
+
+}  // namespace focus
 

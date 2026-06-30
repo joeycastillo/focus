@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <vector>
 
+namespace focus {
+
 Button::Button(Rect rect, std::string title) : Control(rect) {
     this->titles[ControlState::Normal] = std::move(title);
 }
@@ -235,3 +237,5 @@ std::string Button::accessibilityValue() const {
     if (this->selected) return "selected";
     return "";
 }
+
+}  // namespace focus

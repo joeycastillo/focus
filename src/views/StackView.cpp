@@ -24,6 +24,8 @@
 
 #include "StackView.hpp"
 
+namespace focus {
+
 StackView::StackView(Rect rect, Axis axis) : View(rect), axis(axis) {
     if (axis == Axis::Vertical) {
         this->setDirectionalAffinity(DirectionalAffinity::Vertical);
@@ -137,3 +139,5 @@ void StackView::layoutSubviews() {
         offset += childSize + this->spacing;
     }
 }
+
+}  // namespace focus

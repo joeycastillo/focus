@@ -27,6 +27,8 @@
 #include <cassert>
 #include <cstring>
 
+namespace focus {
+
 FallbackGlyphProvider::FallbackGlyphProvider(
     std::shared_ptr<GlyphProvider> primary,
     std::shared_ptr<GlyphProvider> fallback,
@@ -193,3 +195,5 @@ void FallbackGlyphProvider::reformatFallbackGlyph(UNICODE_CODEPOINT codepoint, u
         applyBoldToBitmap(this->glyphBuffer.data(), outputBytesPerRow, outputRowCount);
     }
 }
+
+}  // namespace focus

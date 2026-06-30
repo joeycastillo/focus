@@ -24,6 +24,8 @@
 
 #include "CollectionView.hpp"
 
+namespace focus {
+
 CollectionView::CollectionView(Rect rect) : View(rect) {
 }
 
@@ -67,3 +69,5 @@ void CollectionView::setItemSpacing(int spacing) {
 AccessibilityRole CollectionView::accessibilityRole() const {
     return AccessibilityRole::List;
 }
+
+}  // namespace focus

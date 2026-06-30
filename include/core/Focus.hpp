@@ -104,6 +104,8 @@
 #define FOCUS_EVENT_USER_BASE (10000)
 /// @}
 
+namespace focus {
+
 /// @brief Device orientation as detected by accelerometer.
 enum class FocusOrientation {
     Unknown = 0,            ///< Orientation could not be determined.
@@ -247,4 +249,6 @@ enum class AccessibilityRole {
     ProgressBar,    ///< A progress indicator.
     Adjustable,     ///< A value that can be incremented or decremented.
 };
+
+}  // namespace focus
 

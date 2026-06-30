@@ -6,6 +6,8 @@
 
 #pragma once
 
+namespace focus {
+
 /// Layout metrics for Focus UI components. Apps select a preset at startup
 /// or construct a custom struct. Components read from the active metrics
 /// via FocusMetrics::get().
@@ -36,3 +38,5 @@ struct FocusMetrics {
     /// Get the active metrics. Returns Standard if not explicitly set.
     static const FocusMetrics& get();
 };
+
+}  // namespace focus

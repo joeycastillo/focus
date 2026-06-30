@@ -28,6 +28,8 @@
 #include "Display.hpp"
 #include "Font.hpp"
 
+namespace focus {
+
 LabelView::LabelView(Rect rect, std::string text) : View(rect) {
     this->text = text;
 }
@@ -128,3 +130,5 @@ AccessibilityRole LabelView::accessibilityRole() const {
 bool LabelView::isAccessibilityElement() const {
     return true;
 }
+
+}  // namespace focus

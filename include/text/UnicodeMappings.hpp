@@ -37,6 +37,8 @@
 #include <cstddef>
 #include "utf8_decode.hpp"
 
+namespace focus {
+
 namespace UnicodeMappings {
 
 /**
@@ -82,3 +84,5 @@ void toUppercase(UNICODE_CODEPOINT* buf, size_t len);
 void toLowercase(UNICODE_CODEPOINT* buf, size_t len);
 
 } // namespace UnicodeMappings
+
+}  // namespace focus

@@ -44,6 +44,8 @@
 #include <string>
 #include <vector>
 
+namespace focus {
+
 /**
  * @brief Metrics for a single glyph: advance, bitmap dimensions, and positioning.
  *
@@ -205,3 +207,5 @@ private:
     mutable GlyphMetrics asciiMetricsCache[96]; ///< Cached metrics for codepoints 0x20..0x7F.
     mutable bool asciiCachePopulated = false;
 };
+
+}  // namespace focus

@@ -6,6 +6,8 @@
 
 #include "FocusMetrics.hpp"
 
+namespace focus {
+
 static FocusMetrics sActiveMetrics;
 static bool sMetricsConfigured = false;
 
@@ -55,3 +57,5 @@ const FocusMetrics& FocusMetrics::get() {
     if (!sMetricsConfigured) return Standard;
     return sActiveMetrics;
 }
+
+}  // namespace focus

@@ -11,6 +11,8 @@
 #include <chrono>
 #include <vector>
 
+namespace focus {
+
 class View;
 
 /**
@@ -85,3 +87,5 @@ private:
     void advanceToStep(size_t index);
     void finish();
 };
+
+}  // namespace focus

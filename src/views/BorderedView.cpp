@@ -27,6 +27,8 @@
 #include "Window.hpp"
 #include "Display.hpp"
 
+namespace focus {
+
 BorderedView::BorderedView(Rect rect) : View(rect) {
     this->opaque = true;
 }
@@ -61,3 +63,5 @@ void BorderedView::drawContent(int x, int y, Rect clipRect) {
         }
     }
 }
+
+}  // namespace focus

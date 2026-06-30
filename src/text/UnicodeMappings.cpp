@@ -8,6 +8,8 @@
 #include "UnicodeMappings.hpp"
 #include <algorithm>
 
+namespace focus {
+
 namespace UnicodeMappings {
 
 namespace {
@@ -4708,3 +4710,5 @@ void toLowercase(UNICODE_CODEPOINT* buf, size_t len) {
 }
 
 } // namespace UnicodeMappings
+
+}  // namespace focus

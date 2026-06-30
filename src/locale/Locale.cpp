@@ -26,6 +26,8 @@
 #include "NotificationCenter.hpp"
 #include <fstream>
 
+namespace focus {
+
 // Static member initialization
 std::map<std::string, Locale*> Locale::localeCache;
 std::vector<std::string> Locale::searchPaths;
@@ -170,3 +172,5 @@ std::map<std::string, std::string> Locale::parseFile(const std::string& path) {
 
     return result;
 }
+
+}  // namespace focus

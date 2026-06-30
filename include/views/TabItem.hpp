@@ -38,6 +38,8 @@
 #include <functional>
 #include <memory>
 
+namespace focus {
+
 class Font;
 class CanvasView;
 
@@ -73,3 +75,5 @@ protected:
     /// @brief Render the tab label to the internal canvas.
     virtual void renderCanvas();
 };
+
+}  // namespace focus

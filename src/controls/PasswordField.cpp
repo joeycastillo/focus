@@ -24,6 +24,8 @@
 
 #include "PasswordField.hpp"
 
+namespace focus {
+
 PasswordField::PasswordField(Rect rect) : TextField(rect) {
 }
 
@@ -38,3 +40,5 @@ std::string PasswordField::getDisplayText() const {
     }
     return masked;
 }
+
+}  // namespace focus

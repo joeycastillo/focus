@@ -25,6 +25,8 @@
 #include "RadioGroup.hpp"
 #include "RadioButton.hpp"
 
+namespace focus {
+
 void RadioGroup::addButton(std::shared_ptr<RadioButton> button) {
     button->setGroup(this->shared_from_this());
     this->buttons.push_back(button);
@@ -81,3 +83,5 @@ void RadioGroup::_buttonSelected(RadioButton* selected) {
         this->selectionChangedCallback(selectedIndex);
     }
 }
+
+}  // namespace focus

@@ -29,6 +29,8 @@
 #include <map>
 #include <type_traits>
 
+namespace focus {
+
 /// Locale provides a Font-style cached factory for loading localized string tables.
 /// Locale files are simple key=value text files (UTF-8, .strings extension).
 ///
@@ -226,3 +228,5 @@ inline std::string _LP(const std::string& key, const std::string& comment, int c
     }
     return detail::substitute(comment, args);
 }
+
+}  // namespace focus

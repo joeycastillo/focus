@@ -38,6 +38,8 @@
 #include "PagedCollectionView.hpp"
 #include <memory>
 
+namespace focus {
+
 class CollectionViewDataSource;
 class CollectionViewDelegate;
 class CanvasView;
@@ -130,3 +132,5 @@ private:
     void rebuildLayout();
     void updateFooterLabel();
 };
+
+}  // namespace focus

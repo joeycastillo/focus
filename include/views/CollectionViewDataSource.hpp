@@ -32,6 +32,8 @@
 #include "Focus.hpp"
 #include <cstddef>
 
+namespace focus {
+
 class CollectionView;
 class CollectionViewCell;
 
@@ -83,3 +85,5 @@ public:
 
     virtual ~CollectionViewDataSource() {}
 };
+
+}  // namespace focus

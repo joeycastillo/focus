@@ -7,6 +7,8 @@
 #include "AnimationSequence.hpp"
 #include "View.hpp"
 
+namespace focus {
+
 AnimationSequence &AnimationSequence::animate(
     std::chrono::milliseconds interval,
     int frameCount,
@@ -120,3 +122,5 @@ void AnimationSequence::finish()
     owner_.reset();
     if (cb) cb();
 }
+
+}  // namespace focus

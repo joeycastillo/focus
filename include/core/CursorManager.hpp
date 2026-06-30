@@ -9,6 +9,8 @@
 #include "Focus.hpp"
 #include "RelativeTracker.hpp"
 
+namespace focus {
+
 /**
  * @brief Trackpad-style cursor position tracker.
  *
@@ -50,3 +52,5 @@ private:
     RelativeTracker trackX{0, 1.0f};
     RelativeTracker trackY{0, 1.0f};
 };
+
+}  // namespace focus

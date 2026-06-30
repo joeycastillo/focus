@@ -32,6 +32,8 @@
 #include "Font.hpp"
 #include "TextLayout.hpp"
 
+namespace focus {
+
 std::shared_ptr<AlertViewController> AlertViewController::create(
     std::shared_ptr<Application> app,
     std::string title,
@@ -217,3 +219,5 @@ void AlertViewController::createView() {
         MakeRect(padding, padding, contentWidth, contentHeight));
     alertBox->addSubview(contentStack);
 }
+
+}  // namespace focus

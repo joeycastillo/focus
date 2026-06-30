@@ -26,6 +26,8 @@
 #include "Window.hpp"
 #include "Display.hpp"
 
+namespace focus {
+
 HatchedView::HatchedView(Rect rect, uint16_t color) : View(rect) {
     this->foregroundColor = color;
     this->opaque = false;
@@ -64,3 +66,5 @@ void HatchedView::drawContent(int x, int y, Rect clipRect) {
                             this->foregroundColor, this->mask.data(), this->maskRowBytes, clipRect);
     }
 }
+
+}  // namespace focus

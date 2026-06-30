@@ -46,6 +46,8 @@
 #include <cstdint>
 #include <cstddef>
 
+namespace focus {
+
 /// Result of a word wrap measurement.
 struct WordWrapResult {
     /// Number of codepoints that fit on this line, or negative if no wrap was
@@ -127,3 +129,5 @@ public:
     static int16_t measureTextHeight(const char* utf8String, int16_t layoutWidth, uint8_t textSize, const GlyphProvider* glyphProvider);
 
 };
+
+}  // namespace focus

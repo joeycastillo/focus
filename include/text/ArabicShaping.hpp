@@ -36,6 +36,8 @@
 #include <cstddef>
 #include "utf8_decode.hpp"
 
+namespace focus {
+
 /**
  * @brief Shape Arabic text by replacing base characters with contextual forms.
  *
@@ -47,3 +49,5 @@
  * @param len Number of codepoints in the array.
  */
 void shapeArabic(UNICODE_CODEPOINT* codepoints, size_t len);
+
+}  // namespace focus

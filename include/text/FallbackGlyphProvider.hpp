@@ -48,6 +48,8 @@
 #include <memory>
 #include <vector>
 
+namespace focus {
+
 /**
  * @brief GlyphProvider that falls back to a secondary font for missing glyphs.
  *
@@ -101,3 +103,5 @@ private:
     uint8_t fallbackAscent;
     mutable std::vector<uint8_t> glyphBuffer;
 };
+
+}  // namespace focus

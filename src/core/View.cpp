@@ -33,6 +33,8 @@
 #include <inttypes.h>
 
 #include "FocusLog.hpp"
+namespace focus {
+
 static const char *VIEW_TAG = "View";
 
 int View::drawCount = 0;
@@ -726,3 +728,5 @@ std::shared_ptr<View> findAccessibilityElement(
     }
     return nullptr;
 }
+
+}  // namespace focus

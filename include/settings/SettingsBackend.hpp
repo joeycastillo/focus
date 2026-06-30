@@ -37,6 +37,8 @@
 #include <string>
 #include <cstdint>
 
+namespace focus {
+
 /**
  * @brief Abstract interface for typed key-value persistent storage.
  *
@@ -68,3 +70,5 @@ public:
     /// @brief Write a boolean value for the given key.
     virtual void setBool(const std::string& key, bool value) = 0;
 };
+
+}  // namespace focus

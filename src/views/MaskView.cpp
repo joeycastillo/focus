@@ -26,6 +26,8 @@
 #include "Window.hpp"
 #include "Display.hpp"
 
+namespace focus {
+
 MaskView::MaskView(Rect rect, const unsigned char *mask) : View(rect) {
     this->mask = mask;
 }
@@ -38,3 +40,5 @@ void MaskView::drawContent(int x, int y, Rect clipRect) {
                             this->foregroundColor, this->mask, maskRowBytes, clipRect);
     }
 }
+
+}  // namespace focus

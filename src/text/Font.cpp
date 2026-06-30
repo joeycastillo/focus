@@ -28,6 +28,8 @@
 #include "StyledGlyphProvider.hpp"
 #include "FallbackGlyphProvider.hpp"
 
+namespace focus {
+
 // Static member initialization
 std::map<std::string, std::shared_ptr<Font>> Font::fontCache;
 std::vector<std::string> Font::searchPaths;
@@ -236,3 +238,5 @@ const uint8_t* Font::glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emph
 bool Font::isValid() const {
     return provider && provider->isValid();
 }
+
+}  // namespace focus

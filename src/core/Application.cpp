@@ -36,6 +36,8 @@
 
 #include "focus_platform.h"
 
+namespace focus {
+
 static const char *TAG = "Focus";
 
 Application::Application(const std::shared_ptr<Window>& window) {
@@ -420,3 +422,5 @@ void Application::dismissAllViewControllers() {
 void Application::quit() {
     this->running = false;
 }
+
+}  // namespace focus

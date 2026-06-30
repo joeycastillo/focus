@@ -26,6 +26,8 @@
 #include <algorithm>
 #include <any>
 
+namespace focus {
+
 NotificationCenter* NotificationCenter::shared() {
     static NotificationCenter instance;
     return &instance;
@@ -91,3 +93,5 @@ void NotificationCenter::post(const std::string& name, std::any userInfo) {
             observers.end());
     }
 }
+
+}  // namespace focus

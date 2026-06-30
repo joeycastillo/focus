@@ -29,6 +29,8 @@
 #include <cstring>
 #include <algorithm>
 
+namespace focus {
+
 static const char *TAG = "BDF";
 
 BDFGlyphProvider::BDFGlyphProvider(const std::string& bdfFilePath) {
@@ -231,3 +233,5 @@ GlyphMetrics BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, 
 
     return GlyphMetrics{glyph.advance, glyph.width, glyph.height, glyph.xOffset, 0};
 }
+
+}  // namespace focus

@@ -35,6 +35,8 @@
 
 #include "Button.hpp"
 
+namespace focus {
+
 class CircularButton : public Button {
 public:
     CircularButton(Rect rect, std::string title = "");
@@ -42,3 +44,5 @@ public:
 protected:
     void renderCanvas() override;
 };
+
+}  // namespace focus

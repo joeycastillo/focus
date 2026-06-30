@@ -27,6 +27,8 @@
 #include "Window.hpp"
 #include "Display.hpp"
 
+namespace focus {
+
 void ProgressView::renderCanvas() {
     if (!this->canvas) {
         this->canvas = std::make_shared<CanvasView>(
@@ -83,3 +85,5 @@ std::string ProgressView::accessibilityValue() const {
     int percent = (int)(this->progress * 100.0f + 0.5f);
     return std::to_string(percent) + "%";
 }
+
+}  // namespace focus

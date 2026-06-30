@@ -29,6 +29,8 @@
 #include <typeinfo>
 #include "FocusLog.hpp"
 
+namespace focus {
+
 static const char *TAG = "Focus";
 
 std::shared_ptr<NavigationViewController> NavigationViewController::create(
@@ -220,3 +222,5 @@ void NavigationViewController::updateNavigationBar() {
     }
     this->navigationBar->setBackButtonVisible(this->viewControllerStack.size() > 1);
 }
+
+}  // namespace focus

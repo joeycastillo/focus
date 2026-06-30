@@ -24,6 +24,8 @@
 
 #include "InMemorySettingsBackend.hpp"
 
+namespace focus {
+
 bool InMemorySettingsBackend::hasKey(const std::string& key) const {
     return store.count(key) > 0;
 }
@@ -64,3 +66,5 @@ bool InMemorySettingsBackend::getBool(const std::string& key) const {
 void InMemorySettingsBackend::setBool(const std::string& key, bool value) {
     store[key] = value;
 }
+
+}  // namespace focus

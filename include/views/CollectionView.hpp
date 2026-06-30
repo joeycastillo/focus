@@ -41,6 +41,8 @@
 #include <memory>
 #include <optional>
 
+namespace focus {
+
 class CollectionViewDataSource;
 class CollectionViewDelegate;
 
@@ -110,3 +112,5 @@ protected:
     Size itemSize = {0, 0};
     int itemSpacing = 0;
 };
+
+}  // namespace focus

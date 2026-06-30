@@ -25,6 +25,8 @@
 #include "Timer.hpp"
 #include "Application.hpp"
 
+namespace focus {
+
 Timer::Timer(Clock::time_point fireDate,
              std::chrono::milliseconds interval,
              Callback callback,
@@ -137,3 +139,5 @@ std::shared_ptr<Timer> Timer::scheduledTimerForNextHour(
     application->addTask(timer);
     return timer;
 }
+
+}  // namespace focus

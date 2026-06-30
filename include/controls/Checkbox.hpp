@@ -36,6 +36,8 @@
 #include "Control.hpp"
 #include <memory>
 
+namespace focus {
+
 class Font;
 class CanvasView;
 
@@ -86,3 +88,5 @@ protected:
     /// Override to customize checkbox rendering while reusing the canvas infrastructure.
     virtual void renderCanvas();
 };
+
+}  // namespace focus

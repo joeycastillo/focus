@@ -37,6 +37,8 @@
 #include <vector>
 #include <functional>
 
+namespace focus {
+
 class RadioButton;
 
 /**
@@ -70,3 +72,5 @@ private:
     std::vector<std::weak_ptr<RadioButton>> buttons; ///< Buttons in this group.
     std::function<void(int)> selectionChangedCallback; ///< Selection change callback.
 };
+
+}  // namespace focus

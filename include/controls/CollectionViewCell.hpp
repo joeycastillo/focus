@@ -37,6 +37,8 @@
 #include "Control.hpp"
 #include <functional>
 
+namespace focus {
+
 /**
  * @brief A focusable container view for CollectionView items.
  *
@@ -66,3 +68,5 @@ private:
     std::function<void(CollectionViewCell&, bool)> onFocusChanged;
     friend class PagedCollectionView;
 };
+
+}  // namespace focus

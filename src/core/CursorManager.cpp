@@ -6,6 +6,8 @@
 
 #include "CursorManager.hpp"
 
+namespace focus {
+
 void CursorManager::setGain(float gain) {
     trackX.gain = gain;
     trackY.gain = gain;
@@ -37,3 +39,5 @@ void CursorManager::handleTouchEvent(Event event, int maxX, int maxY) {
         if (onTrackingEnded) onTrackingEnded();
     }
 }
+
+}  // namespace focus

@@ -28,6 +28,8 @@
 #include "Application.hpp"
 #include "Window.hpp"
 
+namespace focus {
+
 ViewController::ViewController(std::shared_ptr<Application> application) {
     this->application = application;
 }
@@ -82,3 +84,5 @@ std::shared_ptr<TabViewController> ViewController::getTabViewController() const 
 std::shared_ptr<View> ViewController::getView() const {
     return this->view;
 }
+
+}  // namespace focus

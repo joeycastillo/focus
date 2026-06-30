@@ -1,6 +1,8 @@
 #pragma once
 #include <cmath>
 
+namespace focus {
+
 /// Trackpad-style relative position tracker.
 /// On touch-down call anchor(), on touch-moved call track().
 /// Both raw input and position are in pixel space by default (gain=1.0).
@@ -28,3 +30,5 @@ private:
     float rawAnchor = 0;
     float posAnchor = 0;
 };
+
+}  // namespace focus

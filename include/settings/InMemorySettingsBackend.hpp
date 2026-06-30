@@ -29,6 +29,8 @@
 #include <variant>
 #include <string>
 
+namespace focus {
+
 /// @ingroup settings
 class InMemorySettingsBackend : public SettingsBackend {
 public:
@@ -48,3 +50,5 @@ private:
     using Value = std::variant<std::string, int32_t, bool>;
     std::map<std::string, Value> store;
 };
+
+}  // namespace focus

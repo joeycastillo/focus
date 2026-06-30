@@ -28,6 +28,8 @@
 #include "KeyboardView.hpp"
 #include <algorithm>
 
+namespace focus {
+
 Window::Window(std::shared_ptr<Display> display, Size size) : View(MakeRect(0, 0, size.width, size.height)) {
     this->display = display;
     this->setNeedsDisplayInRect(this->frame);
@@ -223,3 +225,5 @@ bool Window::isKeyboardView(std::shared_ptr<View> view) {
     }
     return false;
 }
+
+}  // namespace focus

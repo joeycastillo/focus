@@ -43,6 +43,8 @@
 #include <vector>
 #include <memory>
 
+namespace focus {
+
 class Font;
 class TabItem;
 class HStack;
@@ -129,3 +131,5 @@ private:
     /// @brief Rebuild the tab bar HStack from the current tabs list.
     void rebuildTabBar();
 };
+
+}  // namespace focus

@@ -33,6 +33,8 @@
 #include "FocusMetrics.hpp"
 #include <algorithm>
 
+namespace focus {
+
 PaginatedCollectionView::PaginatedCollectionView(Rect rect) : View(rect) {
     this->collectionView = std::make_shared<PagedCollectionView>(MakeRect(0, 0, rect.size.width, rect.size.height));
     // Note: collectionView is added as a subview in rebuildLayout(), not here.
@@ -367,3 +369,5 @@ void PaginatedCollectionView::updateFooterLabel() {
         this->pageLabel->setText(_LF("pagination.page_of", "Page {0} of {1}", current, total));
     }
 }
+
+}  // namespace focus

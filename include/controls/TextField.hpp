@@ -37,6 +37,8 @@
 #include <string>
 #include <functional>
 
+namespace focus {
+
 class Font;
 class CanvasView;
 
@@ -118,3 +120,5 @@ protected:
     /// Override to customize text field rendering while reusing the canvas infrastructure.
     virtual void renderCanvas();
 };
+
+}  // namespace focus

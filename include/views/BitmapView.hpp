@@ -32,6 +32,8 @@
 #include "Focus.hpp"
 #include "View.hpp"
 
+namespace focus {
+
 /**
  * @brief A view that renders a 1bpp bitmap opaquely to the display.
  *
@@ -55,3 +57,5 @@ public:
 protected:
     const unsigned char *bitmap; ///< Pointer to the external bitmap data.
 };
+
+}  // namespace focus

@@ -40,6 +40,8 @@
 #include "Focus.hpp"
 #include <string>
 
+namespace focus {
+
 class NavigationViewController;
 class TabViewController;
 
@@ -135,3 +137,5 @@ protected:
     friend class NavigationViewController;
     friend class TabViewController;
 };
+
+}  // namespace focus

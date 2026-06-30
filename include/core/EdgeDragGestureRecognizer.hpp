@@ -40,6 +40,8 @@
 
 #include "GestureRecognizer.hpp"
 
+namespace focus {
+
 /// @ingroup core
 class EdgeDragGestureRecognizer final : public GestureRecognizer {
 public:
@@ -63,3 +65,5 @@ private:
     int moveThreshold;
     Point touchDownPoint;
 };
+
+}  // namespace focus

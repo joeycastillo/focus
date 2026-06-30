@@ -30,6 +30,8 @@
 #include <algorithm>
 #include <cstring>
 
+namespace focus {
+
 extern const uint16_t _unicode_info_0000_33FF[];
 
 CanvasView::CanvasView(Rect rect)
@@ -1067,3 +1069,5 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_
 
     return glyphRect.advance * this->textSize;
 }
+
+}  // namespace focus

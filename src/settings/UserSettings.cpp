@@ -26,6 +26,8 @@
 #include "SettingsBackend.hpp"
 #include "FocusLog.hpp"
 
+namespace focus {
+
 UserSettings::BackendFactory UserSettings::backendFactory;
 std::map<std::string, UserSettings*> UserSettings::instances;
 
@@ -89,3 +91,5 @@ void UserSettings::setBool(const std::string& key, bool value) {
 void UserSettings::eraseKey(const std::string& key) {
     backend->eraseKey(key);
 }
+
+}  // namespace focus

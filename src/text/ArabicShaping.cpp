@@ -26,6 +26,8 @@
 #include "UnicodeArabicPresentation.hpp"
 #include "UnicodeTraits.hpp"
 
+namespace focus {
+
 using namespace UnicodeArabicPresentation;
 
 static inline bool isInArabicBlock(UNICODE_CODEPOINT cp) {
@@ -124,3 +126,5 @@ void shapeArabic(UNICODE_CODEPOINT* codepoints, size_t len) {
         }
     }
 }
+
+}  // namespace focus

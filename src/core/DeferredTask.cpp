@@ -24,6 +24,8 @@
 
 #include "DeferredTask.hpp"
 
+namespace focus {
+
 DeferredTask::DeferredTask(std::function<void()> callback, int delayCycles)
     : callback(callback), remainingCycles(delayCycles) {
 }
@@ -42,3 +44,5 @@ bool DeferredTask::run(std::shared_ptr<Application> application) {
     // Return true to remove this task from the run loop
     return true;
 }
+
+}  // namespace focus

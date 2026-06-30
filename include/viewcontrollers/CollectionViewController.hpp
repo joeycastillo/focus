@@ -43,6 +43,8 @@
 #include "CollectionView.hpp"
 #include "PaginatedCollectionView.hpp"
 
+namespace focus {
+
 class CollectionViewCell;
 
 /**
@@ -128,3 +130,5 @@ private:
     /// always rebuilds, even though this controller object can outlive its view.
     Size lastLaidOutSize = {0, 0};
 };
+
+}  // namespace focus

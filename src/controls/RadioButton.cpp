@@ -30,6 +30,8 @@
 #include "Font.hpp"
 #include <algorithm>
 
+namespace focus {
+
 RadioButton::RadioButton(Rect rect, std::string text) : Control(rect) {
     this->text = text;
 }
@@ -160,3 +162,5 @@ std::shared_ptr<Font> RadioButton::getFont() const {
 void RadioButton::setGroup(std::shared_ptr<RadioGroup> group) {
     this->group = group;
 }
+
+}  // namespace focus

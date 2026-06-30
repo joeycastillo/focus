@@ -41,6 +41,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace focus {
+
 /**
  * @brief Parsed data for a single BDF glyph.
  *
@@ -115,3 +117,5 @@ private:
     uint32_t defaultChar = 0;   ///< DEFAULT_CHAR codepoint for missing glyphs.
     bool valid = false;         ///< Whether the BDF file was parsed successfully.
 };
+
+}  // namespace focus

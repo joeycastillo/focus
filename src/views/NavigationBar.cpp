@@ -31,6 +31,8 @@
 #include "Locale.hpp"
 #include "FocusMetrics.hpp"
 
+namespace focus {
+
 NavigationBar::NavigationBar(int width) : View(MakeRect(0, 0, width, getHeight())) {
     this->opaque = true;
 }
@@ -116,3 +118,5 @@ void NavigationBar::drawContent(int x, int y, Rect clipRect) {
                           this->foregroundColor, clipRect);
     }
 }
+
+}  // namespace focus

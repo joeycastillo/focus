@@ -40,6 +40,8 @@
 #include <vector>
 #include <memory>
 
+namespace focus {
+
 class NavigationBar;
 
 /**
@@ -127,3 +129,5 @@ private:
     std::function<void()> rightButtonAction;
     bool inTransition = false;
 };
+
+}  // namespace focus

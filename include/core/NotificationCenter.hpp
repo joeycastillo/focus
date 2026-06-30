@@ -44,6 +44,8 @@
 #include <cstdint>
 #include <any>
 
+namespace focus {
+
 /// @brief A named notification with an optional payload.
 struct Notification {
     std::string name;        ///< The notification name (e.g. "dataLoaded").
@@ -103,3 +105,5 @@ private:
     uint32_t nextToken = 1;           ///< Counter for generating unique tokens.
     int postingDepth = 0;             ///< Re-entrancy depth for safe posting.
 };
+
+}  // namespace focus

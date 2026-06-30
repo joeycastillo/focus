@@ -40,6 +40,8 @@
 #include <vector>
 #include <functional>
 
+namespace focus {
+
 /**
  * @brief A modal alert dialog with buttons.
  *
@@ -82,3 +84,5 @@ private:
     std::vector<std::string> buttonLabels;
     CompletionHandler completion;
 };
+
+}  // namespace focus

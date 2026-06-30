@@ -25,6 +25,8 @@
 #include "UnifontGlyphProvider.hpp"
 #include <cstring>
 
+namespace focus {
+
 // Magic number for unifont.bin files
 static const uint8_t UNIFONT_MAGIC[4] = {'U', 'F', 'N', 'T'};
 
@@ -252,3 +254,5 @@ GlyphMetrics UnifontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoi
     // Unifont glyphs are monospace: advance equals bitmap width
     return GlyphMetrics{width, width, nominalHeight, 0, 0};
 }
+
+}  // namespace focus

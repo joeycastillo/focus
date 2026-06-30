@@ -36,6 +36,8 @@
 #include "Focus.hpp"
 #include "GlyphProvider.hpp"
 
+namespace focus {
+
 /**
  * @brief A minimal built-in 5x8 fixed-width glyph provider.
  *
@@ -56,3 +58,5 @@ public:
     GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
     bool hasGlyph(UNICODE_CODEPOINT codepoint) const override;
 };
+
+}  // namespace focus

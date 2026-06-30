@@ -37,6 +37,8 @@
 #include "View.hpp"
 #include <memory>
 
+namespace focus {
+
 class CanvasView;
 
 /**
@@ -62,3 +64,5 @@ protected:
     /// @brief Render the border to the canvas. Override for custom border rendering.
     virtual void renderCanvas();
 };
+
+}  // namespace focus

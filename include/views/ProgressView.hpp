@@ -37,6 +37,8 @@
 #include "View.hpp"
 #include <memory>
 
+namespace focus {
+
 class CanvasView;
 
 /**
@@ -77,3 +79,5 @@ protected:
     /// @brief Render the progress bar to the canvas. Override for custom rendering.
     virtual void renderCanvas();
 };
+
+}  // namespace focus

@@ -32,6 +32,8 @@
 #include "Task.hpp"
 #include <functional>
 
+namespace focus {
+
 /// A one-shot task that executes a callback after a specified number of run loop cycles.
 /// After executing, it removes itself from the application's task list.
 ///
@@ -55,3 +57,5 @@ private:
     std::function<void()> callback;
     int remainingCycles;
 };
+
+}  // namespace focus

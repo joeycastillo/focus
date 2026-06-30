@@ -41,6 +41,8 @@
 #include "utf8_decode.hpp"
 #include <cstddef>
 
+namespace focus {
+
 class Hyphenator {
 public:
     virtual ~Hyphenator() = default;
@@ -58,3 +60,5 @@ public:
         size_t* positions, size_t maxPositions
     ) const = 0;
 };
+
+}  // namespace focus

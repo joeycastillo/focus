@@ -39,6 +39,8 @@
 #include <map>
 #include <memory>
 
+namespace focus {
+
 class Font;
 class CanvasView;
 
@@ -102,3 +104,5 @@ protected:
     /// Override to customize button rendering while reusing the canvas infrastructure.
     virtual void renderCanvas();
 };
+
+}  // namespace focus

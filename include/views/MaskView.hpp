@@ -32,6 +32,8 @@
 #include "Focus.hpp"
 #include "View.hpp"
 
+namespace focus {
+
 /**
  * @brief A view that renders foreground color through a 1bpp mask.
  *
@@ -55,3 +57,5 @@ public:
 protected:
     const unsigned char *mask; ///< Pointer to the external mask data.
 };
+
+}  // namespace focus

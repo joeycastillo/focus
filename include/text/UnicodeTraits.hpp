@@ -51,6 +51,8 @@
 #include <stdint.h>
 #include "utf8_decode.hpp"
 
+namespace focus {
+
 /**
  * @brief UAX#9 Bidirectional class values.
  *
@@ -148,3 +150,5 @@ static inline bool bidiIsStrong(uint8_t bidi_class) {
  * @return A unicode_info_t with the relevant property fields set.
  */
 unicode_info_t getTraitsForCodepoint(UNICODE_CODEPOINT codepoint);
+
+}  // namespace focus

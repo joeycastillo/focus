@@ -35,6 +35,8 @@
 
 #include "TextField.hpp"
 
+namespace focus {
+
 /**
  * @brief A text input control that hides its content with bullet characters.
  * @ingroup controls
@@ -48,3 +50,5 @@ protected:
     /// @brief Returns a string of bullet characters matching the text length.
     std::string getDisplayText() const override;
 };
+
+}  // namespace focus

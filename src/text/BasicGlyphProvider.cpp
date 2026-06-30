@@ -24,6 +24,8 @@
 
 #include "BasicGlyphProvider.hpp"
 
+namespace focus {
+
 // 5x8 ASCII font with descenders, 95 printable characters (0x20 ' ' through 0x7E '~')
 // plus a replacement glyph. Stored row-major: 8 bytes per glyph, MSB-first, top 5
 // bits of each byte used. Lowercase descenders (g, j, p, q, y) extend into row 7.
@@ -161,3 +163,5 @@ GlyphMetrics BasicGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint
 bool BasicGlyphProvider::hasGlyph(UNICODE_CODEPOINT codepoint) const {
     return codepoint >= 0x20 && codepoint <= 0x7E;
 }
+
+}  // namespace focus

@@ -32,6 +32,8 @@
 #include <cmath>
 #include <cstring>
 
+namespace focus {
+
 Slider::Slider(Rect rect, std::string label) : Control(rect), label(label) {
 }
 
@@ -237,3 +239,5 @@ std::string Slider::accessibilityValue() const {
     int percent = (int)(this->value * 100.0f + 0.5f);
     return std::to_string(percent) + "%";
 }
+
+}  // namespace focus

@@ -40,6 +40,8 @@
 #include <stdint.h>
 #include "Focus.hpp"
 
+namespace focus {
+
 /// Display operating mode — describes the display's pixel capability.
 enum class DisplayMode {
     Monochrome,   ///< 1 bit per pixel (black & white) — default
@@ -161,3 +163,5 @@ protected:
     int nativeWidth = 0;       ///< Panel width in pixels (unrotated).
     int nativeHeight = 0;      ///< Panel height in pixels (unrotated).
 };
+
+}  // namespace focus

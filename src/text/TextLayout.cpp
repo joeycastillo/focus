@@ -28,6 +28,8 @@
 #include <cstring>
 #include <cstdlib>
 
+namespace focus {
+
 // Direct access to the Unicode traits LUT for ASCII fast path.
 // Defined in UnicodeTraits.cpp. For ASCII codepoints (< 0x80), indexing
 // directly avoids the branch cascade in getTraitsForCodepoint().
@@ -369,3 +371,5 @@ int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidt
     free(codepoints);
     return totalHeight;
 }
+
+}  // namespace focus

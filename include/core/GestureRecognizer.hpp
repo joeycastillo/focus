@@ -43,6 +43,8 @@
 #include "Focus.hpp"
 #include <functional>
 
+namespace focus {
+
 /// @ingroup core
 class GestureRecognizer {
 public:
@@ -89,3 +91,5 @@ public:
 protected:
     State state = State::Possible;
 };
+
+}  // namespace focus

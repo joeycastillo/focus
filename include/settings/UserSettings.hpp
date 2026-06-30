@@ -56,6 +56,8 @@
 #include <functional>
 #include <cstdint>
 
+namespace focus {
+
 class SettingsBackend;
 
 /**
@@ -118,3 +120,5 @@ private:
     static BackendFactory backendFactory;               ///< Registered backend factory.
     static std::map<std::string, UserSettings*> instances; ///< Cached instances by namespace.
 };
+
+}  // namespace focus

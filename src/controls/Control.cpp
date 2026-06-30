@@ -25,6 +25,8 @@
 #include "Control.hpp"
 #include "Window.hpp"
 
+namespace focus {
+
 Control::Control(Rect rect) : View(rect) {
 }
 
@@ -68,3 +70,5 @@ bool Control::handleEvent(Event event) {
 bool Control::isAccessibilityElement() const {
     return true;
 }
+
+}  // namespace focus

@@ -26,6 +26,8 @@
 #include "Window.hpp"
 #include "Display.hpp"
 
+namespace focus {
+
 BitmapView::BitmapView(Rect rect, const unsigned char *bitmap) : View(rect) {
     this->bitmap = bitmap;
 }
@@ -39,3 +41,5 @@ void BitmapView::drawContent(int x, int y, Rect clipRect) {
                             this->bitmap, bitmapRowBytes, clipRect);
     }
 }
+
+}  // namespace focus

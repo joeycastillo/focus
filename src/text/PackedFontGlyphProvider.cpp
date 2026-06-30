@@ -27,6 +27,8 @@
 #include <cstring>
 #include <algorithm>
 
+namespace focus {
+
 PackedFontGlyphProvider::PackedFontGlyphProvider(const std::string& bdpFilePath) {
     valid = loadBDPFile(bdpFilePath);
 }
@@ -214,3 +216,5 @@ std::string PackedFontGlyphProvider::readTitle(const std::string& path) {
     fclose(f);
     return std::string(buf.data(), titleLength);
 }
+
+}  // namespace focus

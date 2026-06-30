@@ -44,6 +44,8 @@
 #include <memory>
 #include <string>
 
+namespace focus {
+
 class Font;
 class CanvasView;
 
@@ -108,3 +110,5 @@ protected:
     /// @brief Calculate the width of the track area.
     int getTrackWidth() const;
 };
+
+}  // namespace focus

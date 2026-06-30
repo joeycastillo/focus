@@ -29,6 +29,8 @@
 #include "Font.hpp"
 #include <algorithm>
 
+namespace focus {
+
 Checkbox::Checkbox(Rect rect, std::string text) : Control(rect) {
     this->text = text;
 }
@@ -157,3 +159,5 @@ AccessibilityRole Checkbox::accessibilityRole() const {
 std::string Checkbox::accessibilityValue() const {
     return this->selected ? "checked" : "unchecked";
 }
+
+}  // namespace focus

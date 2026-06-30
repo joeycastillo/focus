@@ -45,6 +45,8 @@
 #include <optional>
 #include <chrono>
 
+namespace focus {
+
 class Timer;
 
 /**
@@ -519,4 +521,6 @@ private:
 /// @return A shared pointer to the matching view, or nullptr.
 std::shared_ptr<View> findAccessibilityElement(
     std::shared_ptr<View> root, const std::string& identifier);
+
+}  // namespace focus
 

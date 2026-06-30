@@ -43,6 +43,8 @@
 #include <cstdint>
 #include "utf8_decode.hpp"
 
+namespace focus {
+
 namespace UnicodeArabicPresentation {
 
 /**
@@ -74,3 +76,5 @@ bool isShapeable(UNICODE_CODEPOINT cp);
 UNICODE_CODEPOINT getForm(UNICODE_CODEPOINT base, Form form);
 
 } // namespace UnicodeArabicPresentation
+
+}  // namespace focus

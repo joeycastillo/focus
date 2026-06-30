@@ -37,6 +37,8 @@
 #include <cstddef>
 #include <vector>
 
+namespace focus {
+
 /**
  * @brief A paginated collection of item views driven by a data source.
  *
@@ -77,3 +79,5 @@ private:
     void loadPage(size_t page);
     void removeCurrentPageViews();
 };
+
+}  // namespace focus

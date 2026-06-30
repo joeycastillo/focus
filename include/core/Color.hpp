@@ -26,6 +26,8 @@
 
 #include <stdint.h>
 
+namespace focus {
+
 /// @brief Factory class for 16-bit grayscale color values.
 ///
 /// GrayscaleColor provides static methods that return uint16_t color values
@@ -102,3 +104,5 @@ struct RGB565Color {
     }
 
 };
+
+}  // namespace focus

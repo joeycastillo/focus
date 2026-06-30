@@ -37,6 +37,8 @@
 #include "Control.hpp"
 #include <memory>
 
+namespace focus {
+
 class Font;
 class CanvasView;
 class RadioGroup;
@@ -89,3 +91,5 @@ private:
     bool canvasValid = false;
     void renderCanvas();
 };
+
+}  // namespace focus

@@ -31,6 +31,8 @@
 #include "TextLayout.hpp"
 #include <cstring>
 
+namespace focus {
+
 KeyboardView::KeyboardView(Rect rect, KeyboardType type) : View(rect) {
     this->type = type;
 }
@@ -389,3 +391,5 @@ bool KeyboardView::handleEvent(Event event) {
 
     return View::handleEvent(event);
 }
+
+}  // namespace focus

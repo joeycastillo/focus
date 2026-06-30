@@ -20,6 +20,8 @@
 
 #include "UnicodeArabicPresentation.hpp"
 
+namespace focus {
+
 namespace UnicodeArabicPresentation {
 
 namespace {
@@ -227,3 +229,5 @@ UNICODE_CODEPOINT getForm(UNICODE_CODEPOINT base, Form form) {
 }
 
 } // namespace UnicodeArabicPresentation
+
+}  // namespace focus

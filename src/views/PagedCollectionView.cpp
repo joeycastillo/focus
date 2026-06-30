@@ -28,6 +28,8 @@
 #include "CollectionViewCell.hpp"
 #include "Window.hpp"
 
+namespace focus {
+
 PagedCollectionView::PagedCollectionView(Rect rect) : CollectionView(rect) {
 }
 
@@ -366,3 +368,5 @@ void PagedCollectionView::goToPage(size_t page) {
         this->setNeedsDisplayInRect(this->frame);
     }
 }
+
+}  // namespace focus

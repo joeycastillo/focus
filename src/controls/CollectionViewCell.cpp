@@ -24,6 +24,8 @@
 
 #include "CollectionViewCell.hpp"
 
+namespace focus {
+
 CollectionViewCell::CollectionViewCell(Rect rect) : Control(rect) {
 }
 
@@ -40,3 +42,5 @@ void CollectionViewCell::didResignFocus() {
 AccessibilityRole CollectionViewCell::accessibilityRole() const {
     return AccessibilityRole::ListItem;
 }
+
+}  // namespace focus

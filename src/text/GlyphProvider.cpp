@@ -24,6 +24,8 @@
 
 #include "GlyphProvider.hpp"
 
+namespace focus {
+
 GlyphProvider::GlyphProvider() {
 }
 
@@ -109,3 +111,5 @@ void GlyphProvider::applyShearToBitmap(uint8_t* bitmap, uint8_t bytesPerRow, uin
         }
     }
 }
+
+}  // namespace focus

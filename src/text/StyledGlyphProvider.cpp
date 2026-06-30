@@ -25,6 +25,8 @@
 #include "StyledGlyphProvider.hpp"
 #include <cassert>
 
+namespace focus {
+
 StyledGlyphProvider::StyledGlyphProvider(
     std::shared_ptr<GlyphProvider> regular,
     std::shared_ptr<GlyphProvider> italic,
@@ -90,3 +92,5 @@ bool StyledGlyphProvider::hasGlyph(UNICODE_CODEPOINT codepoint) const {
 bool StyledGlyphProvider::supportsEmphasis(uint8_t emphasis) const {
     return emphasis < 4 && this->providers[emphasis] != nullptr;
 }
+
+}  // namespace focus

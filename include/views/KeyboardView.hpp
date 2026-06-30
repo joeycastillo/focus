@@ -40,6 +40,8 @@
 #include <string>
 #include <functional>
 
+namespace focus {
+
 class Font;
 class CanvasView;
 
@@ -94,3 +96,5 @@ private:
     mutable std::vector<KeyRect> cachedKeys;
     mutable bool keysCached = false;
 };
+
+}  // namespace focus

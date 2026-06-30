@@ -32,6 +32,8 @@
 #include <memory>
 #include <functional>
 
+namespace focus {
+
 /// Font provides a UIKit-style cached factory for loading and managing fonts.
 /// Fonts are automatically cached — requesting the same font name twice returns
 /// the same instance.
@@ -196,3 +198,5 @@ private:
     // Helper to load a font file
     static std::shared_ptr<GlyphProvider> loadFontFile(const std::string& name);
 };
+
+}  // namespace focus

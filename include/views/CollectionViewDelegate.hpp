@@ -35,6 +35,8 @@
 
 #include <cstddef>
 
+namespace focus {
+
 class CollectionView;
 class CollectionViewCell;
 
@@ -79,3 +81,5 @@ public:
 
     virtual ~CollectionViewDelegate() {}
 };
+
+}  // namespace focus
