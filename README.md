@@ -49,12 +49,11 @@ In non-touch-oriented applications, Window also manages focus: which view curren
 **Application** is the central coordinator. It owns the Window, manages a root view controller plus a stack of modally presented view controllers, and runs the cooperative event loop.
 
 ```
-while (running) {
+while tasks.count > 0:
     for each task in tasks:
         if task.run() returns true:
             remove task (one-shot)
     loopCounter++
-}
 ```
 
 Subclass Application and override `setup()` to set your root view controller and add tasks. Call `run()` to enter the loop. Call `quit()` to exit.
@@ -366,7 +365,7 @@ Modal dialog with a message and action buttons:
 ```cpp
 auto alert = AlertViewController::create(
     app,
-    "Delete Book",                    // title
+    "Delete Item",                    // title
     "This cannot be undone.",         // message
     {"Cancel", "Delete"},             // button labels
     [](int buttonIndex) {             // completion handler
