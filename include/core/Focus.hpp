@@ -44,6 +44,8 @@
 #include <string>
 #include <functional>
 
+#include "utf8_decode.hpp"  // UNICODE_CODEPOINT (aliased below as focus::CodePoint)
+
 /// @name Directional Navigation Events
 /// @brief D-pad or arrow-key navigation events for focus traversal.
 /// @{
@@ -105,6 +107,14 @@
 /// @}
 
 namespace focus {
+
+/// @brief A Unicode scalar value (code point).
+///
+/// uint32_t, or uint16_t when UNICODE_BMP_ONLY is defined. The text and glyph
+/// APIs work in code points — character decoding, GlyphProvider lookup, and
+/// text measurement all take a CodePoint.
+/// @ingroup core
+using CodePoint = UNICODE_CODEPOINT;
 
 /// @brief Device orientation as detected by accelerometer.
 enum class FocusOrientation {

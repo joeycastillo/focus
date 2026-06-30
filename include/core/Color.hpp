@@ -28,26 +28,36 @@
 
 namespace focus {
 
-/// @brief Factory class for 16-bit grayscale color values.
-///
-/// GrayscaleColor provides static methods that return uint16_t color values
-/// using a 16-bit grayscale representation (0x0000 = black, 0xFFFF = white).
-///
-/// It also manages the default foreground and background colors used by newly
-/// created Views.
-///
-/// **Bit depth conversion:**
-/// - 8-bit: `color >> 8`  (0x00 to 0xFF)
-/// - 4-bit: `color >> 12` (0x0 to 0xF)
-/// - 3-bit: `color >> 13` (0x0 to 0x7)
-/// - 2-bit: `color >> 14` (0x0 to 0x3)
-///                        (for the four factory methods, `color & 3` works
-///                         equivalently due to the static bit pattern)
-///
-/// **IMPORTANT:** GrayscaleColor values are designed for grayscale displays.
-/// Do not use them on RGB displays — they will render incorrectly. Use
-/// RGB565Color for RGB/TFT displays instead.
-/// @ingroup core
+/**
+ * @brief The canonical color type used throughout Focus.
+ *
+ * A 16-bit value representing a color. Interpretation is display-dependent,
+ * and you're only meant to use one display type in a project. GrayscaleColor
+ * is an intensity for monochromatic or grayscale displays; RGB565Color is an
+ * RGB565 value on RGB/TFT displays. Aliased to uint16_t, so you can also use
+ * raw integers to define colors if you prefer.
+ * @ingroup core
+ */
+using Color = uint16_t;
+
+/**
+ * @brief Factory class for 16-bit grayscale color values.
+ *
+ * GrayscaleColor provides static methods that return uint16_t color values
+ * using a 16-bit grayscale representation (0x0000 = black, 0xFFFF = white).
+ *
+ * **Bit depth conversion:**
+ * - 8-bit: `color >> 8`  (0x00 to 0xFF)
+ * - 4-bit: `color >> 12` (0x0 to 0xF)
+ * - 3-bit: `color >> 13` (0x0 to 0x7)
+ * - 2-bit: `color >> 14` (0x0 to 0x3)
+ *                        (for the factory methods, `color & 3` also works)
+ *
+ * **NOTE:** GrayscaleColor values are designed for grayscale displays.
+ * Do not use them on RGB displays — they will render incorrectly. Use
+ * RGB565Color for RGB/TFT displays instead.
+ * @ingroup core
+ */
 struct GrayscaleColor {
     static constexpr uint16_t Black()     { return 0x0000; }  // 0/255 intensity
     static constexpr uint16_t DarkGray()  { return 0x5555; }  // 85/255 intensity
@@ -56,19 +66,18 @@ struct GrayscaleColor {
 
 };
 
-/// @brief Factory class for RGB565 color values.
-///
-/// RGB565Color provides static methods that return uint16_t color values
-/// in RGB565 format (5 bits red, 6 bits green, 5 bits blue). This is the
-/// native format for most 16-bit TFT displays.
-///
-/// Grayscale values use equal intensity across all channels, accounting for
-/// the different bit depths (R5:G6:B5).
-///
-/// **IMPORTANT:** RGB565Color values are designed for RGB/TFT displays.
-/// Do not use them on grayscale e-paper displays — they will render incorrectly.
-/// Use GrayscaleColor for grayscale displays instead.
-/// @ingroup core
+/**
+ * @brief Factory class for RGB565 color values.
+ *
+ * RGB565Color provides static methods that return uint16_t color values
+ * in RGB565 format (5 bits red, 6 bits green, 5 bits blue). This is the
+ * native format for most 16-bit TFT displays.
+ *
+ * **NOTE:** RGB565Color values are designed for RGB/TFT displays.
+ * Do not use them on grayscale e-paper displays — they will render incorrectly.
+ * Use GrayscaleColor for grayscale displays instead.
+ * @ingroup core
+ */
 struct RGB565Color {
     // Primary colors
     static constexpr uint16_t Black()   { return 0x0000; }
@@ -87,18 +96,22 @@ struct RGB565Color {
     static constexpr uint16_t Gray()      { return 0x8410; }  // 128/255 intensity
     static constexpr uint16_t LightGray() { return 0xAD55; }  // 170/255 intensity
 
-    /// @brief Create an RGB565 color from 8-bit R, G, B components.
-    /// @param r Red component (0-255)
-    /// @param g Green component (0-255)
-    /// @param b Blue component (0-255)
-    /// @return RGB565-encoded color value
+    /**
+     * @brief Create an RGB565 color from 8-bit R, G, B components.
+     * @param r Red component (0-255)
+     * @param g Green component (0-255)
+     * @param b Blue component (0-255)
+     * @return RGB565-encoded color value
+     */
     static constexpr uint16_t fromRGB(uint8_t r, uint8_t g, uint8_t b) {
         return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
     }
 
-    /// @brief Create a grayscale RGB565 color from an 8-bit intensity value.
-    /// @param value Grayscale intensity (0-255, where 0=black, 255=white)
-    /// @return RGB565-encoded grayscale color
+    /**
+     * @brief Create a grayscale RGB565 color from an 8-bit intensity value.
+     * @param value Grayscale intensity (0-255, where 0=black, 255=white)
+     * @return RGB565-encoded grayscale color
+     */
     static constexpr uint16_t fromGrayscale(uint8_t value) {
         return fromRGB(value, value, value);
     }
