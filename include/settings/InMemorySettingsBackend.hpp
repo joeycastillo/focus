@@ -31,7 +31,9 @@
 
 namespace focus {
 
-/// @ingroup settings
+/**
+ * @ingroup settings
+ */
 class InMemorySettingsBackend : public SettingsBackend {
 public:
     bool hasKey(const std::string& key) const override;

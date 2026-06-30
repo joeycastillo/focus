@@ -3,10 +3,12 @@
 
 namespace focus {
 
-/// Trackpad-style relative position tracker.
-/// On touch-down call anchor(), on touch-moved call track().
-/// Both raw input and position are in pixel space by default (gain=1.0).
-/// `gain` is a multiplier on the raw delta.
+/**
+ * Trackpad-style relative position tracker.
+ * On touch-down call anchor(), on touch-moved call track().
+ * Both raw input and position are in pixel space by default (gain=1.0).
+ * `gain` is a multiplier on the raw delta.
+ */
 struct RelativeTracker {
     float position;
     float gain;

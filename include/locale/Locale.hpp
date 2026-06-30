@@ -31,38 +31,43 @@
 
 namespace focus {
 
-/// Locale provides a Font-style cached factory for loading localized string tables.
-/// Locale files are simple key=value text files (UTF-8, .strings extension).
-///
-/// Usage:
-///   // At app startup
-///   Locale::addLocaleSearchPath("/system/locale/");
-///   Locale::setDefaultLocale(Locale::withIdentifier("en"));
-///   Locale::setCurrentLocale(Locale::withIdentifier("en"));
-///
-///   // In views — the comment is both documentation and fallback
-///   label->setText(_LS("wifi_settings", "WiFi Settings"));
-///   std::string page = _LF("page_of", "Page {0} of {1}", current, total);
-///
-/// @par Memory management
-/// The locale cache grows without bound as new locales are loaded.
-/// On memory-constrained devices, call clearCache() when the platform
-/// signals memory pressure, or at natural transition points (e.g.,
-/// after changing the active locale). clearCache() preserves the
-/// active and fallback locales; all other cached locales are freed.
-/// Any Locale* previously obtained via withIdentifier() (other than
-/// the active/fallback) is invalidated by clearCache().
-/// @ingroup locale
-///
+/**
+ * Locale provides a Font-style cached factory for loading localized string tables.
+ * Locale files are simple key=value text files (UTF-8, .strings extension).
+ *
+ * Usage:
+ *   // At app startup
+ *   Locale::addLocaleSearchPath("/system/locale/");
+ *   Locale::setDefaultLocale(Locale::withIdentifier("en"));
+ *   Locale::setCurrentLocale(Locale::withIdentifier("en"));
+ *
+ *   // In views — the comment is both documentation and fallback
+ *   label->setText(_LS("wifi_settings", "WiFi Settings"));
+ *   std::string page = _LF("page_of", "Page {0} of {1}", current, total);
+ *
+ * @par Memory management
+ * The locale cache grows without bound as new locales are loaded.
+ * On memory-constrained devices, call clearCache() when the platform
+ * signals memory pressure, or at natural transition points (e.g.,
+ * after changing the active locale). clearCache() preserves the
+ * active and fallback locales; all other cached locales are freed.
+ * Any Locale* previously obtained via withIdentifier() (other than
+ * the active/fallback) is invalidated by clearCache().
+ * @ingroup locale
+ */
 class Locale {
 public:
-    /// Load a locale by identifier. Returns cached instance if already loaded.
-    /// Searches all registered paths for a file named "{identifier}.strings".
-    /// @param identifier Locale identifier (e.g., "en", "es", "fr")
+    /**
+     * Load a locale by identifier. Returns cached instance if already loaded.
+     * Searches all registered paths for a file named "{identifier}.strings".
+     * @param identifier Locale identifier (e.g., "en", "es", "fr")
+     */
     static Locale* withIdentifier(const std::string& identifier);
 
-    /// Set the active locale for the application.
-    /// Posts a "LocaleChanged" notification via NotificationCenter.
+    /**
+     * Set the active locale for the application.
+     * Posts a "LocaleChanged" notification via NotificationCenter.
+     */
     static void setCurrentLocale(Locale* locale);
 
     /// Get the current active locale.
@@ -74,13 +79,17 @@ public:
     /// Get the default/fallback locale.
     static Locale* defaultLocale();
 
-    /// Set the locale search path (clears any existing paths).
-    /// @param path Directory path (e.g., "/system/locale/")
+    /**
+     * Set the locale search path (clears any existing paths).
+     * @param path Directory path (e.g., "/system/locale/")
+     */
     static void setLocaleSearchPath(const std::string& path);
 
-    /// Add an additional search path for locale files.
-    /// Paths are searched in the order they are added.
-    /// @param path Directory path (e.g., "/system/locale/")
+    /**
+     * Add an additional search path for locale files.
+     * Paths are searched in the order they are added.
+     * @param path Directory path (e.g., "/system/locale/")
+     */
     static void addLocaleSearchPath(const std::string& path);
 
     /// Clear all locale search paths.
@@ -89,23 +98,27 @@ public:
     /// Get the current list of search paths.
     static const std::vector<std::string>& getSearchPaths();
 
-    /// Clear the locale cache, freeing all cached locales except the
-    /// active and fallback locales (which are preserved and re-added
-    /// to the cache).
-    ///
-    /// Any Locale* previously obtained via withIdentifier() — other
-    /// than currentLocale() and defaultLocale() — is invalidated.
-    /// In practice this rarely matters, since application code
-    /// accesses locales through _LS / _LF / _LP, which look up
-    /// currentLocale() on every call.
-    ///
-    /// Call this from your platform's memory-pressure handler, or
-    /// after changing the active locale, to free unused locale data.
+    /**
+     * Clear the locale cache, freeing all cached locales except the
+     * active and fallback locales (which are preserved and re-added
+     * to the cache).
+     *
+     * Any Locale* previously obtained via withIdentifier() — other
+     * than currentLocale() and defaultLocale() — is invalidated.
+     * In practice this rarely matters, since application code
+     * accesses locales through _LS / _LF / _LP, which look up
+     * currentLocale() on every call.
+     *
+     * Call this from your platform's memory-pressure handler, or
+     * after changing the active locale, to free unused locale data.
+     */
     static void clearCache();
 
-    /// Look up a string by key in this locale.
-    /// @param key The string key (e.g., "wifi_settings")
-    /// @return The localized string, or empty string if not found.
+    /**
+     * Look up a string by key in this locale.
+     * @param key The string key (e.g., "wifi_settings")
+     * @return The localized string, or empty string if not found.
+     */
     std::string getString(const std::string& key) const;
 
     /// Get the locale identifier (e.g., "en", "es").
@@ -161,10 +174,12 @@ namespace detail {
     }
 }
 
-/// Look up a localized string by key. The comment serves as documentation and
-/// as the fallback if no locale is loaded or the key is missing.
-/// @param key The string key (e.g., "wifi_settings")
-/// @param comment The English text / fallback (e.g., "WiFi Settings")
+/**
+ * Look up a localized string by key. The comment serves as documentation and
+ * as the fallback if no locale is loaded or the key is missing.
+ * @param key The string key (e.g., "wifi_settings")
+ * @param comment The English text / fallback (e.g., "WiFi Settings")
+ */
 inline std::string _LS(const std::string& key, const std::string& comment) {
     auto locale = Locale::currentLocale();
     if (locale) {
@@ -179,11 +194,13 @@ inline std::string _LS(const std::string& key, const std::string& comment) {
     return comment;
 }
 
-/// Look up and format a localized string with positional arguments.
-/// The comment serves as documentation and as the fallback format string.
-/// @param key The string key (e.g., "page_of")
-/// @param comment The English format string (e.g., "Page {0} of {1}")
-/// @param args Values to substitute for {0}, {1}, etc.
+/**
+ * Look up and format a localized string with positional arguments.
+ * The comment serves as documentation and as the fallback format string.
+ * @param key The string key (e.g., "page_of")
+ * @param comment The English format string (e.g., "Page {0} of {1}")
+ * @param args Values to substitute for {0}, {1}, etc.
+ */
 template<typename... Args>
 inline std::string _LF(const std::string& key, const std::string& comment, Args&&... args) {
     std::vector<std::string> argVec;
@@ -202,12 +219,14 @@ inline std::string _LF(const std::string& key, const std::string& comment, Args&
     return detail::substitute(comment, argVec);
 }
 
-/// Look up a plural form based on count.
-/// Looks for key.zero (count==0), key.one (count==1), or key.other.
-/// The comment is the fallback format string (use {0} for the count).
-/// @param key The base key (e.g., "items")
-/// @param comment The English fallback (e.g., "{0} items")
-/// @param count The count that determines which plural form to use
+/**
+ * Look up a plural form based on count.
+ * Looks for key.zero (count==0), key.one (count==1), or key.other.
+ * The comment is the fallback format string (use {0} for the count).
+ * @param key The base key (e.g., "items")
+ * @param comment The English fallback (e.g., "{0} items")
+ * @param count The count that determines which plural form to use
+ */
 inline std::string _LP(const std::string& key, const std::string& comment, int count) {
     std::string subkey;
     if (count == 0) subkey = key + ".zero";
