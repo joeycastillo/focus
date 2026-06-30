@@ -30,7 +30,7 @@ namespace focus {
 Control::Control(Rect rect) : View(rect) {
 }
 
-bool Control::isEnabled() {
+bool Control::isEnabled() const {
     return this->enabled;
 }
 
@@ -58,7 +58,7 @@ void Control::setSelected(bool value) {
     }
 }
 
-bool Control::canBecomeFocused() {
+bool Control::canBecomeFocused() const {
     return this->enabled;
 }
 

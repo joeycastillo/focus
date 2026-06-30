@@ -71,7 +71,7 @@ public:
     void addSubview(std::shared_ptr<View> view) override;
 
     /// @brief Windows can always become focused (returns true).
-    bool canBecomeFocused() override;
+    bool canBecomeFocused() const override;
 
     /**
      * @brief Enable touch input mode.
@@ -149,7 +149,7 @@ public:
     bool isKeyboardView(std::shared_ptr<View> view);
 
     /// @brief Returns a weak_ptr to this window.
-    std::weak_ptr<Window> getWindow() override;
+    std::weak_ptr<Window> getWindow() const override;
 
     /**
      * @brief Get the usable content area of the window.

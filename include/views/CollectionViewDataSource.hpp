@@ -50,7 +50,7 @@ class CollectionViewDataSource {
 public:
     /// @brief Return the total number of items in the data source.
     /// @param collectionView The collection view requesting this information.
-    virtual size_t numberOfItems(CollectionView* collectionView) = 0;
+    virtual size_t numberOfItems(const CollectionView* collectionView) const = 0;
 
     /**
      * @brief Create and return a cell for the item at the given index.
@@ -79,7 +79,7 @@ public:
      *
      * Item sizes must not change between calls to reloadData().
      */
-    virtual Size sizeForItemAtIndex(CollectionView* collectionView, size_t index) {
+    virtual Size sizeForItemAtIndex(const CollectionView* collectionView, size_t index) const {
         return {0, 0};
     }
 

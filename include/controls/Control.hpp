@@ -62,7 +62,7 @@ public:
     /// @brief Construct a control with the given frame rectangle.
     Control(Rect rect);
     /// @brief Check whether this control is enabled.
-    bool isEnabled();
+    bool isEnabled() const;
     /// @brief Enable or disable this control.
     void setEnabled(bool value);
     /// @brief Check whether this control is selected.
@@ -70,7 +70,7 @@ public:
     /// @brief Set the selected state of this control.
     virtual void setSelected(bool value);
     /// @brief Controls can become focused when enabled (returns true).
-    bool canBecomeFocused() override;
+    bool canBecomeFocused() const override;
     /// @brief Disabled controls ignore all events.
     bool handleEvent(Event event) override;
     /// @brief Controls are meaningful accessibility elements by default.

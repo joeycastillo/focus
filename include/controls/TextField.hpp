@@ -88,8 +88,8 @@ public:
     void didBecomeFocused() override;
     void didResignFocus() override;
 
-    bool wantsKeyboardInput() override;
-    KeyboardType keyboardType() override;
+    bool wantsKeyboardInput() const override;
+    KeyboardType keyboardType() const override;
     void insertText(const std::string& str) override;
     void deleteBackward() override;
 

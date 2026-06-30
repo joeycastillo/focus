@@ -197,11 +197,11 @@ void View::removeSubview(std::shared_ptr<View> view) {
     }
 }
 
-bool View::isFocused() {
+bool View::isFocused() const {
     return this->focused;
 }
 
-bool View::canBecomeFocused() {
+bool View::canBecomeFocused() const {
     return false;
 }
 
@@ -448,11 +448,11 @@ bool View::fireAction(int32_t eventType, Event event) {
     return true;
 }
 
-View* View::getSuperview() {
+View* View::getSuperview() const {
     return this->superview;
 }
 
-std::weak_ptr<Window> View::getWindow() {
+std::weak_ptr<Window> View::getWindow() const {
     return this->window;
 }
 
@@ -470,7 +470,7 @@ std::shared_ptr<Display> View::getDisplayIfAttached() {
     return nullptr;
 }
 
-Rect View::getFrame() {
+Rect View::getFrame() const {
     return this->frame;
 }
 
@@ -489,7 +489,7 @@ void View::setFrame(Rect frame) {
     }
 }
 
-Rect View::getBounds() {
+Rect View::getBounds() const {
     return this->bounds;
 }
 
@@ -500,7 +500,7 @@ void View::setBounds(Rect bounds) {
     }
 }
 
-bool View::isOpaque() {
+bool View::isOpaque() const {
     return this->opaque;
 }
 
@@ -514,7 +514,7 @@ void View::setOpaque(bool value) {
     }
 }
 
-bool View::isHidden() {
+bool View::isHidden() const {
     return this->hidden;
 }
 
@@ -527,7 +527,7 @@ void View::setHidden(bool value) {
     }
 }
 
-uint16_t View::getBackgroundColor() {
+uint16_t View::getBackgroundColor() const {
     return this->backgroundColor;
 }
 
@@ -536,7 +536,7 @@ void View::setBackgroundColor(uint16_t value) {
     this->appearanceDidChange();
 }
 
-uint16_t View::getForegroundColor() {
+uint16_t View::getForegroundColor() const {
     return this->foregroundColor;
 }
 
@@ -549,7 +549,7 @@ void View::appearanceDidChange() {
     // Default: nothing. Subclasses with rendering caches override this.
 }
 
-DirectionalAffinity View::getDirectionalAffinity() {
+DirectionalAffinity View::getDirectionalAffinity() const {
     return this->affinity;
 }
 
@@ -666,7 +666,7 @@ uint16_t View::DefaultForegroundColor() { return sDefaultFG; }
 void View::SetDefaultBackgroundColor(uint16_t color) { sDefaultBG = color; }
 void View::SetDefaultForegroundColor(uint16_t color) { sDefaultFG = color; }
 
-bool View::wantsKeyboardInput() {
+bool View::wantsKeyboardInput() const {
     return false;
 }
 
@@ -678,7 +678,7 @@ void View::deleteBackward() {
     // no-op by default
 }
 
-KeyboardType View::keyboardType() {
+KeyboardType View::keyboardType() const {
     return KeyboardType::Default;
 }
 

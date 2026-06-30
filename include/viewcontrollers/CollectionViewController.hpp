@@ -67,9 +67,9 @@ public:
     /// @name Simplified Data Source API
     /// Subclasses override these. The CollectionView* parameter is omitted.
     /// @{
-    virtual size_t numberOfItems() = 0;
+    virtual size_t numberOfItems() const = 0;
     virtual std::shared_ptr<CollectionViewCell> cellForItemAtIndex(size_t index, Rect frame) = 0;
-    virtual Size sizeForItemAtIndex(size_t index) { return {0, 0}; }
+    virtual Size sizeForItemAtIndex(size_t index) const { return {0, 0}; }
     /// @}
 
     /// @brief Called when the user taps an item. Override to handle selection.
@@ -102,7 +102,7 @@ protected:
 
 private:
     // Bridge: forward protocol methods (with CollectionView*) to simplified API
-    size_t numberOfItems(CollectionView*) final { return numberOfItems(); }
+    size_t numberOfItems(const CollectionView*) const final { return numberOfItems(); }
     std::shared_ptr<CollectionViewCell> cellForItemAtIndex(
         CollectionView*, size_t index, Rect frame) final {
         return cellForItemAtIndex(index, frame);
@@ -113,7 +113,7 @@ private:
     void didLongPressItemAtIndex(CollectionView*, size_t index) final {
         didLongPressItemAtIndex(index);
     }
-    Size sizeForItemAtIndex(CollectionView*, size_t index) final {
+    Size sizeForItemAtIndex(const CollectionView*, size_t index) const final {
         return sizeForItemAtIndex(index);
     }
 

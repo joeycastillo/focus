@@ -145,7 +145,7 @@ public:
     const std::vector<std::shared_ptr<View>>& getSubviews() const { return this->subviews; }
 
     /// @brief Check whether this view currently has focus.
-    bool isFocused();
+    bool isFocused() const;
 
     /**
      * @brief Whether this view is capable of receiving focus.
@@ -153,7 +153,7 @@ public:
      * Returns false by default. Override in subclasses (e.g. controls) that
      * should participate in the focus system.
      */
-    virtual bool canBecomeFocused();
+    virtual bool canBecomeFocused() const;
 
     /**
      * @brief Attempt to make this view the focused view in its window.
@@ -201,7 +201,7 @@ public:
 
     /// @brief Whether this view accepts keyboard text input when focused.
     /// The Window uses this to auto-present an on-screen keyboard.
-    virtual bool wantsKeyboardInput();
+    virtual bool wantsKeyboardInput() const;
 
     /// @brief Insert text at the current input position.
     virtual void insertText(const std::string& text);
@@ -210,7 +210,7 @@ public:
     virtual void deleteBackward();
 
     /// @brief The type of keyboard to present when this view receives focus.
-    virtual KeyboardType keyboardType();
+    virtual KeyboardType keyboardType() const;
     /// @}
 
     /**
@@ -272,10 +272,10 @@ public:
     void removeAction(int32_t type);
 
     /// @brief Get this view's parent view, or nullptr if none.
-    virtual View* getSuperview();
+    virtual View* getSuperview() const;
 
     /// @brief Get the window this view belongs to, or an empty weak_ptr if detached.
-    virtual std::weak_ptr<Window> getWindow();
+    virtual std::weak_ptr<Window> getWindow() const;
 
     /**
      * @brief Set the window reference for this view and all its subviews.
@@ -286,7 +286,7 @@ public:
     virtual void setWindow(std::shared_ptr<Window> window);
 
     /// @brief Get the view's frame (position and size in superview coordinates).
-    Rect getFrame();
+    Rect getFrame() const;
 
     /**
      * @brief Set the view's frame, updating bounds size to match.
@@ -297,7 +297,7 @@ public:
     virtual void setFrame(Rect rect);
 
     /// @brief Get the view's bounds (its own coordinate system, used for scrolling).
-    Rect getBounds();
+    Rect getBounds() const;
 
     /**
      * @brief Set the view's bounds rectangle.
@@ -309,22 +309,22 @@ public:
     void setBounds(Rect rect);
 
     /// @brief Whether this view fills its frame with its background color before drawing.
-    bool isOpaque();
+    bool isOpaque() const;
     /// @brief Set whether this view should fill its frame with backgroundColor.
     void setOpaque(bool value);
 
     /// @brief Whether this view is hidden (hidden views are not drawn).
-    bool isHidden();
+    bool isHidden() const;
     /// @brief Set whether this view should be hidden.
     void setHidden(bool value);
 
     /// @brief Get the view's background fill color.
-    uint16_t getBackgroundColor();
+    uint16_t getBackgroundColor() const;
     /// @brief Set the view's background fill color.
     void setBackgroundColor(uint16_t value);
 
     /// @brief Get the view's foreground (text/border) color.
-    uint16_t getForegroundColor();
+    uint16_t getForegroundColor() const;
     /// @brief Set the view's foreground (text/border) color.
     void setForegroundColor(uint16_t value);
 
@@ -334,7 +334,7 @@ public:
     virtual void appearanceDidChange();
 
     /// @brief Get the directional affinity for focus navigation among subviews.
-    DirectionalAffinity getDirectionalAffinity();
+    DirectionalAffinity getDirectionalAffinity() const;
     /// @brief Set the directional affinity (vertical or horizontal) for subview navigation.
     void setDirectionalAffinity(DirectionalAffinity value);
 

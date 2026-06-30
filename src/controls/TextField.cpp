@@ -177,7 +177,7 @@ void TextField::drawContent(int x, int y, Rect clipRect) {
     }
 }
 
-bool TextField::wantsKeyboardInput() {
+bool TextField::wantsKeyboardInput() const {
     return true;
 }
 
@@ -185,7 +185,7 @@ void TextField::setKeyboardType(KeyboardType type) {
     this->_keyboardType = type;
 }
 
-KeyboardType TextField::keyboardType() {
+KeyboardType TextField::keyboardType() const {
     return this->_keyboardType;
 }
 

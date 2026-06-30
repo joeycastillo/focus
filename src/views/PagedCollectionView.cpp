@@ -56,7 +56,7 @@ size_t PagedCollectionView::calculateItemsPerPage() const {
         if (page + 1 < this->pageBoundaries.size()) {
             end = this->pageBoundaries[page + 1];
         } else {
-            end = this->dataSource ? this->dataSource->numberOfItems(const_cast<PagedCollectionView*>(this)) : start;
+            end = this->dataSource ? this->dataSource->numberOfItems(this) : start;
         }
         return end - start;
     }
@@ -97,7 +97,7 @@ size_t PagedCollectionView::getPageCount() const {
 
     size_t itemsPerPage = this->calculateItemsPerPage();
     if (itemsPerPage == 0) return 0;
-    size_t totalItems = this->dataSource->numberOfItems(const_cast<PagedCollectionView*>(this));
+    size_t totalItems = this->dataSource->numberOfItems(this);
     return (totalItems + itemsPerPage - 1) / itemsPerPage;
 }
 

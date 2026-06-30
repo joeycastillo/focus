@@ -53,7 +53,7 @@ void Window::addSubview(std::shared_ptr<View> view) {
     }
 }
 
-bool Window::canBecomeFocused() {
+bool Window::canBecomeFocused() const {
     return true;
 }
 
@@ -113,8 +113,11 @@ std::weak_ptr<View> Window::getFocusedView() {
     return this->focusedView;
 }
 
-std::weak_ptr<Window> Window::getWindow() {
-    return std::static_pointer_cast<Window, View>(this->shared_from_this());
+std::weak_ptr<Window> Window::getWindow() const {
+    // A Window is its own window, so this returns a handle to itself. The const method
+    // hands that back read-only, so the casts convert it into a normal, usable window.
+    return std::static_pointer_cast<Window>(
+        std::const_pointer_cast<View>(this->shared_from_this()));
 }
 
 void Window::setWindow(std::shared_ptr<Window> window) {
