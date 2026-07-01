@@ -58,7 +58,8 @@ void Application::run() {
         this->window->becomeFocused();
     }
     this->window->setNeedsDisplayInRect(this->window->getFrame());
-    while(this->running) {
+    // With no tasks left, nothing can ever call quit(), so an empty list ends the loop.
+    while(this->running && !this->tasks.empty()) {
         for (int i = 0; i < (int)this->tasks.size(); i++) {
             if (this->tasks[i]->run(application)) {
                 this->tasks.erase(this->tasks.begin() + i);
