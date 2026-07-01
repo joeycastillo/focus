@@ -40,13 +40,15 @@ StyledGlyphProvider::StyledGlyphProvider(
     this->providers[3] = std::move(boldItalic);
 }
 
-const GlyphProvider* StyledGlyphProvider::providerForEmphasis(uint8_t emphasis) const {
-    if (emphasis < 4 && this->providers[emphasis] != nullptr) {
-        return this->providers[emphasis].get();
+const GlyphProvider* StyledGlyphProvider::providerForEmphasis(FontStyle emphasis) const {
+    uint8_t index = static_cast<uint8_t>(emphasis);
+    if (index < 4 && this->providers[index] != nullptr) {
+        return this->providers[index].get();
     }
-    // For bold+italic (3), try italic (1) then bold (2) before falling back to regular.
-    // Italic letterforms are harder to synthesize than bold weight, so prefer real italic.
-    if (emphasis == 3) {
+    // For bold+italic, try the italic variant then the bold variant before falling
+    // back to regular. Italic letterforms are harder to synthesize than bold weight,
+    // so prefer a real italic.
+    if (emphasis == (FontStyle::Italic | FontStyle::Bold)) {
         if (this->providers[1] != nullptr) return this->providers[1].get();
         if (this->providers[2] != nullptr) return this->providers[2].get();
     }
@@ -77,11 +79,11 @@ std::string StyledGlyphProvider::getTitle() const {
     return this->providers[0]->getTitle();
 }
 
-const uint8_t* StyledGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+const uint8_t* StyledGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis) const {
     return this->providerForEmphasis(emphasis)->glyphForCodepoint(codepoint);
 }
 
-GlyphMetrics StyledGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+GlyphMetrics StyledGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis) const {
     return this->providerForEmphasis(emphasis)->metricsForCodepoint(codepoint);
 }
 
@@ -89,8 +91,9 @@ bool StyledGlyphProvider::hasGlyph(UNICODE_CODEPOINT codepoint) const {
     return this->providers[0]->hasGlyph(codepoint);
 }
 
-bool StyledGlyphProvider::supportsEmphasis(uint8_t emphasis) const {
-    return emphasis < 4 && this->providers[emphasis] != nullptr;
+bool StyledGlyphProvider::supportsEmphasis(FontStyle emphasis) const {
+    uint8_t index = static_cast<uint8_t>(emphasis);
+    return index < 4 && this->providers[index] != nullptr;
 }
 
 }  // namespace focus

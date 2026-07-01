@@ -89,14 +89,14 @@ public:
     std::string getTitle() const override;
 
     // Per-glyph queries with fallback
-    const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
-    GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
+    const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis = FontStyle::Regular) const override;
+    GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis = FontStyle::Regular) const override;
 
-    bool supportsEmphasis(uint8_t emphasis) const override;
+    bool supportsEmphasis(FontStyle emphasis) const override;
     bool hasGlyph(UNICODE_CODEPOINT codepoint) const override;
 
 private:
-    void reformatFallbackGlyph(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const;
+    void reformatFallbackGlyph(UNICODE_CODEPOINT codepoint, FontStyle emphasis) const;
 
     std::shared_ptr<GlyphProvider> primary;
     std::shared_ptr<GlyphProvider> fallback;

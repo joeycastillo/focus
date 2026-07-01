@@ -70,8 +70,8 @@ public:
     Size getMaxSize() const override;
     Point getOffset() const override;
     uint8_t getGlyphRowCount() const override;
-    const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
-    GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
+    const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis = FontStyle::Regular) const override;
+    GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis = FontStyle::Regular) const override;
     bool hasGlyph(UNICODE_CODEPOINT codepoint) const override;
 
     bool isValid() const override { return valid; }

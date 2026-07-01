@@ -227,11 +227,11 @@ uint8_t Font::getPointSize() const {
     return provider ? provider->getPointSize() : 12;
 }
 
-GlyphMetrics Font::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+GlyphMetrics Font::metricsForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis) const {
     return provider ? provider->metricsForCodepoint(codepoint, emphasis) : GlyphMetrics{};
 }
 
-const uint8_t* Font::glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+const uint8_t* Font::glyphForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis) const {
     return provider ? provider->glyphForCodepoint(codepoint, emphasis) : nullptr;
 }
 

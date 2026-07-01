@@ -67,7 +67,7 @@ std::string FallbackGlyphProvider::getTitle() const {
     return this->primary->getTitle();
 }
 
-bool FallbackGlyphProvider::supportsEmphasis(uint8_t emphasis) const {
+bool FallbackGlyphProvider::supportsEmphasis(FontStyle emphasis) const {
     return this->primary->supportsEmphasis(emphasis);
 }
 
@@ -75,7 +75,7 @@ bool FallbackGlyphProvider::hasGlyph(UNICODE_CODEPOINT codepoint) const {
     return this->primary->hasGlyph(codepoint);
 }
 
-GlyphMetrics FallbackGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+GlyphMetrics FallbackGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis) const {
     if (this->primary->hasGlyph(codepoint)) {
         return this->primary->metricsForCodepoint(codepoint, emphasis);
     }
@@ -87,10 +87,10 @@ GlyphMetrics FallbackGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepo
 
     // Adjust bitmapWidth for synthetic emphasis applied by reformatFallbackGlyph
     int extraWidth = 0;
-    if ((emphasis & 2) && this->primary->supportsEmphasis(2)) {
+    if (contains(emphasis, FontStyle::Bold) && this->primary->supportsEmphasis(FontStyle::Bold)) {
         extraWidth += 1;
     }
-    if ((emphasis & 1) && this->primary->supportsEmphasis(1)) {
+    if (contains(emphasis, FontStyle::Italic) && this->primary->supportsEmphasis(FontStyle::Italic)) {
         extraWidth += fbMetrics.height / 4; // shear amount
     }
     if (extraWidth > 0) {
@@ -98,8 +98,8 @@ GlyphMetrics FallbackGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepo
     }
 
     // Bold adds 1px to advance when the primary supports bold
-    bool wantBold = (emphasis & 2) != 0;
-    if (wantBold && this->primary->supportsEmphasis(2)) {
+    bool wantBold = contains(emphasis, FontStyle::Bold);
+    if (wantBold && this->primary->supportsEmphasis(FontStyle::Bold)) {
         fbMetrics.advance += 1;
     }
 
@@ -114,7 +114,7 @@ GlyphMetrics FallbackGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepo
     return fbMetrics;
 }
 
-const uint8_t* FallbackGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+const uint8_t* FallbackGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis) const {
     if (this->primary->hasGlyph(codepoint)) {
         return this->primary->glyphForCodepoint(codepoint, emphasis);
     }
@@ -123,7 +123,7 @@ const uint8_t* FallbackGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepo
     return this->glyphBuffer.data();
 }
 
-void FallbackGlyphProvider::reformatFallbackGlyph(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+void FallbackGlyphProvider::reformatFallbackGlyph(UNICODE_CODEPOINT codepoint, FontStyle emphasis) const {
     // 1. Get fallback metrics and glyph data
     GlyphMetrics fbMetrics = this->fallback->metricsForCodepoint(codepoint);
     const uint8_t* fbGlyph = this->fallback->glyphForCodepoint(codepoint);
@@ -136,10 +136,10 @@ void FallbackGlyphProvider::reformatFallbackGlyph(UNICODE_CODEPOINT codepoint, u
     uint8_t fallbackWidth = fbMetrics.bitmapWidth;
     uint8_t extraWidth = 0;
 
-    bool wantBold = (emphasis & 2) != 0;
-    bool wantItalic = (emphasis & 1) != 0;
-    bool primarySupportsBold = this->primary->supportsEmphasis(2);
-    bool primarySupportsItalic = this->primary->supportsEmphasis(1);
+    bool wantBold = contains(emphasis, FontStyle::Bold);
+    bool wantItalic = contains(emphasis, FontStyle::Italic);
+    bool primarySupportsBold = this->primary->supportsEmphasis(FontStyle::Bold);
+    bool primarySupportsItalic = this->primary->supportsEmphasis(FontStyle::Italic);
 
     int shearPixels = 0;
     if (wantItalic && primarySupportsItalic) {

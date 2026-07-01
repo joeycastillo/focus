@@ -820,20 +820,19 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
 int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider) {
     int16_t width = 0;
     int16_t lastAdvance = 0;
-    uint8_t emphasis = (uint8_t)this->emphasisDepth;
+    uint8_t emphasis = this->emphasisDepth;
     const GlyphMetrics* asciiMetrics = glyphProvider->getAsciiMetricsCache();
-    bool emphasisAware = emphasis > 0 || glyphProvider->supportsEmphasis(1)
-                                      || glyphProvider->supportsEmphasis(2);
+    bool emphasisAware = emphasis > 0 || glyphProvider->supportsEmphasis(FontStyle::Italic)
+                                      || glyphProvider->supportsEmphasis(FontStyle::Bold);
     for (size_t i = 0; i < len; i++) {
         UNICODE_CODEPOINT cp = codepoints[i];
-        if (cp == 0x08) {
+        if (cp == TextControlCode::Backspace) {
             width -= lastAdvance;
             if (width < 0) width = 0;
             lastAdvance = 0;
             continue;
         }
-        if (cp == 0x0E) { emphasis = emphasis < 3 ? emphasis + 1 : 3; continue; }
-        if (cp == 0x0F) { emphasis = emphasis > 0 ? emphasis - 1 : 0; continue; }
+        if (applyEmphasisShift(cp, emphasis)) continue;
         if (cp < 0x20) continue;
         unicode_info_t traits;
         GlyphMetrics metrics;
@@ -846,7 +845,7 @@ int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_
             } else {
                 traits = getTraitsForCodepoint(cp);
             }
-            metrics = glyphProvider->metricsForCodepoint(cp, emphasis);
+            metrics = glyphProvider->metricsForCodepoint(cp, static_cast<FontStyle>(emphasis));
         }
         if (!(traits.is.nsm || traits.is.controlchar)) {
             int16_t advance = metrics.advance * this->textSize;
@@ -881,7 +880,7 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             this->textSize,
             glyphProvider,
             0,
-            (uint8_t)this->emphasisDepth
+            static_cast<FontStyle>(this->emphasisDepth)
         );
 
         int32_t numGlyphsToDraw;
@@ -939,19 +938,13 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
         return 1;
     }
 
-    // SO (Shift Out) increases emphasis depth
-    if (codepoint == 0x0E) {
-        this->emphasisDepth = std::min(this->emphasisDepth + 1, 3);
+    // SO/SI adjust the running emphasis depth; they render nothing.
+    if (applyEmphasisShift(codepoint, this->emphasisDepth)) {
         return 1;
     }
-    // SI (Shift In) decreases emphasis depth
-    if (codepoint == 0x0F) {
-        this->emphasisDepth = std::max(this->emphasisDepth - 1, 0);
-        return 1;
-    }
-    // BS (0x08) — backspace for typewriter overprinting
-    // Move cursor back to the last glyph position so the next character overprints
-    if (codepoint == 0x08) {
+    // BS — backspace for typewriter overprinting. Move cursor back to the last
+    // glyph position so the next character overprints.
+    if (codepoint == TextControlCode::Backspace) {
         if (this->hasLastGlyph) {
             this->cursor.x = this->lastGlyphPosition.x;
         }
@@ -977,13 +970,13 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
 
     this->lastWasNewline = false; // Visible character breaks consecutive newline tracking
 
-    uint8_t emphasis = (uint8_t)this->emphasisDepth;
-    GlyphMetrics metrics = glyphProvider->metricsForCodepoint(codepoint, emphasis);
+    FontStyle style = static_cast<FontStyle>(this->emphasisDepth);
+    GlyphMetrics metrics = glyphProvider->metricsForCodepoint(codepoint, style);
 
     // Direction is set by the run-based renderer in writeCodepoints;
     // writeCodepoint just renders in the current direction.
 
-    const uint8_t *glyph = glyphProvider->glyphForCodepoint(codepoint, emphasis);
+    const uint8_t *glyph = glyphProvider->glyphForCodepoint(codepoint, style);
     if (traits.is.nsm && this->hasLastGlyph) {
         drawGlyph(this->lastGlyphPosition.x, this->lastGlyphPosition.y, metrics, traits, glyph);
     } else {
@@ -1034,10 +1027,10 @@ int CanvasView::drawGlyph(int16_t x, int16_t y, GlyphMetrics glyphRect, unicode_
     // Synthetic effects are needed only for emphasis components the provider lacks.
     // The provider's smart fallback handles glyph selection (e.g., BI→I when BI is missing).
     const GlyphProvider *provider = this->font ? this->font->getGlyphProvider() : nullptr;
-    bool bold = (this->emphasisDepth == 2 || this->emphasisDepth == 3)
-                && (!provider || !provider->supportsEmphasis(2));
-    int shear = ((this->emphasisDepth == 1 || this->emphasisDepth == 3)
-                && (!provider || !provider->supportsEmphasis(1)))
+    bool bold = (this->emphasisDepth & 2)
+                && (!provider || !provider->supportsEmphasis(FontStyle::Bold));
+    int shear = ((this->emphasisDepth & 1)
+                && (!provider || !provider->supportsEmphasis(FontStyle::Italic)))
                 ? drawRowCount / 4 : 0;
 
     for (int row = 0; row < drawRowCount; row++) {

@@ -40,6 +40,7 @@
 #pragma once
 
 #include "Focus.hpp"
+#include "FontStyle.hpp"
 #include "utf8_decode.hpp"
 #include <string>
 #include <vector>
@@ -115,25 +116,28 @@ public:
      * dimensions and positioning.
      *
      * @param codepoint The Unicode codepoint to look up.
+     * @param emphasis The style to render (default FontStyle::Regular).
      * @return Pointer to the glyph bitmap, or nullptr if not found.
      *         The pointer is valid only until the next call to
      *         glyphForCodepoint() on the same provider.
      */
-    virtual const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const = 0;
+    virtual const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis = FontStyle::Regular) const = 0;
 
     /**
      * @brief Get the metrics for a Unicode codepoint.
      *
      * @param codepoint The Unicode codepoint to look up.
-     * @param emphasis Style variant: 0=regular, 1=italic, 2=bold, 3=bold+italic.
+     * @param emphasis The style to measure (default FontStyle::Regular).
      * @return GlyphMetrics with advance, bitmap dimensions, and positioning.
      */
-    virtual GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const = 0;
+    virtual GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis = FontStyle::Regular) const = 0;
 
-    /// Query whether this provider has a real font for the given emphasis level.
-    /// @param emphasis 0=regular, 1=italic, 2=bold, 3=bold+italic
-    /// @return true if real variant glyphs are available (not synthetic).
-    virtual bool supportsEmphasis(uint8_t emphasis) const { return emphasis == 0; }
+    /**
+     * @brief Query whether this provider has real (non-synthetic) glyphs for a style.
+     * @param emphasis The style to query.
+     * @return true if real variant glyphs are available (not synthetic).
+     */
+    virtual bool supportsEmphasis(FontStyle emphasis) const { return emphasis == FontStyle::Regular; }
 
     /// Query whether this provider has a real glyph for the given codepoint.
     ///

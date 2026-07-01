@@ -42,6 +42,18 @@ size_t TextLayout::bytesForCodepoint(UNICODE_CODEPOINT cp) {
     return 4;
 }
 
+bool applyEmphasisShift(UNICODE_CODEPOINT cp, uint8_t& depth) {
+    if (cp == TextControlCode::EmphasisIncrease) {
+        depth = depth < 3 ? depth + 1 : 3;
+        return true;
+    }
+    if (cp == TextControlCode::EmphasisDecrease) {
+        depth = depth > 0 ? depth - 1 : 0;
+        return true;
+    }
+    return false;
+}
+
 WordWrapResult TextLayout::measureLineWrap(
     UNICODE_CODEPOINT* codepoints,
     size_t len,
@@ -49,7 +61,7 @@ WordWrapResult TextLayout::measureLineWrap(
     uint8_t textSize,
     const GlyphProvider* glyphProvider,
     int16_t initialCursorX,
-    uint8_t initialEmphasis,
+    FontStyle initialEmphasis,
     const Hyphenator* hyphenator
 ) {
     WordWrapResult result = {
@@ -68,14 +80,14 @@ WordWrapResult TextLayout::measureLineWrap(
     size_t position = 0;
     int16_t cursorX = initialCursorX;
     int16_t lastAdvance = 0;
-    uint8_t emphasis = initialEmphasis;
+    uint8_t emphasis = static_cast<uint8_t>(initialEmphasis);
 
-    // Pre-fetch ASCII metrics cache for emphasis=0 fast path.
-    // When emphasis > 0 and the provider supports it, we go through
-    // metricsForCodepoint() instead to get style-accurate widths.
+    // Pre-fetch ASCII metrics cache for the Regular fast path. When emphasis is
+    // non-regular and the provider supports it, we go through metricsForCodepoint()
+    // instead to get style-accurate widths.
     const GlyphMetrics* asciiMetrics = glyphProvider->getAsciiMetricsCache();
-    bool emphasisAware = initialEmphasis > 0 || glyphProvider->supportsEmphasis(1)
-                                             || glyphProvider->supportsEmphasis(2);
+    bool emphasisAware = initialEmphasis != FontStyle::Regular || glyphProvider->supportsEmphasis(FontStyle::Italic)
+                                                              || glyphProvider->supportsEmphasis(FontStyle::Bold);
 
     while (cursorX <= layoutWidth) {
         // Check if we've consumed all input (no wrap needed)
@@ -100,7 +112,7 @@ WordWrapResult TextLayout::measureLineWrap(
 
         // Handle FF (form feed) — stop the line so the caller can
         // process the page break via its style run.
-        if (cp == 0x0C) {
+        if (cp == TextControlCode::PageBreak) {
             result.codepointsConsumed = position + 1;
             result.wrapped = false;
             result.isParagraphBreak = true;
@@ -109,7 +121,7 @@ WordWrapResult TextLayout::measureLineWrap(
         }
 
         // Handle BS (backspace) — move cursor back for typewriter overprinting
-        if (cp == 0x08) {
+        if (cp == TextControlCode::Backspace) {
             cursorX -= lastAdvance;
             if (cursorX < initialCursorX) cursorX = initialCursorX;
             lastAdvance = 0;
@@ -118,13 +130,7 @@ WordWrapResult TextLayout::measureLineWrap(
         }
 
         // Track SO/SI emphasis changes (no width, just state)
-        if (cp == 0x0E) {
-            emphasis = emphasis < 3 ? emphasis + 1 : 3;
-            position++;
-            continue;
-        }
-        if (cp == 0x0F) {
-            emphasis = emphasis > 0 ? emphasis - 1 : 0;
+        if (applyEmphasisShift(cp, emphasis)) {
             position++;
             continue;
         }
@@ -149,7 +155,7 @@ WordWrapResult TextLayout::measureLineWrap(
             } else {
                 traits = getTraitsForCodepoint(cp);
             }
-            metrics = glyphProvider->metricsForCodepoint(cp, emphasis);
+            metrics = glyphProvider->metricsForCodepoint(cp, static_cast<FontStyle>(emphasis));
         }
 
         // Advance cursor for non-combining characters
@@ -206,15 +212,14 @@ WordWrapResult TextLayout::measureLineWrap(
 
                     // Measure width from line start to split point + hyphen
                     int16_t prefixWidth = initialCursorX;
-                    uint8_t emph = initialEmphasis;
+                    uint8_t emph = static_cast<uint8_t>(initialEmphasis);
                     for (size_t k = 0; k < splitCodepoint; k++) {
                         UNICODE_CODEPOINT cp = codepoints[k];
-                        if (cp == 0x0E) { emph = emph < 3 ? emph + 1 : 3; continue; }
-                        if (cp == 0x0F) { emph = emph > 0 ? emph - 1 : 0; continue; }
-                        if (cp == 0x08) {
+                        if (applyEmphasisShift(cp, emph)) continue;
+                        if (cp == TextControlCode::Backspace) {
                             // Backspace
                             GlyphMetrics prevMetrics = glyphProvider->metricsForCodepoint(
-                                k > 0 ? codepoints[k-1] : ' ', emph);
+                                k > 0 ? codepoints[k-1] : ' ', static_cast<FontStyle>(emph));
                             prefixWidth -= prevMetrics.advance * textSize;
                             if (prefixWidth < initialCursorX) prefixWidth = initialCursorX;
                             continue;
@@ -228,13 +233,13 @@ WordWrapResult TextLayout::measureLineWrap(
                             traits = getTraitsForCodepoint(cp);
                         }
                         if (!(traits.is.nsm || traits.is.controlchar)) {
-                            GlyphMetrics metrics = glyphProvider->metricsForCodepoint(cp, emph);
+                            GlyphMetrics metrics = glyphProvider->metricsForCodepoint(cp, static_cast<FontStyle>(emph));
                             prefixWidth += metrics.advance * textSize;
                         }
                     }
 
                     // Measure hyphen at the emphasis state at this break position
-                    int16_t hyphenAdvance = glyphProvider->metricsForCodepoint('-', emph).advance * textSize;
+                    int16_t hyphenAdvance = glyphProvider->metricsForCodepoint('-', static_cast<FontStyle>(emph)).advance * textSize;
 
                     if (prefixWidth + hyphenAdvance <= layoutWidth) {
                         result.codepointsConsumed = splitCodepoint;
@@ -288,13 +293,12 @@ int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, c
 
     int16_t width = 0;
     uint8_t emphasis = 0;
-    bool emphasisAware = glyphProvider->supportsEmphasis(1) || glyphProvider->supportsEmphasis(2);
+    bool emphasisAware = glyphProvider->supportsEmphasis(FontStyle::Italic) || glyphProvider->supportsEmphasis(FontStyle::Bold);
     for (size_t i = 0; i < len; i++) {
         UNICODE_CODEPOINT cp = codepoints[i];
 
         // Track SO/SI emphasis changes
-        if (cp == 0x0E) { emphasis = emphasis < 3 ? emphasis + 1 : 3; continue; }
-        if (cp == 0x0F) { emphasis = emphasis > 0 ? emphasis - 1 : 0; continue; }
+        if (applyEmphasisShift(cp, emphasis)) continue;
 
         // Skip other control characters
         if (cp < 0x20) continue;
@@ -304,7 +308,7 @@ int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, c
         // Only count non-combining characters
         if (!(traits.is.nsm || traits.is.controlchar)) {
             GlyphMetrics metrics = emphasisAware
-                ? glyphProvider->metricsForCodepoint(cp, emphasis)
+                ? glyphProvider->metricsForCodepoint(cp, static_cast<FontStyle>(emphasis))
                 : glyphProvider->metricsForCodepoint(cp);
             width += metrics.advance * textSize;
         }
@@ -344,7 +348,7 @@ int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidt
             textSize,
             glyphProvider,
             0,
-            emphasis);
+            static_cast<FontStyle>(emphasis));
 
         if (result.codepointsConsumed < 0) {
             // Remaining text fits on one line — this is the last line
@@ -354,9 +358,7 @@ int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidt
 
         // Track SO/SI emphasis changes through consumed codepoints
         for (int32_t i = 0; i < result.codepointsConsumed; i++) {
-            UNICODE_CODEPOINT cp = codepoints[offset + i];
-            if (cp == 0x0E) emphasis = emphasis < 3 ? emphasis + 1 : 3;
-            else if (cp == 0x0F) emphasis = emphasis > 0 ? emphasis - 1 : 0;
+            applyEmphasisShift(codepoints[offset + i], emphasis);
         }
 
         if (result.isParagraphBreak) {

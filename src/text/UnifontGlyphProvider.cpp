@@ -213,7 +213,7 @@ bool UnifontGlyphProvider::isValid() const {
     return valid;
 }
 
-const uint8_t* UnifontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+const uint8_t* UnifontGlyphProvider::glyphForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis) const {
     uint8_t width;
     uint32_t offset = lookupGlyph(codepoint, width);
 
@@ -242,7 +242,7 @@ bool UnifontGlyphProvider::hasGlyph(UNICODE_CODEPOINT codepoint) const {
     return offset != 0 && width != 0;
 }
 
-GlyphMetrics UnifontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis) const {
+GlyphMetrics UnifontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis) const {
     uint8_t width;
     uint32_t offset = lookupGlyph(codepoint, width);
 

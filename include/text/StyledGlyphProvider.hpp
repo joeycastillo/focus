@@ -94,17 +94,17 @@ public:
     std::string getTitle() const override;
 
     // GlyphProvider interface — per-glyph queries dispatch on emphasis
-    const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
-    GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const override;
+    const uint8_t *glyphForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis = FontStyle::Regular) const override;
+    GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis = FontStyle::Regular) const override;
     bool hasGlyph(UNICODE_CODEPOINT codepoint) const override;
 
     /// Query whether this provider has a real font for the given emphasis level.
     /// Returns true only if a non-null provider was supplied for that level.
-    bool supportsEmphasis(uint8_t emphasis) const override;
+    bool supportsEmphasis(FontStyle emphasis) const override;
 
 private:
     /// Get the sub-provider for the given emphasis, falling back to regular.
-    const GlyphProvider* providerForEmphasis(uint8_t emphasis) const;
+    const GlyphProvider* providerForEmphasis(FontStyle emphasis) const;
 
     /// [0]=regular, [1]=italic, [2]=bold, [3]=bold+italic
     std::array<std::shared_ptr<GlyphProvider>, 4> providers;

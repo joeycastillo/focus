@@ -50,12 +50,14 @@ namespace focus {
 
 /// Result of a word wrap measurement.
 struct WordWrapResult {
-    /// Number of codepoints that fit on this line, or negative if no wrap was
-    /// needed (all remaining codepoints were consumed without exceeding the
-    /// layout width). A negative value means the input ended mid-line — either
-    /// the text genuinely ended, or the buffer ran out. A framing engine
-    /// uses the sign to distinguish complete lines from partial lines at
-    /// chunk boundaries.
+    /**
+     * Number of codepoints that fit on this line, or negative if no wrap was
+     * needed (all remaining codepoints were consumed without exceeding the
+     * layout width). A negative value means the input ended mid-line — either
+     * the text genuinely ended, or the buffer ran out. A framing engine
+     * uses the sign to distinguish complete lines from partial lines at
+     * chunk boundaries.
+     */
     int32_t codepointsConsumed;
 
     bool wrapped;                ///< True if line was wrapped (false if ended at newline or end of text).
@@ -64,25 +66,66 @@ struct WordWrapResult {
     int16_t endCursorX;          ///< Horizontal cursor position after processing.
 };
 
-/// Low-level text measurement shared across the Focus text subsystem.
-/// Used by Display, CanvasView, and application-level pagination engines.
-/// All word-wrapping flows through measureLineWrap, ensuring that measurement
-/// during pagination and measurement during rendering always agree.
-/// @ingroup text
+/**
+ * @brief Reserved C0 control bytes that carry in-band text-styling markup.
+ *
+ * The Focus text stack reads a few C0 control codes as styling markup embedded
+ * directly in the codepoint stream, rather than rendering them as glyphs. A
+ * producer of styled text emits these bytes; TextLayout (measurement) and
+ * CanvasView (rendering) consume them.
+ *
+ * SO/SI are a paired, nesting emphasis control: each SO pushes one level
+ * (Regular → Italic → Bold → Bold+Italic, saturating at the top), each SI pops
+ * one. BS and FF act on cursor and page position and are handled per consumer.
+ *
+ * @warning These bytes are reserved markup. A stream carrying them as literal
+ * data will be misread — strip or escape C0 controls upstream if your content
+ * may legitimately contain them.
+ * @ingroup text
+ */
+namespace TextControlCode {
+    constexpr UNICODE_CODEPOINT EmphasisIncrease = 0x0E;  ///< SO — push one emphasis level.
+    constexpr UNICODE_CODEPOINT EmphasisDecrease = 0x0F;  ///< SI — pop one emphasis level.
+    constexpr UNICODE_CODEPOINT Backspace        = 0x08;  ///< BS — step the cursor back one glyph (overprinting).
+    constexpr UNICODE_CODEPOINT PageBreak        = 0x0C;  ///< FF — force a page break.
+}
+
+/**
+ * @brief Fold an SO/SI byte into a running emphasis depth.
+ *
+ * If @p cp is TextControlCode::EmphasisIncrease or EmphasisDecrease, advance
+ * @p depth by one level (saturating in [0, 3]) and return true — the caller
+ * should then skip the byte. Otherwise leave @p depth unchanged and return false.
+ *
+ * @p depth is an emphasis code (0 regular, 1 italic, 2 bold, 3 bold+italic);
+ * static_cast it to FontStyle when querying a glyph. Backspace and PageBreak are
+ * left to the caller, whose cursor and line side effects differ by context.
+ */
+bool applyEmphasisShift(UNICODE_CODEPOINT cp, uint8_t& depth);
+
+/**
+ * Low-level text measurement shared across the Focus text subsystem.
+ * Used by Display, CanvasView, and application-level pagination engines.
+ * All word-wrapping flows through measureLineWrap, ensuring that measurement
+ * during pagination and measurement during rendering always agree.
+ * @ingroup text
+ */
 class TextLayout {
 public:
     /// Calculate the UTF-8 byte count for a Unicode codepoint
     static size_t bytesForCodepoint(UNICODE_CODEPOINT cp);
 
-    /// Measure where to wrap a line of text.
-    /// @param codepoints Array of Unicode codepoints to measure
-    /// @param len Number of codepoints in the array
-    /// @param layoutWidth Width of the layout area in pixels
-    /// @param textSize Text scaling factor (1 = normal)
-    /// @param glyphProvider Provider for glyph metrics
-    /// @param initialCursorX Starting X position (for continuing partial lines across chunks)
-    /// @param initialEmphasis Starting emphasis depth (0-3) for style-aware measurement
-    /// @return WordWrapResult containing wrap position and metadata
+    /**
+     * Measure where to wrap a line of text.
+     * @param codepoints Array of Unicode codepoints to measure
+     * @param len Number of codepoints in the array
+     * @param layoutWidth Width of the layout area in pixels
+     * @param textSize Text scaling factor (1 = normal)
+     * @param glyphProvider Provider for glyph metrics
+     * @param initialCursorX Starting X position (for continuing partial lines across chunks)
+     * @param initialEmphasis Emphasis style in effect at the start of the line
+     * @return WordWrapResult containing wrap position and metadata
+     */
     static WordWrapResult measureLineWrap(
         UNICODE_CODEPOINT* codepoints,
         size_t len,
@@ -90,20 +133,24 @@ public:
         uint8_t textSize,
         const GlyphProvider* glyphProvider,
         int16_t initialCursorX = 0,
-        uint8_t initialEmphasis = 0,
+        FontStyle initialEmphasis = FontStyle::Regular,
         const Hyphenator* hyphenator = nullptr
     );
 
-    /// Calculate line height for wrapped lines
-    /// @param glyphProvider Provider for font metrics
-    /// @param textSize Text scaling factor
-    /// @param lineSpacing Additional spacing between lines
+    /**
+     * Calculate line height for wrapped lines
+     * @param glyphProvider Provider for font metrics
+     * @param textSize Text scaling factor
+     * @param lineSpacing Additional spacing between lines
+     */
     static int16_t getLineHeight(const GlyphProvider* glyphProvider, uint8_t textSize, int16_t lineSpacing);
 
-    /// Calculate paragraph height (line height + extra paragraph spacing)
-    /// @param glyphProvider Provider for font metrics
-    /// @param textSize Text scaling factor
-    /// @param paragraphSpacing Total spacing after paragraph break
+    /**
+     * Calculate paragraph height (line height + extra paragraph spacing)
+     * @param glyphProvider Provider for font metrics
+     * @param textSize Text scaling factor
+     * @param paragraphSpacing Total spacing after paragraph break
+     */
     static int16_t getParagraphHeight(const GlyphProvider* glyphProvider, uint8_t textSize, int16_t paragraphSpacing);
 
     /// Calculate default line spacing (constant 2 pixels)
@@ -112,20 +159,24 @@ public:
     /// Calculate default paragraph spacing based on glyph row count
     static int16_t calculateParagraphSpacing(const GlyphProvider* glyphProvider);
 
-    /// Measure the width of a UTF-8 text string in pixels.
-    /// @param utf8String The UTF-8 encoded string to measure
-    /// @param textSize Text scaling factor (1 = normal)
-    /// @param glyphProvider Provider for glyph metrics
-    /// @return Width of the text in pixels
+    /**
+     * Measure the width of a UTF-8 text string in pixels.
+     * @param utf8String The UTF-8 encoded string to measure
+     * @param textSize Text scaling factor (1 = normal)
+     * @param glyphProvider Provider for glyph metrics
+     * @return Width of the text in pixels
+     */
     static int16_t measureTextWidth(const char* utf8String, uint8_t textSize, const GlyphProvider* glyphProvider);
 
-    /// Measure the total height of a UTF-8 text string when word-wrapped
-    /// to a given layout width.
-    /// @param utf8String The UTF-8 encoded string to measure
-    /// @param layoutWidth Available width in pixels for word wrapping
-    /// @param textSize Text scaling factor (1 = normal)
-    /// @param glyphProvider Provider for glyph metrics
-    /// @return Total height in pixels, including line and paragraph spacing
+    /**
+     * Measure the total height of a UTF-8 text string when word-wrapped
+     * to a given layout width.
+     * @param utf8String The UTF-8 encoded string to measure
+     * @param layoutWidth Available width in pixels for word wrapping
+     * @param textSize Text scaling factor (1 = normal)
+     * @param glyphProvider Provider for glyph metrics
+     * @return Total height in pixels, including line and paragraph spacing
+     */
     static int16_t measureTextHeight(const char* utf8String, int16_t layoutWidth, uint8_t textSize, const GlyphProvider* glyphProvider);
 
 };

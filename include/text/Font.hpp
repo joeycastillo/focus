@@ -205,8 +205,8 @@ public:
     std::string getTitle() const;
     uint8_t getGlyphRowCount() const;
     uint8_t getPointSize() const;
-    GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const;
-    const uint8_t* glyphForCodepoint(UNICODE_CODEPOINT codepoint, uint8_t emphasis = 0) const;
+    GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis = FontStyle::Regular) const;
+    const uint8_t* glyphForCodepoint(UNICODE_CODEPOINT codepoint, FontStyle emphasis = FontStyle::Regular) const;
     bool isValid() const;
 
 private:

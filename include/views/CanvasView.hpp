@@ -174,8 +174,9 @@ protected:
     bool lastWasNewline = false;  // Tracks consecutive newlines for paragraph detection
     TextAlignment textAlignment = TextAlignment::Left;
 
-    // Emphasis state (SO/SI control codes): 0=normal, 1=italic, 2=bold, 3=bold+italic
-    int emphasisDepth = 0;
+    // Emphasis depth tracked from SO/SI control codes (0-3). static_cast to
+    // FontStyle for glyph queries (0=regular, 1=italic, 2=bold, 3=bold+italic).
+    uint8_t emphasisDepth = 0;
 
     // Word position tracking (set by setWordMapOutput, used during text rendering)
     std::vector<WordPosition> *wordMapOutput = nullptr;
