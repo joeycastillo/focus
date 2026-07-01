@@ -136,11 +136,12 @@ class ViewController;
 
 /// @brief An event delivered to views via the event dispatch system.
 ///
-/// Events carry a type identifier, an optional userInfo payload, and a
-/// timestamp. For touch events, userInfo encodes the touch coordinates as
-/// (x << 16 | y). For FOCUS_EVENT_VALUE_CHANGED, userInfo carries a
-/// control-specific value. The timestamp records when the event was
-/// generated, in microseconds (monotonic clock, microsecond resolution).
+/// Events carry a type identifier, a userInfo payload, and a timestamp. The
+/// meaning of userInfo is keyed by type: touch and gesture events pack the
+/// coordinates as (x << 16) | y; FOCUS_EVENT_VALUE_CHANGED carries a
+/// sender-specific value; other event types document their payload at the
+/// FOCUS_EVENT_* definition. The timestamp records when the event was
+/// generated, in microseconds (monotonic clock).
 typedef struct {
     int32_t type;       ///< One of the FOCUS_EVENT_* constants.
     int32_t userInfo;   ///< Event-specific payload data.

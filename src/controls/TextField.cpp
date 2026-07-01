@@ -193,9 +193,7 @@ bool TextField::handleEvent(Event event) {
     if (!this->enabled) return false;
     if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
         this->becomeFocused();
-        if (this->actions.count(FOCUS_EVENT_TOUCH_DOWN)) {
-            this->actions[FOCUS_EVENT_TOUCH_DOWN].callback(event, this->shared_from_this());
-        }
+        this->fireAction(FOCUS_EVENT_TOUCH_DOWN, event);
         return true;
     }
     return View::handleEvent(event);

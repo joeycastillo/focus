@@ -230,7 +230,9 @@ public:
      * @brief Register a callback for a specific event type.
      *
      * When this view receives an event with a matching type, the action is
-     * called instead of the default event handling.
+     * called instead of the default event handling. At most one action is held
+     * per event type — registering another action for the same type replaces the
+     * previous one.
      *
      * @param action The callback to invoke. It receives the triggering Event
      *   and a weak pointer to this view (the sender). See the Action typedef

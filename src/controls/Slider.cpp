@@ -145,12 +145,9 @@ bool Slider::handleEvent(Event event) {
                 this->setNeedsDisplayInRect(this->frame);
             }
             // Fire value changed action
-            auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
-            if (it != this->actions.end()) {
-                int32_t valueBits; memcpy(&valueBits, &this->value, sizeof(valueBits));
-                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, valueBits, 0};
-                it->second.callback(valueEvent, this->weak_from_this());
-            }
+            int32_t valueBits; memcpy(&valueBits, &this->value, sizeof(valueBits));
+            Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, valueBits, 0};
+            this->fireAction(FOCUS_EVENT_VALUE_CHANGED, valueEvent);
         }
         return true;
     }
@@ -166,12 +163,9 @@ bool Slider::handleEvent(Event event) {
             if (std::shared_ptr<Window> window = this->getWindow().lock()) {
                 this->setNeedsDisplayInRect(this->frame);
             }
-            auto it = this->actions.find(FOCUS_EVENT_VALUE_CHANGED);
-            if (it != this->actions.end()) {
-                int32_t valueBits; memcpy(&valueBits, &this->value, sizeof(valueBits));
-                Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, valueBits, 0};
-                it->second.callback(valueEvent, this->weak_from_this());
-            }
+            int32_t valueBits; memcpy(&valueBits, &this->value, sizeof(valueBits));
+            Event valueEvent = {FOCUS_EVENT_VALUE_CHANGED, valueBits, 0};
+            this->fireAction(FOCUS_EVENT_VALUE_CHANGED, valueEvent);
         }
         return true;
     }
