@@ -1,4 +1,4 @@
-# Libros Firmware - License
+# Focus - License
 
 MIT License
 
@@ -30,5 +30,7 @@ This project includes third-party components under various open-source licenses.
 
 | Component | License |
 |---|---|
-| [components/focus/tools/unicodedata](components/focus/tools/unicodedata/) | Unicode License Agreement (Unicode Character Database) |
-| [components/focus/tools/unifontconvert](components/focus/tools/unifontconvert/) | GPL v2+ with font embedding exception (GNU Unifont data and generator) |
+| [src/text/Utf8.cpp](src/text/Utf8.cpp) (DFA decoder core) | MIT, Copyright (c) 2008-2009 Bjoern Hoehrmann |
+| [doxygen-awesome-css](doxygen-awesome-css/) (submodule, documentation styling only) | MIT, Copyright (c) 2021-2023 jothepro |
+| [tools/unicodedata](tools/unicodedata/) | Unicode License Agreement (Unicode Character Database) |
+| [tools/unifontconvert](tools/unifontconvert/) | GPL v2+ with font embedding exception (GNU Unifont data and generator; applies to the tool and its input data, not the MIT framework source) |
