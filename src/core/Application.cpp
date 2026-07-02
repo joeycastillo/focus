@@ -268,7 +268,7 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
     Event event;
     event.type = eventType;
     event.userInfo = userInfo;
-    event.timestamp = esp_timer_get_time();
+    event.timestamp = focus_timer_get_time();
 
     // For touch events, transform native panel coordinates to logical coordinates.
     // Each case is the inverse of the Display's rendering rotation.
