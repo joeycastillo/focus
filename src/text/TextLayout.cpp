@@ -23,8 +23,7 @@
  */
 
 #include "TextLayout.hpp"
-#include "utf8_decode.hpp"
-#include "utf8_parse.hpp"
+#include "Utf8.hpp"
 #include <cstring>
 #include <cstdlib>
 
@@ -283,13 +282,13 @@ int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, c
         return 0;
     }
 
-    size_t len = utf8_codepoint_length((char*)utf8String);
+    size_t len = utf8_codepoint_length(utf8String);
     if (len == 0) return 0;
 
     UNICODE_CODEPOINT* codepoints = (UNICODE_CODEPOINT*)malloc(len * sizeof(UNICODE_CODEPOINT));
     if (codepoints == nullptr) return 0;
 
-    utf8_parse((char*)utf8String, codepoints);
+    utf8_parse(utf8String, codepoints);
 
     int16_t width = 0;
     uint8_t emphasis = 0;
@@ -323,13 +322,13 @@ int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidt
         return 0;
     }
 
-    size_t len = utf8_codepoint_length((char*)utf8String);
+    size_t len = utf8_codepoint_length(utf8String);
     if (len == 0) return 0;
 
     UNICODE_CODEPOINT* codepoints = (UNICODE_CODEPOINT*)malloc(len * sizeof(UNICODE_CODEPOINT));
     if (codepoints == nullptr) return 0;
 
-    utf8_parse((char*)utf8String, codepoints);
+    utf8_parse(utf8String, codepoints);
 
     int16_t lineSpacing = calculateLineSpacing(glyphProvider);
     int16_t paragraphSpacing = calculateParagraphSpacing(glyphProvider);

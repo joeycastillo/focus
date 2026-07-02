@@ -38,7 +38,7 @@
 #pragma once
 
 #include "Focus.hpp"
-#include "utf8_decode.hpp"
+#include "Utf8.hpp"
 #include <cstddef>
 
 namespace focus {

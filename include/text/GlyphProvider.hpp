@@ -41,7 +41,7 @@
 
 #include "Focus.hpp"
 #include "FontStyle.hpp"
-#include "utf8_decode.hpp"
+#include "Utf8.hpp"
 #include <string>
 #include <vector>
 

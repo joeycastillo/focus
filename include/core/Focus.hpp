@@ -44,7 +44,7 @@
 #include <string>
 #include <functional>
 
-#include "utf8_decode.hpp"  // UNICODE_CODEPOINT (aliased below as focus::CodePoint)
+#include "Utf8.hpp"  // UNICODE_CODEPOINT (aliased below as focus::CodePoint)
 
 /// @name Directional Navigation Events
 /// @brief D-pad or arrow-key navigation events for focus traversal.

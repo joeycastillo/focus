@@ -26,7 +26,7 @@
 #include "Display.hpp"
 #include "TextLayout.hpp"
 #include "ArabicShaping.hpp"
-#include "utf8_parse.hpp"
+#include "Utf8.hpp"
 #include <algorithm>
 #include <cstring>
 
@@ -478,7 +478,7 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
     if (text_size < 1) text_size = 1;
     if (text_size > 16) text_size = 16;
 
-    size_t len = utf8_codepoint_length((char *)utf8String);
+    size_t len = utf8_codepoint_length(utf8String);
 
     this->textSize = text_size;
     this->textColor = color;
@@ -495,7 +495,7 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
     UNICODE_CODEPOINT *codepoints = (UNICODE_CODEPOINT *)malloc(len * sizeof(UNICODE_CODEPOINT));
     if (!codepoints) return 0;
 
-    utf8_parse((char *)utf8String, codepoints);
+    utf8_parse(utf8String, codepoints);
 
     // Build byte offset map for word position tracking (before shaping,
     // so offsets correspond to the original UTF-8 string).
