@@ -51,11 +51,9 @@ using Color = uint16_t;
  * - 4-bit: `color >> 12` (0x0 to 0xF)
  * - 3-bit: `color >> 13` (0x0 to 0x7)
  * - 2-bit: `color >> 14` (0x0 to 0x3)
- *                        (for the factory methods, `color & 3` also works)
  *
- * **NOTE:** GrayscaleColor values are designed for grayscale displays.
- * Do not use them on RGB displays — they will render incorrectly. Use
- * RGB565Color for RGB/TFT displays instead.
+ * These values are for grayscale displays; they render incorrectly on RGB
+ * displays. Use RGB565Color for RGB/TFT displays.
  * @ingroup core
  */
 struct GrayscaleColor {
@@ -73,9 +71,8 @@ struct GrayscaleColor {
  * in RGB565 format (5 bits red, 6 bits green, 5 bits blue). This is the
  * native format for most 16-bit TFT displays.
  *
- * **NOTE:** RGB565Color values are designed for RGB/TFT displays.
- * Do not use them on grayscale e-paper displays — they will render incorrectly.
- * Use GrayscaleColor for grayscale displays instead.
+ * These values are for RGB/TFT displays; they render incorrectly on grayscale
+ * e-paper displays. Use GrayscaleColor for grayscale displays.
  * @ingroup core
  */
 struct RGB565Color {

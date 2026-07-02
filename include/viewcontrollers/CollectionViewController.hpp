@@ -124,10 +124,10 @@ private:
     PaginationStyle configuredPaginationStyle = PaginationStyle::Arrows;
     size_t savedPageIndex = 0;
 
-    /// F3: the paginatedView frame size at the last populate (reloadData +
+    /// The paginatedView frame size at the last populate (reloadData +
     /// goToPage). viewDidLayoutSubviews skips the rebuild when the size is
     /// unchanged. Reset to {0,0} in createView() so a freshly (re)created view
-    /// always rebuilds, even though this controller object can outlive its view.
+    /// always rebuilds; this controller object can outlive its view.
     Size lastLaidOutSize = {0, 0};
 };
 

@@ -83,9 +83,8 @@ public:
     /**
      * @brief Enter the main run loop.
      *
-     * Calls setup(), then enters an infinite loop that repeatedly executes
-     * all registered tasks. This method only returns when no tasks remain,
-     * since there will be no way to add more tasks.
+     * Calls setup(), then repeatedly runs every registered task. Returns when
+     * quit() is called, or when the last task removes itself and none remain.
      */
     void run();
 

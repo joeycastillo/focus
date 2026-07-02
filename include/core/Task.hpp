@@ -57,10 +57,9 @@ public:
      * Called once per main loop iteration by the Application.
      *
      * @param application The owning application.
-     * @return true to remove this task from the run loop (one-shot),
-     *         false to keep running on subsequent iterations. You
-     *         can of course return false many times before returning
-     *         true (i.e. a long-running task that completes).
+     * @return true to remove this task from the run loop, false to keep
+     *         running on subsequent iterations. A long-running task returns
+     *         false until its work is done, then true to remove itself.
      */
     virtual bool run(std::shared_ptr<Application> application) = 0;
 };

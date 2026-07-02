@@ -33,8 +33,7 @@
  *
  * This is the bridge between the emphasis-aware text rendering stack and the
  * emphasis-unaware single-font providers (BDFGlyphProvider, PackedFontGlyphProvider,
- * etc.). Each sub-provider handles exactly one style; StyledGlyphProvider
- * selects among them.
+ * etc.), each of which handles exactly one style.
  *
  * When a requested emphasis level has no provider, queries fall back to the
  * regular (emphasis=0) provider. supportsEmphasis() reports which levels have

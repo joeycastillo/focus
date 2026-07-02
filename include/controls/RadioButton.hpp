@@ -76,9 +76,8 @@ public:
 protected:
     std::string text;                     ///< Label text.
     std::shared_ptr<Font> font;           ///< Custom font, or nullptr for system font.
-    /// The RadioGroup this button belongs to. This is a shared_ptr (not weak)
-    /// so the group stays alive as long as any button in it exists. There is no
-    /// ownership cycle because RadioGroup holds only weak_ptrs back to its buttons.
+    /// The RadioGroup this button belongs to. A shared_ptr, so the group stays
+    /// alive as long as any of its buttons do.
     std::shared_ptr<RadioGroup> group;
 
 private:

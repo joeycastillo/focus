@@ -30,10 +30,6 @@
  * the child view controller associated with the selected tab. Only the selected
  * tab's view exists at any given time — views are created lazily when a tab is
  * selected and destroyed when the user switches away.
- *
- * This mirrors NavigationViewController's architecture:
- * - NavigationViewController: NavigationBar + contentArea, push/pop transitions
- * - TabViewController: HStack of TabItems + contentArea, selectTab transitions
  */
 
 #pragma once

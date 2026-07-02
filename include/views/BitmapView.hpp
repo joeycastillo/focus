@@ -35,11 +35,11 @@
 namespace focus {
 
 /**
- * @brief A view that renders a 1bpp bitmap opaquely to the display.
+ * @brief A view that renders a 1bpp bitmap in the view's colors.
  *
- * Every pixel in the bitmap is drawn: set bits (1) produce white, clear
- * bits (0) produce black. This matches the display's native blitOpaque
- * convention.
+ * Set bits (1) are drawn in foregroundColor and clear bits (0) in
+ * backgroundColor — black on white with the default colors. The view is
+ * opaque, so it fills the background first and every pixel ends up painted.
  *
  * The bitmap data is not owned by this view — it must remain valid for
  * the lifetime of the BitmapView.
