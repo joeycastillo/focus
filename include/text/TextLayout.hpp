@@ -134,6 +134,9 @@ public:
      * @param glyphProvider Provider for glyph metrics
      * @param initialCursorX Starting X position (for continuing partial lines across chunks)
      * @param initialEmphasis Emphasis style in effect at the start of the line
+     * @param hyphenator Optional algorithmic hyphenator consulted when a word
+     *        overflows the line and contains no soft hyphens; pass nullptr to
+     *        wrap at word boundaries only
      * @return WordWrapResult containing wrap position and metadata
      */
     static WordWrapResult measureLineWrap(

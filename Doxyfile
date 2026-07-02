@@ -1,5 +1,5 @@
 # Focus Framework — Doxygen Configuration
-# Run from components/focus/:  doxygen Doxyfile
+# Run from the repository root:  doxygen Doxyfile
 
 PROJECT_NAME           = "Focus"
 PROJECT_BRIEF          = "A C++ UI framework for resource-constrained devices"
