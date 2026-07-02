@@ -49,14 +49,14 @@ In non-touch-oriented applications, Window also manages focus: which view curren
 **Application** is the central coordinator. It owns the Window, manages a root view controller plus a stack of modally presented view controllers, and runs the cooperative event loop.
 
 ```
-while tasks.count > 0:
+while running and tasks.count > 0:
     for each task in tasks:
         if task.run() returns true:
             remove task (one-shot)
     loopCounter++
 ```
 
-Subclass Application and override `setup()` to set your root view controller and add tasks. Call `run()` to enter the loop. Call `quit()` to exit.
+Subclass Application and override `setup()` to set your root view controller and add tasks. Call `run()` to enter the loop. The loop exits when `quit()` is called, or when the last task removes itself.
 
 ### ViewController
 
@@ -226,12 +226,13 @@ Focus includes these built-in views:
 | **MaskView** | Renders foreground color where mask bits are set, background elsewhere. |
 | **NavigationBar** | Title bar with optional back button and right action button. |
 | **KeyboardView** | On-screen keyboard for text input. |
-| **CollectionView** | Paginated list or grid driven by a data source. |
-| **PaginatedCollectionView** | CollectionView with built-in pagination controls (arrows or footer). |
+| **CollectionView** | Abstract base for data-source-driven collections; holds the data source, delegate, and layout configuration. |
+| **PagedCollectionView** | Concrete list or grid that lays items out in fixed pages; navigate with `goToPage()`. |
+| **PaginatedCollectionView** | A view that wraps a PagedCollectionView and adds pagination controls (arrows or a footer). |
 
 ### CollectionView
 
-CollectionView uses a data source / delegate pattern:
+CollectionView is an abstract base — it can't be instantiated directly. For a paginated list or grid, instantiate **PagedCollectionView** (or **PaginatedCollectionView** when you want on-screen pagination controls). All three share the same data source / delegate pattern:
 
 ```cpp
 class MyDataSource : public CollectionViewDataSource {
@@ -248,7 +249,7 @@ class MyDataSource : public CollectionViewDataSource {
 };
 ```
 
-Configure layout with `setLayout()` (VerticalList, HorizontalList, or Grid), `setItemSize()`, and `setItemSpacing()`. Call `reloadData()` after data changes.
+Configure layout with `setLayout()` (VerticalList, HorizontalList, or Grid), `setItemSize()`, and `setItemSpacing()`. Call `reloadData()` after data changes. PagedCollectionView adds page navigation (`goToPage()`, `getCurrentPage()`, `getPageCount()`); PaginatedCollectionView forwards the same configuration methods and adds a pagination style (`None`, `Arrows`, or `Footer`).
 
 ---
 
@@ -285,7 +286,7 @@ button->setAction(callback, FOCUS_EVENT_TOUCH_UP_INSIDE,
 
 | Control | Description |
 |---------|-------------|
-| **Button** | Tappable button with text label. Inverts colors when focused. Supports a `selected` visual state via `setSelected()` — when selected, renders inverted (filled, no border), same as focused. The caller manages toggle semantics in action handlers. Supports state-keyed content: `setTitle(text, state)` and `setImage(mask, size, state)` register different content for Normal, Selected, or Disabled states. Content resolves with fallback to Normal. |
+| **Button** | Tappable button with text label. Inverts colors when focused. Supports a `selected` visual state via `setSelected()` — when selected, renders inverted (filled, no border), same as focused. The caller manages toggle semantics in action handlers. Supports state-keyed content: `setTitle(text, state)` and `setImage(mask, size, state)` register different content for the Normal and Selected states, with fallback to Normal. |
 | **CircularButton** | Circular icon button. Renders icon or text in a circle outline (normal) or filled circle with cutout content (highlighted). For toolbar and toggle button UIs. |
 | **TextField** | Single-line text input. Presents an on-screen keyboard when focused. |
 | **PasswordField** | TextField that displays bullets instead of characters. |
@@ -383,6 +384,8 @@ app->presentViewController(settingsVC);  // dims content, shows on top
 app->dismissViewController();            // removes topmost modal
 ```
 
+The content behind the modal is dimmed only when the modal's view is non-opaque; an opaque, full-screen modal covers everything, so no dimmer is added behind it.
+
 ---
 
 ## Events and Input
@@ -393,7 +396,7 @@ When touch is enabled (`window->setTouchEnabled()`), touch events are dispatched
 
 On TOUCH_UP, the framework checks:
 - **Swipe**: if the touch was short (<400ms) and moved far enough (>60px with a 2:1 axis ratio), a `FOCUS_EVENT_SWIPE_*` event is delivered instead.
-- **Long press**: if a LONG_PRESS was already fired (after 500ms of minimal movement), TOUCH_UP_OUTSIDE is delivered to suppress a tap. Currently touch-only; d-pad long-press SELECT is a planned future addition.
+- **Long press**: Focus defines and dispatches `FOCUS_EVENT_LONG_PRESS` but does not generate it — your platform's input layer produces it (typically after ~500ms of minimal movement). When a LONG_PRESS was delivered during a touch, TOUCH_UP_OUTSIDE is delivered on release to suppress the tap. Currently touch-only; d-pad long-press SELECT is a planned future addition.
 - **Tap**: otherwise, TOUCH_UP_INSIDE or TOUCH_UP_OUTSIDE depending on whether the finger is still within the captured view's bounds.
 
 Touch coordinates are packed into `Event.userInfo` as `(x << 16) | y`.
@@ -432,7 +435,7 @@ Fonts are loaded by name from a search path:
 
 ```cpp
 Font::addFontSearchPath("/system/fonts/");
-auto font = Font::withName("spleen-12x24");   // searches for spleen-12x24.bdf/.bdp
+auto font = Font::withName("spleen-12x24");   // tries spleen-12x24.bdp, then .bdf
 ```
 
 Three system font slots are available as defaults:
@@ -449,14 +452,16 @@ Font instances are cached -- calling `Font::withName()` twice with the same name
 
 ### GlyphProvider
 
-Font rendering is abstracted behind the **GlyphProvider** interface. Focus includes four providers:
+Font rendering is abstracted behind the **GlyphProvider** interface. Focus includes six providers:
 
 | Provider | Format | Description |
 |----------|--------|-------------|
 | **BDFGlyphProvider** | `.bdf` | Standard Bitmap Distribution Format. |
 | **PackedFontGlyphProvider** | `.bdp` | Compact binary format (~5-10x smaller than BDF). |
 | **UnifontGlyphProvider** | `.bin` | GNU Unifont (full Unicode coverage, 8x16 / 16x16). |
-| **BasicGlyphProvider** | -- | Hardcoded 5x7 ASCII fallback. |
+| **BasicGlyphProvider** | -- | Hardcoded 5x8 ASCII fallback. |
+| **StyledGlyphProvider** | -- | Routes glyph requests to per-style providers (regular, italic, bold, bold italic). |
+| **FallbackGlyphProvider** | -- | Wraps a primary provider and falls back to another for missing glyphs. |
 
 ### Text Rendering
 
@@ -523,7 +528,7 @@ The **Display** abstract class defines two required rendering primitives and one
 |--------|----------|-------------|
 | `fillRect()` | Yes | Fill a rectangle with a solid color. |
 | `blitMasked()` | Yes | Apply a color where mask bits are set; leave other pixels unchanged. |
-| `blitOpaque()` | No | Blit a pixel buffer (1bpp or 8bpp depending on display mode). Has a slow default implementation that decodes pixels and calls `fillRect()`. Override for better performance. |
+| `blitOpaque()` | No | Blit a pixel buffer (1bpp, 8bpp, or 16bpp depending on display mode). Has a slow default implementation that decodes pixels and calls `fillRect()`. Override for better performance. |
 
 All methods accept an optional clip rectangle for efficient partial redraws.
 

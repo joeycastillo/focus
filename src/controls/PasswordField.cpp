@@ -30,7 +30,7 @@ PasswordField::PasswordField(Rect rect) : TextField(rect) {
 }
 
 std::string PasswordField::getDisplayText() const {
-    // Return bullet characters for each character in the actual text
+    // Return one asterisk for each character in the actual text
     std::string masked;
     for (size_t i = 0; i < this->text.length(); i++) {
         // Skip continuation bytes of multi-byte UTF-8 characters

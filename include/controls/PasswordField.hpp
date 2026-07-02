@@ -27,7 +27,7 @@
  * @brief A text field that masks its content for password entry.
  *
  * PasswordField is a TextField subclass that overrides getDisplayText() to
- * replace each character with a bullet (U+2022), hiding the actual text from
+ * replace each character with an asterisk, hiding the actual text from
  * view while preserving the underlying content.
  */
 
@@ -38,7 +38,7 @@
 namespace focus {
 
 /**
- * @brief A text input control that hides its content with bullet characters.
+ * @brief A text input control that hides its content with asterisks.
  * @ingroup controls
  */
 class PasswordField final : public TextField {
@@ -47,7 +47,7 @@ public:
     PasswordField(Rect rect);
 
 protected:
-    /// @brief Returns a string of bullet characters matching the text length.
+    /// @brief Returns a string of asterisks, one per character of the text.
     std::string getDisplayText() const override;
 };
 

@@ -30,7 +30,8 @@
  * Supports state-keyed content: different titles and images can be registered
  * per ControlState, with fallback to Normal. The appearance inverts (swaps
  * foreground/background) when the button has focus or is selected. Register a
- * FOCUS_EVENT_TOUCH_DOWN or FOCUS_EVENT_SELECT action to respond to presses.
+ * FOCUS_EVENT_TOUCH_UP_INSIDE action to respond to presses — it fires on tap
+ * in touch mode, and d-pad SELECT falls back to it in non-touch mode.
  */
 
 #pragma once
