@@ -81,6 +81,16 @@ WordWrapResult TextLayout::measureLineWrap(
     int16_t lastAdvance = 0;
     uint8_t emphasis = static_cast<uint8_t>(initialEmphasis);
 
+    // Soft-hyphen tracking. A U+00AD is a conditional break candidate: valid
+    // only where the prefix plus a rendered hyphen still fits. We also track
+    // the last one seen regardless of fit, because a word containing soft
+    // hyphens is never algorithmically hyphenated (the author's break points
+    // win, even when none of them fit).
+    size_t softHyphenCandidate = 0;
+    bool hasSoftHyphenCandidate = false;
+    size_t lastSoftHyphen = 0;
+    bool sawSoftHyphen = false;
+
     // Pre-fetch ASCII metrics cache for the Regular fast path. When emphasis is
     // non-regular and the provider supports it, we go through metricsForCodepoint()
     // instead to get style-accurate widths.
@@ -140,6 +150,23 @@ WordWrapResult TextLayout::measureLineWrap(
             continue;
         }
 
+        // U+00AD soft hyphen: invisible and zero-width. Register it as a break
+        // candidate only if the line so far plus a rendered hyphen would fit,
+        // measuring the hyphen at the emphasis state in effect here — the same
+        // state it would render in if the break is taken.
+        if (cp == TextControlCode::SoftHyphen) {
+            lastSoftHyphen = position;
+            sawSoftHyphen = true;
+            int16_t hyphenAdvance = glyphProvider->metricsForCodepoint(
+                '-', static_cast<FontStyle>(emphasis)).advance * textSize;
+            if (cursorX + hyphenAdvance <= layoutWidth) {
+                softHyphenCandidate = position;
+                hasSoftHyphenCandidate = true;
+            }
+            position++;
+            continue;
+        }
+
         unicode_info_t traits;
         GlyphMetrics metrics;
 
@@ -179,11 +206,24 @@ WordWrapResult TextLayout::measureLineWrap(
     result.isParagraphBreak = false;
     result.endCursorX = 0;
 
+    // Soft hyphens take precedence over algorithmic hyphenation: if the
+    // overflowing word contains any, the author has specified its break
+    // points. Break at the rightmost one that fits (rendering a hyphen), or
+    // fall through to the space wrap if none fit — either way, don't consult
+    // the hyphenator for this word.
+    bool wordHasSoftHyphen = sawSoftHyphen && lastSoftHyphen > wrapCandidate;
+    if (wordHasSoftHyphen) {
+        if (hasSoftHyphenCandidate && softHyphenCandidate > wrapCandidate) {
+            result.codepointsConsumed = softHyphenCandidate + 1;
+            result.needsHyphen = true;
+            return result;
+        }
+    }
     // Try hyphenation on the overflowing word before falling back to word wrap.
     // The overflowing word starts after the last wrap candidate (space) and extends
     // to the current position. We extract it, find legal break positions, and check
     // if any prefix + hyphen fits within the layout width.
-    if (hyphenator != nullptr) {
+    else if (hyphenator != nullptr) {
         // Identify the overflowing word boundaries in the codepoint array
         size_t wordStart = (wrapCandidate > 0) ? wrapCandidate + 1 : 0;
         // Skip any leading control characters (SO/SI/BS) that aren't part of the word
@@ -215,6 +255,9 @@ WordWrapResult TextLayout::measureLineWrap(
                     for (size_t k = 0; k < splitCodepoint; k++) {
                         UNICODE_CODEPOINT cp = codepoints[k];
                         if (applyEmphasisShift(cp, emph)) continue;
+                        // Zero-width: an earlier word on this line may carry
+                        // soft hyphens even though the overflowing word doesn't.
+                        if (cp == TextControlCode::SoftHyphen) continue;
                         if (cp == TextControlCode::Backspace) {
                             // Backspace
                             GlyphMetrics prevMetrics = glyphProvider->metricsForCodepoint(
@@ -301,6 +344,10 @@ int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, c
 
         // Skip other control characters
         if (cp < 0x20) continue;
+
+        // Soft hyphens are zero-width unless a line breaks at one; a
+        // single-line width measurement never breaks, so skip them.
+        if (cp == TextControlCode::SoftHyphen) continue;
 
         unicode_info_t traits = getTraitsForCodepoint(cp);
 

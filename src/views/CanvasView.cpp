@@ -834,6 +834,9 @@ int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_
         }
         if (applyEmphasisShift(cp, emphasis)) continue;
         if (cp < 0x20) continue;
+        // Soft hyphens are zero-width within a line; only the synthesized
+        // trailing hyphen (drawn separately) has width.
+        if (cp == TextControlCode::SoftHyphen) continue;
         unicode_info_t traits;
         GlyphMetrics metrics;
         if (cp < 0x80 && (!emphasisAware || emphasis == 0)) {
@@ -890,9 +893,23 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             numGlyphsToDraw = result.codepointsConsumed;
         }
 
+        // A line that breaks at a soft hyphen renders a synthesized hyphen at
+        // its end — the U+00AD itself paints nothing. Reserve the hyphen's
+        // width before alignment so justification's slack distribution can't
+        // push the hyphen past the layout edge.
+        int16_t hyphenReserve = 0;
+        if (result.needsHyphen) {
+            hyphenReserve = glyphProvider->metricsForCodepoint(
+                '-', static_cast<FontStyle>(this->emphasisDepth)).advance * this->textSize;
+        }
+
         renderBidiLine(codepoints, pos, numGlyphsToDraw, paragraphDir,
-                       effectiveWidth, indentedOriginX, glyphProvider);
+                       effectiveWidth - hyphenReserve, indentedOriginX, glyphProvider);
         pos += numGlyphsToDraw;
+
+        if (result.needsHyphen) {
+            this->writeCodepoint('-', glyphProvider);
+        }
 
         if (result.wrapped) {
             this->cursor.y += TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
@@ -956,6 +973,12 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
     }
 
     if (codepoint < 0x20) return 1;
+
+    // U+00AD soft hyphen: invisible and zero-width. When a line breaks at one,
+    // the line renderer draws a synthesized hyphen; the codepoint itself never
+    // paints. (Not caught below: it's category Cf, not Cc, so its controlchar
+    // trait is clear.)
+    if (codepoint == TextControlCode::SoftHyphen) return 1;
 
     unicode_info_t traits = getTraitsForCodepoint(codepoint);
     if (traits.is.controlchar) return 1;

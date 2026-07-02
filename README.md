@@ -482,6 +482,8 @@ canvas->drawText(MakeRect(10, 10, 460, 780),
                  TextAlignment::Left);
 ```
 
+Soft hyphens (U+00AD) are honored throughout: invisible and zero-width within a line, they mark spots where a word may break, and when a line breaks at one, a hyphen is rendered at the line end. Words containing soft hyphens are never algorithmically hyphenated — the author's break points win.
+
 ### Arabic and Bidirectional Text
 
 Focus includes Arabic contextual shaping (isolated, initial, medial, final forms) and bidirectional text rendering. These are applied automatically when Arabic characters are detected in the text. The Unicode property tables that drive bidi classification and line breaking are generated from Unicode spec files by the tools in `tools/unicodedata/`.

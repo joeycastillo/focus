@@ -88,6 +88,16 @@ namespace TextControlCode {
     constexpr UNICODE_CODEPOINT EmphasisDecrease = 0x0F;  ///< SI — pop one emphasis level.
     constexpr UNICODE_CODEPOINT Backspace        = 0x08;  ///< BS — step the cursor back one glyph (overprinting).
     constexpr UNICODE_CODEPOINT PageBreak        = 0x0C;  ///< FF — force a page break.
+
+    /**
+     * @brief U+00AD SOFT HYPHEN — unlike the C0 codes above, a standard Unicode
+     * format character, honored with its standard semantics: invisible and
+     * zero-width everywhere, except that it marks a spot where a word may
+     * break; when the break is taken, a hyphen is rendered at the line end.
+     * Words containing soft hyphens are never algorithmically hyphenated —
+     * the author's break points win.
+     */
+    constexpr UNICODE_CODEPOINT SoftHyphen       = 0x00AD;
 }
 
 /**
