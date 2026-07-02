@@ -27,6 +27,7 @@
 #include "BDFGlyphProvider.hpp"
 #include "StyledGlyphProvider.hpp"
 #include "FallbackGlyphProvider.hpp"
+#include "BasicGlyphProvider.hpp"
 
 namespace focus {
 
@@ -139,6 +140,12 @@ std::shared_ptr<Font> Font::withProvider(
 }
 
 std::shared_ptr<Font> Font::systemFont() {
+    if (!defaultSystemFont) {
+        // Floor, not a feature: with no font configured, fall back to the
+        // built-in 5x8 ASCII provider so text is visibly wrong rather than
+        // invisibly absent.
+        defaultSystemFont = std::shared_ptr<Font>(new Font(std::make_shared<BasicGlyphProvider>()));
+    }
     return defaultSystemFont;
 }
 

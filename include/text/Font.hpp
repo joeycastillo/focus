@@ -105,7 +105,11 @@ public:
 
     /**
      * Get the system/default font.
-     * @return The system font, or nullptr if not set.
+     * Never returns nullptr: if no system font has been set, a font backed
+     * by the built-in BasicGlyphProvider (5x8 ASCII) is installed on first
+     * call, so text renders — visibly small — even before font setup. Set a
+     * real font during application setup with setSystemFont().
+     * @return The system font.
      */
     static std::shared_ptr<Font> systemFont();
 
@@ -142,7 +146,9 @@ public:
 
     /**
      * Set the system/default font.
-     * @param font The font to use as the system default.
+     * @param font The font to use as the system default. Passing nullptr
+     *        resets the slot; the next systemFont() call reinstalls the
+     *        built-in BasicGlyphProvider default.
      */
     static void setSystemFont(std::shared_ptr<Font> font);
 

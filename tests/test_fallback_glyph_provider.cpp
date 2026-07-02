@@ -384,3 +384,36 @@ TEST(basic_has_glyph_outside_ascii) {
     ASSERT_FALSE(basic.hasGlyph(0x7F));    // DEL
     ASSERT_FALSE(basic.hasGlyph(0x4E00));  // CJK
 }
+
+// --- System font default (built-in BasicGlyphProvider floor) ---
+
+TEST(system_font_defaults_to_basic) {
+    Font::setSystemFont(nullptr);  // reset whatever earlier tests installed
+
+    auto sys = Font::systemFont();
+    ASSERT_TRUE(sys != nullptr);
+    ASSERT_TRUE(sys->isValid());
+    ASSERT_TRUE(sys->getGlyphProvider()->hasGlyph('A'));
+    ASSERT_FALSE(sys->getGlyphProvider()->hasGlyph(0x4E00));
+
+    // Repeated calls return the same installed default, not a fresh font
+    ASSERT_TRUE(Font::systemFont() == sys);
+
+    // Unset large/small slots chain to the same default
+    ASSERT_TRUE(Font::systemLargeFont() == sys);
+    ASSERT_TRUE(Font::systemSmallFont() == sys);
+}
+
+TEST(system_font_set_overrides_null_resets) {
+    auto custom = Font::withProvider(std::make_shared<MockGlyphProvider>(8, 16));
+    ASSERT_TRUE(custom != nullptr);
+
+    Font::setSystemFont(custom);
+    ASSERT_TRUE(Font::systemFont() == custom);
+
+    Font::setSystemFont(nullptr);
+    auto sys = Font::systemFont();
+    ASSERT_TRUE(sys != nullptr);
+    ASSERT_TRUE(sys != custom);
+    ASSERT_TRUE(sys->isValid());
+}

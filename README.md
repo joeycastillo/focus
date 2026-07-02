@@ -151,6 +151,7 @@ int main() {
     View::SetDefaultBackgroundColor(GrayscaleColor::White());
     View::SetDefaultForegroundColor(GrayscaleColor::Black());
 
+    // Optional: without this, Focus falls back to a built-in 5x8 ASCII font.
     Font::addFontSearchPath("/fonts/");
     Font::setSystemFont(Font::withName("spleen-12x24"));
 
@@ -431,6 +432,8 @@ window->addSystemGestureRecognizer(recognizer);
 
 ### Font Loading
 
+Focus ships exactly one font: a 5x8 fixed-width ASCII face (`BasicGlyphProvider`) compiled into the library. Until an application installs real fonts, the system font slots fall back to it, so text renders out of the box -- visibly small, never invisibly absent. It is a floor, not a look: bring BDF fonts for real typography. (The examples below use [Spleen](https://github.com/fcambus/spleen), a BSD-licensed bitmap family; Focus does not bundle it or any other BDF font.)
+
 Fonts are loaded by name from a search path:
 
 ```cpp
@@ -438,7 +441,7 @@ Font::addFontSearchPath("/system/fonts/");
 auto font = Font::withName("spleen-12x24");   // tries spleen-12x24.bdp, then .bdf
 ```
 
-Three system font slots are available as defaults:
+Three system font slots provide application-wide defaults. Unset slots chain to the system font, which itself defaults to the built-in face:
 
 ```cpp
 Font::setSystemFont(Font::withName("spleen-12x24"));

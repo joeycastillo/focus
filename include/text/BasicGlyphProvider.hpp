@@ -28,7 +28,8 @@
  *
  * BasicGlyphProvider supplies a minimal 5x8 pixel fixed-width ASCII font
  * that is compiled into the binary. It covers printable ASCII (0x20-0x7E)
- * and is used as a fallback when no external font files are available.
+ * and backs Font::systemFont() until an application installs a real font,
+ * so text renders even when no external font files are available.
  */
 
 #pragma once
