@@ -37,7 +37,6 @@
 
 #pragma once
 
-#include "Focus.hpp"
 #include "Utf8.hpp"
 #include <cstddef>
 

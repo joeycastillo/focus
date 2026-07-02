@@ -39,7 +39,7 @@
 
 #pragma once
 
-#include "Focus.hpp"
+#include "Utf8.hpp"
 #include "GlyphProvider.hpp"
 #include "Hyphenator.hpp"
 #include "UnicodeTraits.hpp"
