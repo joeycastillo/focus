@@ -34,3 +34,4 @@ This project includes third-party components under various open-source licenses.
 | [doxygen-awesome-css](doxygen-awesome-css/) (submodule, documentation styling only) | MIT, Copyright (c) 2021-2023 jothepro |
 | [tools/unicodedata](tools/unicodedata/) | Unicode License Agreement (Unicode Character Database) |
 | [tools/unifontconvert](tools/unifontconvert/) | GPL v2+ with font embedding exception (GNU Unifont data and generator; applies to the tool and its input data, not the MIT framework source) |
+| [tests/fonts](tests/fonts/) (BDF test fixtures) | Lucida, © 1986-1989 Bigelow & Holmes / Sun Microsystems — royalty-free use with required notice; see [tests/fonts/LEGAL_NOTICE.txt](tests/fonts/LEGAL_NOTICE.txt). Test fixtures only, not part of the framework. |

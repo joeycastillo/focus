@@ -6,11 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(FOCUS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-# BDF fonts loaded at runtime by the glyph-provider tests. The default
-# resolves inside the libros tree (Focus lives at components/focus); a
-# standalone checkout must point this at a directory containing the
-# lucida-bright/lucida-sans BDF files.
-set(FOCUS_TEST_FONTS_DIR "${FOCUS_ROOT}/../../fonts" CACHE PATH
+# BDF fonts loaded at runtime by the glyph-provider tests. The bundled
+# fixtures in tests/fonts/ (Lucida, Bigelow & Holmes — see
+# fonts/LEGAL_NOTICE.txt) cover the suite; override to test against a
+# different font set.
+set(FOCUS_TEST_FONTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/fonts" CACHE PATH
     "Directory containing the BDF fonts the glyph-provider tests load")
 
 if(NOT EXISTS "${FOCUS_TEST_FONTS_DIR}")
