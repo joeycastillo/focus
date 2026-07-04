@@ -1,6 +1,8 @@
 # Focus
 
-Focus is a lightweight, platform-agnostic UI framework for resource-constrained embedded systems. It provides a view hierarchy with layout, controls, text rendering, event dispatch, and cooperative task scheduling -- everything needed to build interactive applications on devices with limited memory and no GPU.
+Focus is a lightweight, platform-agnostic UI framework for resource-constrained embedded systems, inspired by UIKit circa 2008 and AppKit before that. It provides a view hierarchy with layout, controls, text rendering, event dispatch, and cooperative task scheduling — everything needed to build interactive applications on ESP32-like microcontroller-oriented devices (read: hundreds of kilobytes to single-digit megabytes of RAM).
+
+If you ever wrote an iOS app back in the day, Focus should feel instantly familiar: a view hierarchy with view controllers and lifecycle callbacks, target-action controls with state-keyed content, navigation stacks, modals and localizable strings.
 
 Focus is single-threaded and cooperative: there are no background threads or preemptive scheduling. The application run loop calls registered tasks one at a time, and each task yields quickly so the loop stays responsive. This makes Focus predictable and easy to reason about on bare-metal or RTOS targets.
 
@@ -20,12 +22,6 @@ Focus is single-threaded and cooperative: there are no background threads or pre
 
 Focus requires C++17 and uses `std::shared_ptr` for view ownership.
 
-## License
-
-Focus is released under the MIT License. See the LICENSE file in this directory.
-
----
-
 ## Core Concepts
 
 ### View Hierarchy
@@ -33,14 +29,14 @@ Focus is released under the MIT License. See the LICENSE file in this directory.
 Every visual element in Focus is a **View**. Views form a tree: each view has zero or more subviews and at most one superview. Subviews are owned via `std::shared_ptr<View>`, so adding a subview keeps it alive.
 
 Every view has two rectangles:
-- **frame** -- position and size in the superview's coordinate system.
-- **bounds** -- the view's own coordinate system (origin is normally 0,0 but can be offset for scrolling).
+- **frame**: position and size in the superview's coordinate system.
+- **bounds**: the view's own coordinate system (origin is normally 0,0 but can be offset for scrolling).
 
-Views have a foreground color and background color (`uint16_t` values -- see Colors and Display below). If a view is **opaque**, it fills its frame with its background color before drawing content.
+Views have a foreground color and background color (`uint16_t` values — see Colors and Display below). If a view is **opaque**, it fills its frame with its background color before drawing content.
 
 ### Window
 
-A **Window** is a special View that sits at the root of the hierarchy. It bridges the view tree to a **Display** backend. The Window tracks a **dirty rectangle** -- the union of all regions that need redrawing. When the display is ready, the application draws only the dirty region, not the entire screen.
+A **Window** is a special View that sits at the root of the hierarchy. It bridges the view tree to a **Display** backend. The Window tracks a **dirty rectangle**: the union of all regions that need redrawing. When the display is ready, the application draws only the dirty region, not the entire screen.
 
 In non-touch-oriented applications, Window also manages focus: which view currently receives keyboard/d-pad events.
 
@@ -60,16 +56,16 @@ Subclass Application and override `setup()` to set your root view controller and
 
 ### ViewController
 
-A **ViewController** manages a view's lifecycle. Views are created lazily (on first appearance) and destroyed when the view controller disappears. This keeps memory usage low -- only the visible screen's views are alive.
+A **ViewController** manages a view's lifecycle. Views are created lazily (on first appearance) and destroyed when the view controller disappears. This keeps memory usage low since only the visible screen's views are alive.
 
 The lifecycle sequence:
 
-1. `createView()` -- build the view hierarchy (called once, lazily)
-2. `viewWillAppear()` -- about to become visible
-3. `viewDidLayoutSubviews()` -- frame has been finalized; do size-dependent work
-4. `viewDidAppear()` -- now on screen
-5. `viewWillDisappear()` -- about to be removed
-6. `viewDidDisappear()` -- removed; default implementation calls `destroyView()`
+1. `createView()`: build the view hierarchy (called once, lazily)
+2. `viewWillAppear()`: about to become visible
+3. `viewDidLayoutSubviews()`: frame has been finalized; do size-dependent work
+4. `viewDidAppear()`: now on screen
+5. `viewWillDisappear()`: about to be removed
+6. `viewDidDisappear()`: removed; default implementation calls `destroyView()`
 
 State that must survive across appearances should be stored in the **controller**, not the view.
 
@@ -78,11 +74,9 @@ State that must survive across appearances should be stored in the **controller*
 Tasks are registered with `Application::addTask()`. Each task's `run()` method is called once per loop iteration. Return `false` to keep running, `true` to self-remove. Tasks must yield quickly to keep the UI responsive.
 
 Focus provides three task types:
-- **Task** -- base class; subclass for custom background work
-- **Timer** -- fires a callback at intervals or on calendar boundaries
-- **DeferredTask** -- runs a callback after N loop iterations, then removes itself
-
----
+- **Task**: base class; subclass for custom background work
+- **Timer**: fires a callback at intervals or on calendar boundaries
+- **DeferredTask**: runs a callback after N loop iterations, then removes itself
 
 ## Getting Started
 
@@ -101,6 +95,12 @@ Here is a minimal Focus application. You will need to provide a `Display` subcla
 // --- Your platform's Display subclass ---
 // (implements fillRect and blitMasked; optionally overrides blitOpaque)
 #include "MyDisplay.hpp"
+
+// --- Your platform's input task (touch or or D-pad input) ---
+// A Task that polls the touch hardware once per loop iteration and calls
+// app->generateEvent(int32_t eventType, int32_t userInfo). Focus turns
+// these raw Events into interactions with the on-screen controls.
+#include "MyTouchInput.hpp"
 
 // --- A simple view controller ---
 class HelloViewController : public ViewController {
@@ -135,33 +135,30 @@ public:
     using Application::Application;
 
     void setup() override {
-        auto vc = std::make_shared<HelloViewController>(
-            this->shared_from_this());
+        auto vc = std::make_shared<HelloViewController>(this->shared_from_this());
         this->setRootViewController(vc);
+
+        // add all tasks in setup()
+        this->addTask(std::make_shared<MyTouchInput>());
     }
 };
 
 // --- Entry point ---
 int main() {
+    View::SetDefaultBackgroundColor(GrayscaleColor::Black());
+    View::SetDefaultForegroundColor(GrayscaleColor::White());
+
     auto display = std::make_shared<MyDisplay>(/* ... */);
     auto window = std::make_shared<Window>(display, MakeSize(480, 800));
-    window->setBackgroundColor(GrayscaleColor::White());
-    window->setTouchEnabled();  // or omit for d-pad only
-
-    View::SetDefaultBackgroundColor(GrayscaleColor::White());
-    View::SetDefaultForegroundColor(GrayscaleColor::Black());
-
-    // Optional: without this, Focus falls back to a built-in 5x8 ASCII font.
-    Font::addFontSearchPath("/fonts/");
-    Font::setSystemFont(Font::withName("spleen-12x24"));
+    window->setBackgroundColor(GrayscaleColor::Black());
+    window->setTouchEnabled();  // omit for d-pad driven interaction
 
     auto app = std::make_shared<HelloApp>(window);
     app->run();
-    return 0;
+
+return 0;
 }
 ```
-
----
 
 ## Layout
 
@@ -186,11 +183,11 @@ auto stack = std::make_shared<VStack>(MakeRect(0, 0, 480, 800));
 stack->setSpacing(8);       // 8px between items (not at edges)
 stack->setMargins(16);      // 16px inset on all four sides
 
-// Fixed height -- always 48px tall
+// Fixed height, always 48px tall
 auto button = std::make_shared<Button>(MakeRect(0, 0, 0, 48), "OK");
 stack->addSubview(button);
 
-// Flexible height -- fills remaining space
+// Flexible height, fills remaining space
 auto content = std::make_shared<View>(RectZero);
 stack->addSubview(content);
 ```
@@ -209,8 +206,6 @@ row->addSubview(field);
 
 stack->addSubview(row);
 ```
-
----
 
 ## Views
 
@@ -252,11 +247,9 @@ class MyDataSource : public CollectionViewDataSource {
 
 Configure layout with `setLayout()` (VerticalList, HorizontalList, or Grid), `setItemSize()`, and `setItemSpacing()`. Call `reloadData()` after data changes. PagedCollectionView adds page navigation (`goToPage()`, `getCurrentPage()`, `getPageCount()`); PaginatedCollectionView forwards the same configuration methods and adds a pagination style (`None`, `Arrows`, or `Footer`).
 
----
-
 ## Controls
 
-All controls inherit from **Control**, which adds enabled/disabled and selected/unselected state and focus behavior to View. Controls fire **actions** -- callbacks registered for specific event types.
+All controls inherit from **Control**, which adds enabled/disabled and selected/unselected state and focus behavior to View. Controls fire **actions**: callbacks registered for specific event types.
 
 ### Action Callbacks
 
@@ -295,8 +288,6 @@ button->setAction(callback, FOCUS_EVENT_TOUCH_UP_INSIDE,
 | **RadioButton** | Radio button. Use with **RadioGroup** for mutual exclusion. |
 | **Slider** | Horizontal slider (0.0 to 1.0). userInfo carries the float value bit-cast to int32_t. |
 
----
-
 ## View Controllers
 
 ### Lifecycle
@@ -318,11 +309,11 @@ public:
     }
 
     void viewDidLayoutSubviews() override {
-        // Frame is final -- do size-dependent work (e.g. reload collection)
+        // Frame is now final; do size-dependent work (e.g. reload collection)
     }
 
     void viewDidAppear() override {
-        // On screen -- start timers, etc.
+        // We are on screen! Start timers, etc.
     }
 
     void viewWillDisappear() override {
@@ -387,8 +378,6 @@ app->dismissViewController();            // removes topmost modal
 
 The content behind the modal is dimmed only when the modal's view is non-opaque; an opaque, full-screen modal covers everything, so no dimmer is added behind it.
 
----
-
 ## Events and Input
 
 ### Touch Events
@@ -406,9 +395,9 @@ Touch coordinates are packed into `Event.userInfo` as `(x << 16) | y`.
 
 When touch is not enabled, directional events (LEFT, DOWN, UP, RIGHT) navigate focus between views. Each view has a **directional affinity** that controls how its children are traversed:
 
-- `DirectionalAffinity::Vertical` -- UP/DOWN navigate between siblings (VStack sets this automatically)
-- `DirectionalAffinity::Horizontal` -- LEFT/RIGHT navigate between siblings (HStack sets this automatically)
-- `DirectionalAffinity::None` -- no automatic navigation
+- `DirectionalAffinity::Vertical`: UP/DOWN navigate between siblings (VStack sets this automatically)
+- `DirectionalAffinity::Horizontal`: LEFT/RIGHT navigate between siblings (HStack sets this automatically)
+- `DirectionalAffinity::None`: no automatic navigation
 
 Events bubble up the view hierarchy until a view handles them.
 
@@ -426,13 +415,11 @@ recognizer->onEnded = [](Event e) { /* drag finished */ };
 window->addSystemGestureRecognizer(recognizer);
 ```
 
----
-
 ## Text and Fonts
 
 ### Font Loading
 
-Focus ships exactly one font: a 5x8 fixed-width ASCII face (`BasicGlyphProvider`) compiled into the library. Until an application installs real fonts, the system font slots fall back to it, so text renders out of the box -- visibly small, never invisibly absent. It is a floor, not a look: bring BDF fonts for real typography. (The examples below use [Spleen](https://github.com/fcambus/spleen), a BSD-licensed bitmap family; Focus does not bundle it or any other BDF font.)
+Focus ships one font: a 5x8 fixed-width ASCII face (`BasicGlyphProvider`) compiled into the library. Until an application installs real fonts, the system font slots fall back to it, so text renders out of the box, but it's very basic. You can bring BDF fonts for real typography. The examples below use [Spleen](https://github.com/fcambus/spleen), a BSD-licensed bitmap family; Focus does not bundle it or any other BDF font.
 
 Fonts are loaded by name from a search path:
 
@@ -451,7 +438,7 @@ Font::setSystemSmallFont(Font::withName("spleen-8x16"));
 auto font = Font::systemFont();  // retrieve anywhere
 ```
 
-Font instances are cached -- calling `Font::withName()` twice with the same name returns the same object.
+Font instances are cached: calling `Font::withName()` twice with the same name returns the same object.
 
 ### GlyphProvider
 
@@ -462,9 +449,9 @@ Font rendering is abstracted behind the **GlyphProvider** interface. Focus inclu
 | **BDFGlyphProvider** | `.bdf` | Standard Bitmap Distribution Format. |
 | **PackedFontGlyphProvider** | `.bdp` | Compact binary format (~5-10x smaller than BDF). |
 | **UnifontGlyphProvider** | `.bin` | GNU Unifont (full Unicode coverage, 8x16 / 16x16). |
-| **BasicGlyphProvider** | -- | Hardcoded 5x8 ASCII fallback. |
-| **StyledGlyphProvider** | -- | Routes glyph requests to per-style providers (regular, italic, bold, bold italic). |
-| **FallbackGlyphProvider** | -- | Wraps a primary provider and falls back to another for missing glyphs. |
+| **BasicGlyphProvider** | — | Hardcoded 5x8 ASCII fallback. |
+| **StyledGlyphProvider** | — | Routes glyph requests to per-style providers (regular, italic, bold, bold italic). |
+| **FallbackGlyphProvider** | — | Wraps a primary provider and falls back to another for missing glyphs. |
 
 ### Text Rendering
 
@@ -485,13 +472,11 @@ canvas->drawText(MakeRect(10, 10, 460, 780),
                  TextAlignment::Left);
 ```
 
-Soft hyphens (U+00AD) are honored throughout: invisible and zero-width within a line, they mark spots where a word may break, and when a line breaks at one, a hyphen is rendered at the line end. Words containing soft hyphens are never algorithmically hyphenated — the author's break points win.
+Soft hyphens (U+00AD) are honored throughout: invisible and zero-width within a line, they mark spots where a word may break, and when a line breaks at one, a hyphen is rendered at the line end.
 
 ### Arabic and Bidirectional Text
 
 Focus includes Arabic contextual shaping (isolated, initial, medial, final forms) and bidirectional text rendering. These are applied automatically when Arabic characters are detected in the text. The Unicode property tables that drive bidi classification and line breaking are generated from Unicode spec files by the tools in `tools/unicodedata/`.
-
----
 
 ## Colors and Display
 
@@ -499,7 +484,7 @@ Focus includes Arabic contextual shaping (isolated, initial, medial, final forms
 
 Colors in Focus are `uint16_t` values. The framework provides two factory classes for different display technologies:
 
-**GrayscaleColor** -- for e-paper and monochrome displays:
+**GrayscaleColor**, for e-paper and monochrome displays:
 
 ```cpp
 GrayscaleColor::Black()     // 0x0000
@@ -508,7 +493,7 @@ GrayscaleColor::LightGray() // 0xAAAA
 GrayscaleColor::White()     // 0xFFFF
 ```
 
-**RGB565Color** -- for 16-bit TFT/LCD displays:
+**RGB565Color**, for 16-bit TFT/LCD displays:
 
 ```cpp
 RGB565Color::Red()                    // 0xF800
@@ -550,8 +535,6 @@ Built-in controls use `blitMasked` for rendering: the canvas buffer acts as a sh
 Display also manages rotation (0, 90, 180, 270 degrees) and reports the current width/height accounting for rotation.
 
 To implement a Display backend for new hardware: subclass Display, set `nativeWidth` and `nativeHeight` in your constructor, and implement `fillRect()` and `blitMasked()`. Override `blitOpaque()` for better performance if your display handles bitmap blits natively.
-
----
 
 ## Settings and Localization
 
@@ -608,8 +591,6 @@ items.other={0} items
 
 Changing the current locale posts a notification so views can update.
 
----
-
 ## Tasks, Timers, and Notifications
 
 ### Task
@@ -661,7 +642,7 @@ app->addTask(std::make_shared<DeferredTask>([]() {
 
 ### NotificationCenter
 
-Decoupled publish-subscribe messaging:
+For publish-subscribe messaging between objects:
 
 ```cpp
 // Subscribe:
@@ -680,8 +661,6 @@ NotificationCenter::shared()->removeObserver(token);
 ```
 
 The owner parameter (a `shared_ptr<void>`) enables automatic cleanup: when the owner object is destroyed, the observer is silently removed. This prevents dangling callbacks on long-lived notification names.
-
----
 
 ## Accessibility
 
@@ -703,8 +682,6 @@ Use `findAccessibilityElement()` to locate views by identifier for testing:
 ```cpp
 auto view = findAccessibilityElement(window, "save_button");
 ```
-
----
 
 ## Code Generation Tools
 
@@ -729,7 +706,7 @@ python3 generate_mappings.py
 python3 generate_arabic.py
 ```
 
-The generated `.cpp` files are checked into the repository so building Focus does not require Python.
+Note that the generated `.cpp` files for Unifont 12.1.03 are already checked into the repository.
 
 ### Unifont Converter (`tools/unifontconvert/`)
 
@@ -740,6 +717,4 @@ cd components/focus/tools/unifontconvert
 python3 generate_unifont.py --output ../../path/to/fonts/unifont.bin
 ```
 
-The HEX source files (Unifont 12.1.03) are included in the directory.
-
-**License note**: `generate_unifont.py` and the Unifont HEX data are licensed under GPL v2+ with a font embedding exception. This license applies only to the tool and its input data, not to the MIT-licensed Focus framework source.
+The HEX source files for Unifont 12.1.03 are included in the directory.
