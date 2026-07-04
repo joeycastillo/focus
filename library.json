@@ -1,0 +1,29 @@
+{
+  "name": "Focus",
+  "version": "0.1.0",
+  "description": "Lightweight, platform-agnostic UI framework for resource-constrained embedded systems. View hierarchy, controls, Unicode text, d-pad and touch input.",
+  "keywords": ["ui", "gui", "embedded", "display", "graphics"],
+  "license": "MIT",
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "srcDir": "src",
+    "includeDir": "include",
+    "unflags": ["-std=gnu++11"],
+    "flags": [
+      "-std=gnu++17",
+      "-frtti",
+      "-fexceptions",
+      "-I include/core",
+      "-I include/settings",
+      "-I include/text",
+      "-I include/locale",
+      "-I include/views",
+      "-I include/controls",
+      "-I include/viewcontrollers"
+    ]
+  },
+  "export": {
+    "exclude": ["tests", "tools", "docs", "examples", ".git*"]
+  }
+}
