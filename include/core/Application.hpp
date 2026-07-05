@@ -38,6 +38,8 @@
 
 #pragma once
 
+#include "detail/stl_guard.h"
+
 #include <atomic>
 #include "Focus.hpp"
 #include "Window.hpp"

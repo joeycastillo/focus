@@ -37,6 +37,8 @@
 
 #pragma once
 
+#include "detail/stl_guard.h"
+
 #include <stdint.h>
 #include <vector>
 #include <memory>

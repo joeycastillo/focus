@@ -1,4 +1,5 @@
 #pragma once
+#include "detail/stl_guard.h"
 #include <cmath>
 
 namespace focus {

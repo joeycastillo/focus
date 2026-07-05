@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "detail/stl_guard.h"
+
 #include <string>
 #include <vector>
 #include <map>
