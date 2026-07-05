@@ -48,6 +48,7 @@ set(TEST_SOURCES
     test_gesture_recognizer.cpp
     test_modal_reentrancy.cpp
     test_control_selected.cpp
+    test_navigation_focus.cpp
     test_styled_glyph_provider.cpp
     test_fallback_glyph_provider.cpp
     test_regressions.cpp

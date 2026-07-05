@@ -124,6 +124,9 @@ private:
     /// @brief Update the navigation bar title and back button visibility.
     void updateNavigationBar();
 
+    /// @brief Move focus into the current top view controller. Called on push / pop.
+    void focusTopViewController();
+
     std::vector<std::shared_ptr<ViewController>> viewControllerStack;
     std::string rightButtonTitle;
     std::function<void()> rightButtonAction;

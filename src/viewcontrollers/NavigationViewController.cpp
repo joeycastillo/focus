@@ -148,6 +148,7 @@ void NavigationViewController::pushViewController(std::shared_ptr<ViewController
     this->viewControllerStack.push_back(viewController);
     this->transitionFromViewController(oldVC, viewController);
     this->updateNavigationBar();
+    this->focusTopViewController();
     this->inTransition = false;
 }
 
@@ -164,6 +165,7 @@ void NavigationViewController::popViewController() {
     auto newVC = this->viewControllerStack.back();
     this->transitionFromViewController(oldVC, newVC);
     this->updateNavigationBar();
+    this->focusTopViewController();
     this->inTransition = false;
 }
 
@@ -211,6 +213,22 @@ void NavigationViewController::transitionFromViewController(
         this->contentArea->addSubview(newVC->view);
     }
     newVC->viewDidAppear();
+}
+
+void NavigationViewController::focusTopViewController() {
+    if (!this->view) return;
+    auto window = this->view->getWindow().lock();
+    if (!window || window->isTouchEnabled()) return;
+
+    auto topVC = this->topViewController();
+    std::shared_ptr<View> target =
+        (topVC && topVC->view) ? topVC->view->firstFocusableDescendant() : nullptr;
+    if (!target && this->navigationBar) {
+        target = this->navigationBar->firstFocusableDescendant();
+    }
+    if (target) {
+        target->becomeFocused();
+    }
 }
 
 void NavigationViewController::updateNavigationBar() {
