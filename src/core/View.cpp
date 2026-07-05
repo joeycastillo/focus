@@ -156,7 +156,11 @@ void View::addSubview(std::shared_ptr<View> view) {
     this->subviews.push_back(view);
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         view->setWindow(window);
-        this->setNeedsDisplayInRect(view->frame);
+        // Convert the child's frame to this view's superview coordinates.
+        Rect invalid = view->frame;
+        invalid.origin.x += this->frame.origin.x;
+        invalid.origin.y += this->frame.origin.y;
+        this->setNeedsDisplayInRect(invalid);
     }
 }
 
@@ -193,7 +197,11 @@ void View::removeSubview(std::shared_ptr<View> view) {
         if (removingFocused) {
             window->becomeFocused();
         }
-        this->setNeedsDisplayInRect(view->frame);
+        // Convert the child's frame to this view's superview coordinates.
+        Rect invalid = view->frame;
+        invalid.origin.x += this->frame.origin.x;
+        invalid.origin.y += this->frame.origin.y;
+        this->setNeedsDisplayInRect(invalid);
     }
 }
 
