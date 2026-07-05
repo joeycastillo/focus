@@ -22,6 +22,10 @@ Focus is single-threaded and cooperative: there are no background threads or pre
 
 Focus requires C++17 and uses `std::shared_ptr` for view ownership.
 
+## Platforms
+
+Focus was developed as an ESP-IDF component, but the repository also includes a `library.json` so that PlatformIO projects can consume it directly. An example in [examples/pygamer](examples/pygamer/), shows the framework runnnuing on the Adafruit PyGamer (ATSAMD51 + ST7735 TFT, 192 KB RAM, 512 KB flash).
+
 ## Core Concepts
 
 ### View Hierarchy
@@ -97,10 +101,15 @@ Here is a minimal Focus application. You will need to provide a `Display` subcla
 #include "MyDisplay.hpp"
 
 // --- Your platform's input task (touch or or D-pad input) ---
-// A Task that polls the touch hardware once per loop iteration and calls
-// app->generateEvent(int32_t eventType, int32_t userInfo). Focus turns
+// A Task that calls app->generateEvent(int32_t eventType, int32_t userInfo)
+// with events from the input hardware (touchscreen or D-pad). Focus turns
 // these raw Events into interactions with the on-screen controls.
 #include "MyTouchInput.hpp"
+
+// --- Your platform's render task ---
+// A Task that, once per loop iteration, draws the window's dirty region
+// (window->draw) and presents it.
+#include "MyRefreshTask.hpp"
 
 // --- A simple view controller ---
 class HelloViewController : public ViewController {
@@ -132,7 +141,7 @@ protected:
 // --- The application ---
 class HelloApp : public Application {
 public:
-    using Application::Application;
+    HelloApp(std::shared_ptr<Window> window, std::shared_ptr<MyDisplay> display) : Application(window), display(display) {}
 
     void setup() override {
         auto vc = std::make_shared<HelloViewController>(this->shared_from_this());
@@ -140,23 +149,23 @@ public:
 
         // add all tasks in setup()
         this->addTask(std::make_shared<MyTouchInput>());
+        this->addTask(std::make_shared<MyRefreshTask>(this->display));
     }
+
+private:
+    std::shared_ptr<MyDisplay> display;
 };
 
 // --- Entry point ---
 int main() {
-    View::SetDefaultBackgroundColor(GrayscaleColor::Black());
-    View::SetDefaultForegroundColor(GrayscaleColor::White());
-
     auto display = std::make_shared<MyDisplay>(/* ... */);
     auto window = std::make_shared<Window>(display, MakeSize(480, 800));
-    window->setBackgroundColor(GrayscaleColor::Black());
     window->setTouchEnabled();  // omit for d-pad driven interaction
 
-    auto app = std::make_shared<HelloApp>(window);
+    auto app = std::make_shared<HelloApp>(window, display);
     app->run();
 
-return 0;
+    return 0;
 }
 ```
 
