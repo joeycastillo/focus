@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host-tests:
+    name: Host tests (g++ / libstdc++)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y cmake g++
+
+      - name: Configure
+        run: cmake -S tests -B build
+
+      # Builds focus-test, utf8-bmp-test, and focus-header-guard. The last is a
+      # compile-only target: every public header is compiled in its own TU with
+      # Arduino.h's round()/abs()/min()/max() macros predefined and the header
+      # included first. A build failure means a header reached the STL unguarded
+      # (see include/core/detail/stl_guard.h).
+      - name: Build (unit tests + header include-order guard)
+        run: cmake --build build -j
+
+      - name: Unit tests
+        run: ./build/focus-test
+
+      - name: UTF-8 BMP-only decoder tests
+        run: ./build/utf8-bmp-test
+
+  pygamer-build:
+    name: PyGamer example (SAMD51 / arm-gcc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('examples/pygamer/platformio.ini') }}
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      # Compiles Focus against the Adafruit SAMD core (arm-none-eabi-g++).
+      - name: Build firmware
+        run: pio run -d examples/pygamer
