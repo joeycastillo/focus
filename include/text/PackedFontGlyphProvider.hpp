@@ -26,7 +26,7 @@
  * @file PackedFontGlyphProvider.hpp
  * @brief GlyphProvider implementation that loads fonts from BDP (Bitmap Distribution Packed) files.
  *
- * PackedFontGlyphProvider reads compact binary font files produced by pack_fonts.py.
+ * PackedFontGlyphProvider reads compact binary font files produced by bdf_to_bdp.py.
  * BDP is a binary encoding of BDF font data that eliminates text parsing overhead
  * and reduces file size by ~4x compared to BDF.
  */
