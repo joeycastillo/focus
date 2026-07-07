@@ -59,3 +59,51 @@ jobs:
       # Compiles Focus against the Adafruit SAMD core (arm-none-eabi-g++).
       - name: Build firmware
         run: pio run -d examples/pygamer
+
+  mp3player-pygamer-build:
+    name: MP3 player example, PyGamer target (SAMD51 / arm-gcc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-mp3-${{ runner.os }}-${{ hashFiles('examples/mp3player/platformio.ini') }}
+      - name: Install PlatformIO
+        run: pip install platformio
+      - name: Build firmware
+        run: pio run -d examples/mp3player -e pygamer
+
+  mp3player-pyportal-build:
+    name: MP3 player example, PyPortal target (SAMD51 / arm-gcc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-mp3-${{ runner.os }}-${{ hashFiles('examples/mp3player/platformio.ini') }}
+      - name: Install PlatformIO
+        run: pip install platformio
+      - name: Build firmware
+        run: pio run -d examples/mp3player -e pyportal
+
+  mp3player-emulator-build:
+    name: MP3 player example, SDL emulator (g++ / SDL2)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ libsdl2-dev
+      - name: Configure
+        run: cmake -S examples/mp3player -B build-mp3player
+      - name: Build
+        run: cmake --build build-mp3player -j

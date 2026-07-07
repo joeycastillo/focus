@@ -24,7 +24,7 @@ Focus requires C++17 and uses `std::shared_ptr` for view ownership.
 
 ## Platforms
 
-Focus was developed as an ESP-IDF component, but the repository also includes a `library.json` so that PlatformIO projects can consume it directly. An example in [examples/pygamer](examples/pygamer/), shows the framework runnnuing on the Adafruit PyGamer (ATSAMD51 + ST7735 TFT, 192 KB RAM, 512 KB flash).
+Focus was developed as an ESP-IDF component, but the repository also includes a `library.json` so that PlatformIO projects can consume it directly. An example in [examples/pygamer](examples/pygamer/), shows the framework runnnuing on the Adafruit PyGamer (ATSAMD51 + ST7735 TFT, 192 KB RAM, 512 KB flash). [examples/mp3player](examples/mp3player/) is an MP3 player that runs on PyGamer (D-pad), PyPortal (touch), and your desktop (SDL emulator) from one shared app.
 
 ## Core Concepts
 
