@@ -136,6 +136,17 @@ public:
         rotation = (degrees / 90) & 0x03;
     }
 
+    /**
+     * @brief Push a rendered region to the physical display.
+     *
+     * Called by a refresh task after drawing into the display. Backends that
+     * buffer pixels (a framebuffer or texture) override this to present the
+     * region; backends that write pixels directly need not override it.
+     *
+     * @param dirtyRect Region to present. A zero-size rect means full screen.
+     */
+    virtual void flush(Rect dirtyRect) {}
+
     /// @brief Get the rotation index (0=0°, 1=90°, 2=180°, 3=270°).
     uint8_t getRotation() const { return rotation; }
 

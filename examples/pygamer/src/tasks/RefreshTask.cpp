@@ -1,15 +1,11 @@
 #include "RefreshTask.hpp"
 
-#include <Arduino.h>
-#include <cstdio>
-
 #include "Application.hpp"
 #include "Window.hpp"
-#include "display/DisplayST7735.hpp"
 
 using namespace focus;
 
-RefreshTask::RefreshTask(std::shared_ptr<DisplayST7735> display) : display(display) {}
+RefreshTask::RefreshTask(std::shared_ptr<Display> display) : display(display) {}
 
 bool RefreshTask::run(std::shared_ptr<Application> application) {
     Window* window = application->getWindow().get();

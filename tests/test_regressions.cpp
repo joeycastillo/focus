@@ -11,6 +11,7 @@
 #include "ArabicShaping.hpp"
 #include "View.hpp"
 #include "Application.hpp"
+#include "Display.hpp"
 #include "Utf8.hpp"
 #include <cstdlib>
 #include <cstring>
@@ -132,4 +133,30 @@ TEST(regression_select_prefers_direct_match_over_fallback) {
 
     ASSERT_TRUE(selectCalled);
     ASSERT_FALSE(touchUpCalled);
+}
+
+// --- Display::flush() dispatch ---
+// Display::flush() dispatches through the base pointer; the default is a no-op.
+
+struct FlushCountingDisplay : public focus::Display {
+    int flushCount = 0;
+    void fillRect(int, int, int, int, uint16_t, focus::Rect = {{0,0},{0,0}}) override {}
+    void blitMasked(int, int, int, int, uint16_t, const uint8_t*, int,
+                    focus::Rect = {{0,0},{0,0}}) override {}
+    void flush(focus::Rect) override { flushCount++; }
+};
+
+TEST(display_flush_dispatches_via_base) {
+    FlushCountingDisplay concrete;
+    focus::Display* base = &concrete;
+    base->flush({{0, 0}, {10, 10}});
+    ASSERT_EQ(concrete.flushCount, 1);
+
+    // Default implementation is callable and harmless.
+    struct MinimalDisplay : public focus::Display {
+        void fillRect(int, int, int, int, uint16_t, focus::Rect = {{0,0},{0,0}}) override {}
+        void blitMasked(int, int, int, int, uint16_t, const uint8_t*, int,
+                        focus::Rect = {{0,0},{0,0}}) override {}
+    } minimal;
+    static_cast<focus::Display*>(&minimal)->flush({{0, 0}, {1, 1}});
 }

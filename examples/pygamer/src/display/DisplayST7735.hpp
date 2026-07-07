@@ -19,7 +19,7 @@ public:
                     focus::Rect clipRect = {{0,0},{0,0}}) override;
 
     /// Push a framebuffer region to the panel. Zero-size rect = full screen.
-    void flush(focus::Rect rect);
+    void flush(focus::Rect rect) override;
 
 private:
     static constexpr int kWidth = 160;
