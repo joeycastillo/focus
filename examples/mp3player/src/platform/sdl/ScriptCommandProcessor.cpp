@@ -19,6 +19,8 @@ void ScriptCommandProcessor::setDelegate(ScriptCommandDelegate* delegate) {
 }
 
 std::string ScriptCommandProcessor::processCommand(const std::string& line) {
+    if (!line.empty() && line[0] == '#') return "";  // comment line
+
     std::string cmd = line;
     std::string args;
     size_t space = line.find(' ');
@@ -145,6 +147,8 @@ std::string ScriptCommandProcessor::handleKey(const std::string& args) {
     if (args == "right")  { this->application->generateEvent(FOCUS_EVENT_DIRECTION_RIGHT, 0); return "OK key right"; }
     if (args == "select") { this->application->generateEvent(FOCUS_EVENT_SELECT, 0);          return "OK key select"; }
     if (args == "back")   { this->application->generateEvent(FOCUS_EVENT_BACK, 0);            return "OK key back"; }
+    if (args == "next") { this->application->generateEvent(FOCUS_EVENT_ACCESSIBILITY_NEXT, 0);     return "OK key next"; }
+    if (args == "prev") { this->application->generateEvent(FOCUS_EVENT_ACCESSIBILITY_PREVIOUS, 0); return "OK key prev"; }
     return "ERR unknown key: " + args;
 }
 

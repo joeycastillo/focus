@@ -166,9 +166,7 @@ TEST(touch_pop_while_engaged_focuses_revealed_content) {
     ASSERT_TRUE(env.window->isFocusEngaged());
 
     nav->popViewController();
-    auto focused = env.window->getFocusedView().lock();
-    ASSERT_TRUE(focused != nullptr);
-    ASSERT_TRUE(focused.get() != env.window.get());
+    ASSERT_TRUE(env.window->getFocusedView().lock() == rootVC->button);
 }
 
 TEST(touch_pop_while_latent_stays_latent) {

@@ -67,6 +67,7 @@ std::shared_ptr<CollectionViewCell> LibraryViewController::cellForItemAtIndex(
         auto app = std::static_pointer_cast<PlayerApp>(this->application.lock());
         text = app->getLibrary()[index].title;
     }
+    cell->accessibilityIdentifier = text;
     auto label = std::make_shared<LabelView>(MakeRect(4, (frame.size.height - 8) / 2, frame.size.width - 8, 8), text);
     cell->addSubview(label);
     return cell;

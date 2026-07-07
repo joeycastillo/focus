@@ -32,9 +32,13 @@ For good measure, the PyPortal's 8-bit parallel bus is fast enough that we can d
 
     cd examples/mp3player
     cmake -S . -B build && cmake --build build -j
-    ./build/mp3player [--input=touch|dpad] [--size=WxH] [--scale=N] [--music=<dir>]
+    ./build/mp3player [--input=touch|dpad|hybrid] [--size=WxH] [--scale=N] [--music=<dir>]
 
 `--input=touch` (default) maps the mouse to touch events; `--input=dpad` maps arrows/Enter/Escape to D-pad navigation, the same events the PyGamer sends. `--size=160x128` previews the PyGamer's geometry. `S` saves a PNG screenshot.
+
+### Hybrid input (`--input=hybrid`)
+
+Hybrid forwards every input: mouse acts as touch, arrows/Enter/Esc act as a D-pad, and Tab/Shift-Tab or the scroll wheel traverse focusable controls linearly (the wheel stands in for a rotary encoder). The core call is the same `setTouchEnabled()` used by touch mode — accessibility navigation is a default capability of touch windows in Focus, so the flag only controls which host inputs the emulator forwards, exactly as device hardware would. Arrow or Tab input raises focus indication; tapping anywhere clears it.
 
 ## What's in it
 

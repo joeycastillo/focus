@@ -22,11 +22,12 @@ public:
 
 /// Stdin command processor for scripted UI testing of the emulator.
 ///
-/// Commands: tap <x y | identifier>, key <up|down|left|right|select|back>,
+/// Commands: tap <x y | identifier>, key <up|down|left|right|select|back|next|prev>,
 /// focused, assert_screen <id>, wait <ms>, wait_for screen <id> <timeout_ms>,
 /// screenshot [path], quit.
 /// Responses go to stderr: "OK ..." / "ERR ...". A "" response means a
 /// pending operation started (wait, wait_for, deferred tap TOUCH_UP).
+/// Lines starting with '#' are comments.
 class ScriptCommandProcessor {
 public:
     ScriptCommandProcessor(focus::Application* application);

@@ -25,17 +25,20 @@ int main(int argc, char* argv[]) {
         std::string arg = argv[i];
         if (arg == "--help" || arg == "-h") {
             fprintf(stderr, "Usage: mp3player [options]\n");
-            fprintf(stderr, "  --input=touch|dpad  Input mode (default: touch)\n");
+            fprintf(stderr, "  --input=touch|dpad|hybrid  Input mode (default: touch)\n");
             fprintf(stderr, "  --size=WxH          Display size (default: 320x240)\n");
             fprintf(stderr, "  --scale=N           Integer window zoom (default: 2)\n");
             fprintf(stderr, "  --music=<dir>       MP3 directory (default: ./music)\n");
             fprintf(stderr, "  --script            Read script commands from stdin\n");
             fprintf(stderr, "Keys: arrows/enter/esc (dpad mode), mouse (touch mode), S = screenshot\n");
+            fprintf(stderr, "Hybrid adds: Tab/Shift-Tab and scroll wheel = next/previous element\n");
             return 0;
         } else if (arg == "--input=touch") {
             mode = InputMode::Touch;
         } else if (arg == "--input=dpad") {
             mode = InputMode::DPad;
+        } else if (arg == "--input=hybrid") {
+            mode = InputMode::Hybrid;
         } else if (arg == "--script") {
             scriptMode = true;
         } else if (arg.rfind("--size=", 0) == 0) {
@@ -70,7 +73,7 @@ int main(int argc, char* argv[]) {
 
     auto display = std::make_shared<SDLDisplay>(width, height, renderer);
     auto window = std::make_shared<Window>(display, MakeSize(width, height));
-    if (mode == InputMode::Touch) {
+    if (mode != InputMode::DPad) {
         window->setTouchEnabled();
     }
 

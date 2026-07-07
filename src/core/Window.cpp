@@ -38,7 +38,7 @@ Window::Window(std::shared_ptr<Display> display, Size size) : View(MakeRect(0, 0
 void Window::addSubview(std::shared_ptr<View> view) {
     view->setWindow(std::static_pointer_cast<Window>(this->shared_from_this()));
     View::addSubview(view);
-    // In touch mode the Window is always the focused view; don't auto-focus descendants.
+    // Touch windows start latent; don't auto-focus descendants.
     if (this->touchEnabled) return;
     // If nothing meaningful is focused, focus the first focusable descendant.
     std::shared_ptr<View> currentFocus = this->focusedView.lock();

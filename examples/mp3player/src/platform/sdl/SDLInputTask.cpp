@@ -35,49 +35,69 @@ bool SDLInputTask::run(std::shared_ptr<Application> application) {
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:
-                if (mode == InputMode::Touch && event.button.button == SDL_BUTTON_LEFT) {
+                if (mode != InputMode::DPad && event.button.button == SDL_BUTTON_LEFT) {
                     application->generateEvent(FOCUS_EVENT_TOUCH_DOWN,
                         packMouse(event.button.x, event.button.y, scale));
                 }
                 break;
             case SDL_MOUSEMOTION:
-                if (mode == InputMode::Touch && (event.motion.state & SDL_BUTTON_LMASK)) {
+                if (mode != InputMode::DPad && (event.motion.state & SDL_BUTTON_LMASK)) {
                     application->generateEvent(FOCUS_EVENT_TOUCH_MOVED,
                         packMouse(event.motion.x, event.motion.y, scale));
                 }
                 break;
             case SDL_MOUSEBUTTONUP:
-                if (mode == InputMode::Touch && event.button.button == SDL_BUTTON_LEFT) {
+                if (mode != InputMode::DPad && event.button.button == SDL_BUTTON_LEFT) {
                     application->generateEvent(FOCUS_EVENT_TOUCH_UP,
                         packMouse(event.button.x, event.button.y, scale));
+                }
+                break;
+            case SDL_MOUSEWHEEL:
+                // The wheel is a rotary encoder: physical wheel-down = next element.
+                if (mode == InputMode::Hybrid) {
+                    int wheelY = event.wheel.y;
+                    if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) wheelY = -wheelY;
+                    if (wheelY < 0) {
+                        application->generateEvent(FOCUS_EVENT_ACCESSIBILITY_NEXT, 0);
+                    } else if (wheelY > 0) {
+                        application->generateEvent(FOCUS_EVENT_ACCESSIBILITY_PREVIOUS, 0);
+                    }
                 }
                 break;
             case SDL_KEYDOWN:
                 switch (event.key.keysym.sym) {
                     case SDLK_UP:
-                        if (mode == InputMode::DPad)
+                        if (mode != InputMode::Touch)
                             application->generateEvent(FOCUS_EVENT_DIRECTION_UP, 0);
                         break;
                     case SDLK_DOWN:
-                        if (mode == InputMode::DPad)
+                        if (mode != InputMode::Touch)
                             application->generateEvent(FOCUS_EVENT_DIRECTION_DOWN, 0);
                         break;
                     case SDLK_LEFT:
-                        if (mode == InputMode::DPad)
+                        if (mode != InputMode::Touch)
                             application->generateEvent(FOCUS_EVENT_DIRECTION_LEFT, 0);
                         break;
                     case SDLK_RIGHT:
-                        if (mode == InputMode::DPad)
+                        if (mode != InputMode::Touch)
                             application->generateEvent(FOCUS_EVENT_DIRECTION_RIGHT, 0);
                         break;
                     case SDLK_RETURN:
                     case SDLK_KP_ENTER:
-                        if (mode == InputMode::DPad)
+                        if (mode != InputMode::Touch)
                             application->generateEvent(FOCUS_EVENT_SELECT, 0);
                         break;
                     case SDLK_ESCAPE:
-                        if (mode == InputMode::DPad)
+                        if (mode != InputMode::Touch)
                             application->generateEvent(FOCUS_EVENT_BACK, 0);
+                        break;
+                    case SDLK_TAB:
+                        if (mode == InputMode::Hybrid) {
+                            application->generateEvent(
+                                (event.key.keysym.mod & KMOD_SHIFT)
+                                    ? FOCUS_EVENT_ACCESSIBILITY_PREVIOUS
+                                    : FOCUS_EVENT_ACCESSIBILITY_NEXT, 0);
+                        }
                         break;
                     case SDLK_s: {
                         char filename[64];

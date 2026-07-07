@@ -7,10 +7,11 @@
 class SDLDisplay;
 
 /// Input mode selected by the --input flag.
-enum class InputMode { Touch, DPad };
+enum class InputMode { Touch, DPad, Hybrid };
 
-/// Translates SDL events into Focus events: mouse -> touch (Touch mode),
-/// arrows/enter/escape -> direction/select/back (DPad mode), S -> screenshot.
+/// Translates SDL events into Focus events: mouse -> touch (Touch and Hybrid
+/// modes), arrows/enter/escape -> direction/select/back (DPad and Hybrid
+/// modes), Tab/wheel -> linear focus traversal (Hybrid only), S -> screenshot.
 /// With scriptMode, also executes stdin commands via ScriptCommandProcessor.
 class SDLInputTask : public focus::Task, public ScriptCommandDelegate {
 public:

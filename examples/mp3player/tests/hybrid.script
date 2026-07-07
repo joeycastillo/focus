@@ -1,0 +1,20 @@
+# End-to-end scenario for hybrid input. Run via run-hybrid-e2e.sh.
+# Latent start -> arrows summon/walk -> select pushes -> back pops -> traversal -> tap clears.
+focused
+assert_screen library
+key down
+focused
+key down
+focused
+key select
+wait_for screen now-playing 2000
+key back
+wait_for screen library 2000
+focused
+key next
+focused
+tap 300 30
+assert_screen library
+focused
+screenshot /tmp/hybrid-e2e.png
+quit
