@@ -31,6 +31,11 @@
  * cellForItemAtIndex(), and optionally didSelectItemAtIndex() — the simplified
  * API omits the CollectionView* parameter since there is only one collection.
  *
+ * Cells draw no focus indication by default: on d-pad/keyboard platforms, also
+ * override the CollectionViewDelegate focus hooks didFocusItemAtIndex /
+ * didUnfocusItemAtIndex (these keep the CollectionView* parameter) and restyle
+ * the cell — e.g. invert its colors — or focus will be invisible.
+ *
  * For view controllers that need multiple collection views, use the raw
  * CollectionViewDataSource and CollectionViewDelegate protocols directly.
  */

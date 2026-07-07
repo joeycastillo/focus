@@ -143,12 +143,15 @@ void NavigationViewController::pushViewController(std::shared_ptr<ViewController
 
     this->inTransition = true;
     auto oldVC = this->viewControllerStack.back();
+    auto window = this->view ? this->view->getWindow().lock() : nullptr;
+    // Capture engagement before the transition.
+    bool wasEngaged = window && window->isFocusEngaged();
     viewController->navigationController = std::dynamic_pointer_cast<NavigationViewController>(
         this->shared_from_this());
     this->viewControllerStack.push_back(viewController);
     this->transitionFromViewController(oldVC, viewController);
     this->updateNavigationBar();
-    this->focusTopViewController();
+    this->focusTopViewController(wasEngaged);
     this->inTransition = false;
 }
 
@@ -159,13 +162,15 @@ void NavigationViewController::popViewController() {
 
     this->inTransition = true;
     auto oldVC = this->viewControllerStack.back();
+    auto window = this->view ? this->view->getWindow().lock() : nullptr;
+    bool wasEngaged = window && window->isFocusEngaged();
     FOCUS_LOGD(TAG, "pop %s", typeid(*oldVC).name());
     oldVC->navigationController.reset();
     this->viewControllerStack.pop_back();
     auto newVC = this->viewControllerStack.back();
     this->transitionFromViewController(oldVC, newVC);
     this->updateNavigationBar();
-    this->focusTopViewController();
+    this->focusTopViewController(wasEngaged);
     this->inTransition = false;
 }
 
@@ -215,10 +220,12 @@ void NavigationViewController::transitionFromViewController(
     newVC->viewDidAppear();
 }
 
-void NavigationViewController::focusTopViewController() {
+void NavigationViewController::focusTopViewController(bool wasEngaged) {
     if (!this->view) return;
     auto window = this->view->getWindow().lock();
-    if (!window || window->isTouchEnabled()) return;
+    if (!window) return;
+    // Touch windows move focus on push/pop only while the user is engaged.
+    if (window->isTouchEnabled() && !wasEngaged) return;
 
     auto topVC = this->topViewController();
     std::shared_ptr<View> target =

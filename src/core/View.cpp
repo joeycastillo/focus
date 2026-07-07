@@ -233,6 +233,17 @@ std::shared_ptr<View> View::lastFocusableDescendant() {
     return nullptr;
 }
 
+void View::collectFocusableDescendants(std::vector<std::shared_ptr<View>>& out) {
+    for (const auto& child : this->subviews) {
+        if (child->hidden) continue;
+        if (child->canBecomeFocused()) {
+            out.push_back(child);
+            continue;
+        }
+        child->collectFocusableDescendants(out);
+    }
+}
+
 int View::indexOfChildContaining(std::shared_ptr<View> view) {
     for (int i = 0; i < (int)this->subviews.size(); i++) {
         View* v = view.get();
@@ -412,6 +423,32 @@ bool View::handleEvent(Event event) {
                     }
                 }
                 break;
+            }
+            case FOCUS_EVENT_ACCESSIBILITY_NEXT:
+            case FOCUS_EVENT_ACCESSIBILITY_PREVIOUS:
+            {
+                // Linear traversal is handled at a traversal boundary
+                // (clipsFocus view or the window); interior views bubble.
+                bool isBoundary = this->clipsFocus ||
+                                  (this->getWindow().lock().get() == this);
+                if (!isBoundary) break;
+
+                std::vector<std::shared_ptr<View>> order;
+                this->collectFocusableDescendants(order);
+                if (order.empty()) return true;
+
+                int index = -1;
+                for (int i = 0; i < (int)order.size(); i++) {
+                    if (order[i] == focusedView) { index = i; break; }
+                }
+                // Focus not engaged in this boundary; let latent dispatch summon.
+                if (index < 0) break;
+
+                bool forward = (event.type == FOCUS_EVENT_ACCESSIBILITY_NEXT);
+                int n = (int)order.size();
+                std::shared_ptr<View> target = order[(index + (forward ? 1 : n - 1)) % n];
+                target->becomeFocused();
+                return true;
             }
             default:
                 break;

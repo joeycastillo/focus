@@ -125,8 +125,9 @@ void CollectionViewController::viewDidAppear() {
     // bootstrapping), ensure something is focused.
     if (this->paginatedView) {
         if (auto window = this->paginatedView->getWindow().lock()) {
+            // Touch windows start latent; only d-pad windows auto-focus content.
             auto current = window->getFocusedView().lock();
-            if (!current || current == window) {
+            if (!window->isTouchEnabled() && (!current || current == window)) {
                 auto first = this->paginatedView->firstFocusableDescendant();
                 if (first) first->becomeFocused();
             }

@@ -71,6 +71,15 @@
 #define FOCUS_EVENT_POWER_BUTTON (200) ///< Hardware power/lock button pressed.
 /// @}
 
+/// @name Accessibility Navigation Events
+/// @brief Linear focus traversal for minimal input devices (rotary encoders,
+/// switch access). Walks focusable views in depth-first document order,
+/// wrapping at both ends.
+/// @{
+#define FOCUS_EVENT_ACCESSIBILITY_NEXT (300)     ///< Move focus to the next element.
+#define FOCUS_EVENT_ACCESSIBILITY_PREVIOUS (301) ///< Move focus to the previous element.
+/// @}
+
 /// @name Touch Events
 /// @brief Touch coordinates are packed into Event::userInfo as (x << 16 | y).
 /// @{

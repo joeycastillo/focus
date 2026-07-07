@@ -483,6 +483,9 @@ protected:
     /// Returns -1 if no child contains the view.
     int indexOfChildContaining(std::shared_ptr<View> view);
 
+    /// @brief Append all focusable, non-hidden descendants in depth-first order.
+    void collectFocusableDescendants(std::vector<std::shared_ptr<View>>& out);
+
     bool focused = false;        ///< Whether this view currently has focus.
     bool opaque = true;          ///< Whether to fill the background before drawing.
     bool hidden = false;         ///< Whether this view is hidden from drawing.

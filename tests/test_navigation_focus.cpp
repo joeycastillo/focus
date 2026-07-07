@@ -16,6 +16,8 @@
 #include "ViewController.hpp"
 #include "Window.hpp"
 #include "NavigationViewController.hpp"
+#include "CollectionViewController.hpp"
+#include "CollectionViewCell.hpp"
 
 using namespace focus;
 
@@ -111,4 +113,155 @@ TEST(navigation_push_vc_with_content_focuses_content) {
 
     auto focused = env.window->getFocusedView().lock();
     ASSERT_TRUE(focused == pushed->button);
+}
+
+namespace {
+
+struct TouchNavTestEnv {
+    std::shared_ptr<NavTestWindow> window;
+    std::shared_ptr<NavTestApplication> app;
+};
+
+static TouchNavTestEnv makeTouchNavTestEnv() {
+    auto window = std::make_shared<NavTestWindow>(MakeSize(160, 128));
+    window->setTouchEnabled();
+    auto app = std::make_shared<NavTestApplication>(window);
+    window->setApp(app);
+    return {window, app};
+}
+
+}  // namespace
+
+TEST(touch_push_while_latent_stays_latent) {
+    auto env = makeTouchNavTestEnv();
+    auto nav = NavigationViewController::create(env.app,
+        std::make_shared<ButtonContentVC>(env.app));
+    env.app->setRootViewController(nav);
+    ASSERT_FALSE(env.window->isFocusEngaged());
+
+    nav->pushViewController(std::make_shared<ButtonContentVC>(env.app));
+    ASSERT_FALSE(env.window->isFocusEngaged());
+}
+
+TEST(touch_push_while_engaged_focuses_new_content) {
+    auto env = makeTouchNavTestEnv();
+    auto rootVC = std::make_shared<ButtonContentVC>(env.app);
+    auto nav = NavigationViewController::create(env.app, rootVC);
+    env.app->setRootViewController(nav);
+    rootVC->button->becomeFocused();
+
+    auto pushed = std::make_shared<ButtonContentVC>(env.app);
+    nav->pushViewController(pushed);
+    ASSERT_TRUE(env.window->getFocusedView().lock() == pushed->button);
+}
+
+TEST(touch_pop_while_engaged_focuses_revealed_content) {
+    auto env = makeTouchNavTestEnv();
+    auto rootVC = std::make_shared<ButtonContentVC>(env.app);
+    auto nav = NavigationViewController::create(env.app, rootVC);
+    env.app->setRootViewController(nav);
+    rootVC->button->becomeFocused();
+    auto pushed = std::make_shared<ButtonContentVC>(env.app);
+    nav->pushViewController(pushed);
+    ASSERT_TRUE(env.window->isFocusEngaged());
+
+    nav->popViewController();
+    auto focused = env.window->getFocusedView().lock();
+    ASSERT_TRUE(focused != nullptr);
+    ASSERT_TRUE(focused.get() != env.window.get());
+}
+
+TEST(touch_pop_while_latent_stays_latent) {
+    auto env = makeTouchNavTestEnv();
+    auto nav = NavigationViewController::create(env.app,
+        std::make_shared<ButtonContentVC>(env.app));
+    env.app->setRootViewController(nav);
+    nav->pushViewController(std::make_shared<ButtonContentVC>(env.app));
+
+    nav->popViewController();
+    ASSERT_FALSE(env.window->isFocusEngaged());
+}
+
+namespace {
+
+// Minimal two-item collection VC for the latent-start pin.
+class TwoItemCollectionVC : public CollectionViewController {
+public:
+    TwoItemCollectionVC(std::shared_ptr<Application> app) : CollectionViewController(app) {
+        this->setItemSize(MakeSize(0, 24));
+        this->setLayout(CollectionViewLayout::VerticalList);
+    }
+    size_t numberOfItems() const override { return 2; }
+    std::shared_ptr<CollectionViewCell> cellForItemAtIndex(size_t index, Rect frame) override {
+        return std::make_shared<CollectionViewCell>(frame);
+    }
+};
+
+}  // namespace
+
+TEST(touch_collection_vc_starts_latent) {
+    auto env = makeTouchNavTestEnv();
+    env.app->setRootViewController(std::make_shared<TwoItemCollectionVC>(env.app));
+    ASSERT_FALSE(env.window->isFocusEngaged());
+}
+
+TEST(dpad_collection_vc_still_autofocuses_first_cell) {
+    auto env = makeNavTestEnv();
+    env.app->setRootViewController(std::make_shared<TwoItemCollectionVC>(env.app));
+    ASSERT_TRUE(env.window->isFocusEngaged());
+}
+
+TEST(touch_modal_present_while_engaged_enters_modal) {
+    auto env = makeTouchNavTestEnv();
+    auto rootVC = std::make_shared<ButtonContentVC>(env.app);
+    env.app->setRootViewController(rootVC);
+    rootVC->button->becomeFocused();
+
+    auto modal = std::make_shared<ButtonContentVC>(env.app);
+    env.app->presentViewController(modal);
+    ASSERT_TRUE(env.window->getFocusedView().lock() == modal->button);
+}
+
+TEST(touch_modal_present_while_latent_stays_latent) {
+    auto env = makeTouchNavTestEnv();
+    env.app->setRootViewController(std::make_shared<ButtonContentVC>(env.app));
+
+    env.app->presentViewController(std::make_shared<ButtonContentVC>(env.app));
+    ASSERT_FALSE(env.window->isFocusEngaged());
+}
+
+TEST(touch_modal_present_engaged_with_no_focusable_drops_to_latent) {
+    auto env = makeTouchNavTestEnv();
+    auto rootVC = std::make_shared<ButtonContentVC>(env.app);
+    env.app->setRootViewController(rootVC);
+    rootVC->button->becomeFocused();
+
+    env.app->presentViewController(std::make_shared<BareContentVC>(env.app));
+    // No live focus behind the dimmer.
+    ASSERT_FALSE(env.window->isFocusEngaged());
+}
+
+TEST(touch_modal_dismiss_restores_focus_only_if_still_engaged) {
+    auto env = makeTouchNavTestEnv();
+    auto rootVC = std::make_shared<ButtonContentVC>(env.app);
+    env.app->setRootViewController(rootVC);
+    rootVC->button->becomeFocused();
+
+    auto modal = std::make_shared<ButtonContentVC>(env.app);
+    env.app->presentViewController(modal);           // engaged -> modal button
+    env.app->dismissViewController();                // still engaged inside modal
+    ASSERT_TRUE(env.window->getFocusedView().lock() == rootVC->button);
+}
+
+TEST(touch_modal_dismiss_stays_latent_if_user_went_latent_inside) {
+    auto env = makeTouchNavTestEnv();
+    auto rootVC = std::make_shared<ButtonContentVC>(env.app);
+    env.app->setRootViewController(rootVC);
+    rootVC->button->becomeFocused();
+
+    auto modal = std::make_shared<ButtonContentVC>(env.app);
+    env.app->presentViewController(modal);
+    env.window->becomeFocused();                     // user went latent mid-modal
+    env.app->dismissViewController();
+    ASSERT_FALSE(env.window->isFocusEngaged());
 }

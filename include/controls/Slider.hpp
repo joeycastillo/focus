@@ -92,6 +92,10 @@ public:
     float getStep() const { return this->step; }
 
     /// @brief Returns AccessibilityRole::Slider.
+    /// @todo Linear-traversal devices cannot adjust the value (their twist is
+    /// ACCESSIBILITY_NEXT, and they have no direction events). Planned shape:
+    /// SELECT toggles an adjusting state in which ACCESSIBILITY_NEXT/PREVIOUS
+    /// step the value and SELECT exits.
     AccessibilityRole accessibilityRole() const override;
     /// @brief Returns the current value as a percentage string.
     std::string accessibilityValue() const override;

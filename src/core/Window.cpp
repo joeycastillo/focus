@@ -113,6 +113,11 @@ std::weak_ptr<View> Window::getFocusedView() {
     return this->focusedView;
 }
 
+bool Window::isFocusEngaged() {
+    std::shared_ptr<View> focused = this->focusedView.lock();
+    return focused != nullptr && focused.get() != this;
+}
+
 std::weak_ptr<Window> Window::getWindow() const {
     // A Window is its own window, so this returns a handle to itself. The const method
     // hands that back read-only, so the casts convert it into a normal, usable window.

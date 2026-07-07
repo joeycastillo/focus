@@ -46,10 +46,12 @@ namespace focus {
  * CollectionViewCell hosts arbitrary subviews. This makes it suitable
  * for composite layouts (e.g. an image alongside multiple labels).
  *
- * Focus appearance is not managed by the cell itself. Set a
- * CollectionViewDelegate on the owning CollectionView and implement
- * didFocusItemAtIndex / didUnfocusItemAtIndex to customize the visual
- * feedback for focused cells.
+ * Cells draw no focus indication by default. On d-pad/keyboard platforms,
+ * implement didFocusItemAtIndex / didUnfocusItemAtIndex on the collection
+ * view's delegate — inverting the cell's colors is the usual treatment —
+ * or focused cells are visually indistinguishable from unfocused ones.
+ * (The cell can't invert itself: it hosts arbitrary subviews, and only the
+ * delegate knows which foregrounds and backgrounds to flip.)
  * @ingroup controls
  */
 class CollectionViewCell : public Control {

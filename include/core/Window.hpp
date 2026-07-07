@@ -51,8 +51,9 @@ class KeyboardView;
  * @brief Root view that connects the view hierarchy to a Display.
  *
  * Window tracks dirty regions and the focused view. When touch is enabled,
- * the window itself remains the focused view and touch events are dispatched
- * via hit-testing rather than focus traversal.
+ * touch events are dispatched via hit-testing; the window is focused while
+ * focus navigation is idle, and unconsumed focus-navigation events summon
+ * and drive focus among focusable descendants.
  * @ingroup core
  */
 class Window : public View {
@@ -76,8 +77,12 @@ public:
     /**
      * @brief Enable touch input mode.
      *
-     * In touch mode, the window itself is always the focused view, and events
-     * are dispatched to views via hit-testing rather than focus navigation.
+     * In touch mode, touch events are dispatched to views via hit-testing.
+     * The window starts as the focused view; focus-navigation events
+     * (direction, select, back, accessibility traversal) that the window
+     * does not consume summon and drive focus, so a touch UI is fully
+     * navigable from a D-pad or similar input with no additional app code.
+     * A touch outside the focused view returns focus to the window.
      */
     void setTouchEnabled();
 
@@ -140,6 +145,13 @@ public:
 
     /// @brief Get the currently focused view, or empty if none.
     std::weak_ptr<View> getFocusedView();
+
+    /// @brief Check whether a view other than the window itself is focused.
+    ///
+    /// In touch windows this distinguishes the latent state (window focused,
+    /// no focus indication) from the engaged state (a control is focused and
+    /// focus-navigation events are being delivered to it).
+    bool isFocusEngaged();
 
     /// @brief Called after focus changes. Presents or dismisses the keyboard
     /// depending on whether the newly focused view wants keyboard input.

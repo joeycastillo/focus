@@ -204,6 +204,13 @@ protected:
     /// @brief Dispatch a touch event through normal view hit-test and capture.
     virtual void dispatchTouchEvent(Event event);
 
+    /// @brief True for the event types that drive focus navigation.
+    static bool isFocusNavigationEvent(int32_t type);
+    /// @brief Handle an unconsumed focus-navigation event while nothing is engaged.
+    void handleLatentNavigationEvent(Event event);
+    /// @brief Focus the first (or last) focusable view in the active context.
+    void summonFocus(bool fromEnd);
+
     /// @brief Attempt to route a touch event through system gesture recognizers.
     /// @return true if the event was consumed (buffered or dispatched to a recognizer).
     virtual bool handleSystemGestures(Event event);

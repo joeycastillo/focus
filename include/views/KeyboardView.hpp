@@ -48,6 +48,12 @@ class CanvasView;
 /**
  * @brief An on-screen touch keyboard with lowercase, uppercase, and symbol pages.
  * @ingroup views
+ *
+ * @todo Typing is touch-only: keys are canvas rects, not focusable views.
+ * Planned shape for non-touch typing: an internal key cursor over the key
+ * grid, driven by navigation events the Window forwards while the keyboard
+ * is presented; SELECT presses the cursored key. Window focus must stay on
+ * the text field (key input routes through the focused view's insertText).
  */
 class KeyboardView : public View {
 public:
