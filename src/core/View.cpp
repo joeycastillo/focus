@@ -156,11 +156,8 @@ void View::addSubview(std::shared_ptr<View> view) {
     this->subviews.push_back(view);
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         view->setWindow(window);
-        // Convert the child's frame to this view's superview coordinates.
-        Rect invalid = view->frame;
-        invalid.origin.x += this->frame.origin.x;
-        invalid.origin.y += this->frame.origin.y;
-        this->setNeedsDisplayInRect(invalid);
+        // Child frames live in this view's coordinate space.
+        window->setNeedsDisplayInRect(this->convertRectToWindow(view->frame));
     }
 }
 
@@ -197,11 +194,8 @@ void View::removeSubview(std::shared_ptr<View> view) {
         if (removingFocused) {
             window->becomeFocused();
         }
-        // Convert the child's frame to this view's superview coordinates.
-        Rect invalid = view->frame;
-        invalid.origin.x += this->frame.origin.x;
-        invalid.origin.y += this->frame.origin.y;
-        this->setNeedsDisplayInRect(invalid);
+        // Child frames live in this view's coordinate space.
+        window->setNeedsDisplayInRect(this->convertRectToWindow(view->frame));
     }
 }
 
@@ -659,14 +653,21 @@ bool View::containsPointInWindowCoordinates(Point windowPoint) {
             localPoint.y >= 0 && localPoint.y < this->bounds.size.height);
 }
 
-void View::setNeedsDisplayInRect(Rect rect) {
-    View* sv = this->superview;
-    while (sv) {
-        rect.origin.x += sv->frame.origin.x;
-        rect.origin.y += sv->frame.origin.y;
-        sv = sv->superview;
+Rect View::convertRectToWindow(Rect rect) const {
+    const View* v = this;
+    while (v) {
+        rect.origin.x += v->frame.origin.x - v->bounds.origin.x;
+        rect.origin.y += v->frame.origin.y - v->bounds.origin.y;
+        v = v->superview;
     }
+    return rect;
+}
 
+void View::setNeedsDisplayInRect(Rect rect) {
+    // rect arrives in this view's superview's coordinate space.
+    if (this->superview) {
+        rect = this->superview->convertRectToWindow(rect);
+    }
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         window->setNeedsDisplayInRect(rect);
     }
@@ -753,14 +754,10 @@ bool View::isAccessibilityElement() const {
 }
 
 Rect View::accessibilityRect() const {
-    Rect rect = this->frame;
-    View* sv = this->superview;
-    while (sv) {
-        rect.origin.x += sv->frame.origin.x - sv->bounds.origin.x;
-        rect.origin.y += sv->frame.origin.y - sv->bounds.origin.y;
-        sv = sv->superview;
+    if (this->superview) {
+        return this->superview->convertRectToWindow(this->frame);
     }
-    return rect;
+    return this->frame;
 }
 
 std::shared_ptr<View> findAccessibilityElement(

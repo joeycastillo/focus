@@ -43,6 +43,7 @@ set(TEST_SOURCES
     test_arabic_shaping.cpp
     test_unicode.cpp
     test_view_hierarchy.cpp
+    test_invalidation.cpp
     test_event_dispatch.cpp
     test_stack_view_layout.cpp
     test_gesture_recognizer.cpp

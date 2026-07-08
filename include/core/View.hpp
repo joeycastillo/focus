@@ -477,6 +477,9 @@ protected:
 
     /// @brief Test whether a point (in superview coordinates) falls within this view's frame.
     bool _contains(Point point);
+
+    /// @brief Convert a rect from this view's coordinate space to window coordinates.
+    Rect convertRectToWindow(Rect rect) const;
     bool _touch_checked = false; ///< Internal flag for touch hit-testing.
 
     /// Find the index of the direct child that is, or is an ancestor of, the given view.
