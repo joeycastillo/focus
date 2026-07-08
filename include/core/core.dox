@@ -3,4 +3,4 @@
 ///
 /// The core module provides the fundamental building blocks: Application (run loop and event dispatch), Window (root view and display bridge), View (base class for all UI elements), ViewController (view lifecycle management), and supporting infrastructure like timers, tasks, and notifications.
 ///
-/// @todo Implement ScrollView for scrollable content areas.
+/// @todo Phase-2 scrolling: focusable ScrollView (opt-in), ensureVisible, overlay indicators.

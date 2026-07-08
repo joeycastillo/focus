@@ -56,9 +56,9 @@ class Timer;
  * handles events (touch, directional navigation, actions), and participates in
  * the focus system. Subclass View to create custom visual elements.
  *
- * **Subview rendering is not clipped to parent bounds.** A child view may
- * draw outside its parent's frame (e.g. with a negative origin). There is
- * currently no mechanism to opt into per-view clipping.
+ * **Subview rendering is not clipped to parent bounds by default.** A child
+ * view may draw outside its parent's frame (e.g. with a negative origin).
+ * Set clipsToBounds to clip a view's subtree to its frame.
  *
  * A subview positioned outside its parent's bounds simply occupies
  * different screen area — it tracks its own dirty state and redraws
@@ -94,7 +94,8 @@ public:
      * whose frame extends beyond its parent will draw into the surrounding
      * area. The only hard clip boundary is the window's dirty rect
      * (clipRect), not the parent's frame. See the class-level documentation
-     * for implications on dirty rect tracking.
+     * for implications on dirty rect tracking. Views with clipsToBounds
+     * enabled narrow the clip rect to their frame before drawing.
      *
      * @param x Horizontal offset from the window origin to the superview's content area.
      * @param y Vertical offset from the window origin to the superview's content area.
@@ -305,7 +306,9 @@ public:
      * @brief Set the view's bounds rectangle.
      *
      * Changing bounds.origin scrolls the view's content. The frame on screen
-     * does not move.
+     * does not move. When offsetting the bounds origin in order to scroll a
+     * view's content, you should almost certainly set clipsToBounds; otherwise
+     * the view's content will draw outside of the view's frame.
      * @param rect The new bounds rectangle.
      */
     void setBounds(Rect rect);
@@ -345,6 +348,20 @@ public:
     /// view are silently consumed instead. Used for modal dialogs.
     bool getClipsFocus() const;
     void setClipsFocus(bool value);
+
+    /// @brief Whether this view's subtree is clipped to its frame when drawing.
+    bool getClipsToBounds() const;
+    /**
+     * @brief Set whether drawing is clipped to this view's bounds.
+     *
+     * When enabled, the draw pass narrows its clip rect to the intersection
+     * of the incoming clip rect and this view's on-screen frame, so nothing
+     * in this view's subtree can paint outside it. Off by default. Enable it
+     * on any view whose bounds origin is offset for scrolling, unless its
+     * content cannot overflow the frame.
+     * @param value True to clip this view's subtree to its frame.
+     */
+    void setClipsToBounds(bool value);
 
     /**
      * @brief Mark a region as needing redraw.
@@ -477,9 +494,6 @@ protected:
 
     /// @brief Test whether a point (in superview coordinates) falls within this view's frame.
     bool _contains(Point point);
-
-    /// @brief Convert a rect from this view's coordinate space to window coordinates.
-    Rect convertRectToWindow(Rect rect) const;
     bool _touch_checked = false; ///< Internal flag for touch hit-testing.
 
     /// Find the index of the direct child that is, or is an ancestor of, the given view.
@@ -493,6 +507,7 @@ protected:
     bool opaque = true;          ///< Whether to fill the background before drawing.
     bool hidden = false;         ///< Whether this view is hidden from drawing.
     bool clipsFocus = false;     ///< Whether focus is trapped inside this subtree.
+    bool clipsToBounds = false;  ///< Whether drawing clips to this view's frame.
     uint16_t backgroundColor;    ///< Background fill color.
     uint16_t foregroundColor;    ///< Foreground drawing color.
     Rect frame = {};             ///< Position and size in superview coordinates.
@@ -514,6 +529,9 @@ private:
     /// manages this pointer internally via addSubview() / removeSubview().
     View* superview = nullptr;
     std::weak_ptr<Window> window; ///< The window this view belongs to.
+
+    /// @brief Convert a rect from this view's coordinate space to window coordinates.
+    Rect convertRectToWindow(Rect rect) const;
 
     friend class Window;
 };

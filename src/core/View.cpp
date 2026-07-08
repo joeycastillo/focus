@@ -63,6 +63,21 @@ View::~View() {
 
 void View::draw(int x, int y, Rect clipRect) {
     if (std::shared_ptr<Display> display = this->getDisplayIfAttached()) {
+        if (this->clipsToBounds) {
+            Rect screenRect = MakeRect(x + this->frame.origin.x, y + this->frame.origin.y,
+                                       this->frame.size.width, this->frame.size.height);
+            // A zero-area viewport shows nothing.
+            if (screenRect.size.width <= 0 || screenRect.size.height <= 0) return;
+            if (clipRect.size.width > 0 && clipRect.size.height > 0) {
+                clipRect = RectIntersection(clipRect, screenRect);
+                // Empty means nothing to draw; zero-size passed down would mean "no clipping".
+                if (clipRect.size.width <= 0 || clipRect.size.height <= 0) return;
+            } else {
+                // Unclipped draw: this view's frame becomes the clip boundary.
+                clipRect = screenRect;
+            }
+        }
+
         // Spatial culling: skip if entirely outside clip rect.
         if (clipRect.size.width > 0 && clipRect.size.height > 0) {
             Rect screenRect = MakeRect(x + this->frame.origin.x, y + this->frame.origin.y,
@@ -602,6 +617,18 @@ bool View::getClipsFocus() const {
 
 void View::setClipsFocus(bool value) {
     this->clipsFocus = value;
+}
+
+bool View::getClipsToBounds() const {
+    return this->clipsToBounds;
+}
+
+void View::setClipsToBounds(bool value) {
+    if (this->clipsToBounds == value) return;
+    this->clipsToBounds = value;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
+    }
 }
 
 std::weak_ptr<View> View::getViewForTouch(Point touch) {

@@ -223,6 +223,17 @@ inline bool RectContains(Rect outer, Rect inner) {
            outer.origin.x + outer.size.width >= inner.origin.x + inner.size.width &&
            outer.origin.y + outer.size.height >= inner.origin.y + inner.size.height;
 }
+/// @brief Compute the intersection of two Rects. Returns RectZero when they do not overlap.
+inline Rect RectIntersection(Rect a, Rect b) {
+    int x0 = a.origin.x > b.origin.x ? a.origin.x : b.origin.x;
+    int y0 = a.origin.y > b.origin.y ? a.origin.y : b.origin.y;
+    int ax1 = a.origin.x + a.size.width, bx1 = b.origin.x + b.size.width;
+    int ay1 = a.origin.y + a.size.height, by1 = b.origin.y + b.size.height;
+    int x1 = ax1 < bx1 ? ax1 : bx1;
+    int y1 = ay1 < by1 ? ay1 : by1;
+    if (x1 <= x0 || y1 <= y0) return RectZero;
+    return MakeRect(x0, y0, x1 - x0, y1 - y0);
+}
 
 /// @brief Controls horizontal text alignment within a layout rect.
 enum class TextAlignment {

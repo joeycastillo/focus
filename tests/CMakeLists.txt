@@ -53,6 +53,10 @@ set(TEST_SOURCES
     test_styled_glyph_provider.cpp
     test_fallback_glyph_provider.cpp
     test_regressions.cpp
+    test_geometry.cpp
+    test_clipping.cpp
+    test_scroll_view.cpp
+    test_text_view.cpp
 )
 
 # --- Build the test executable ---
