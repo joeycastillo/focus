@@ -24,8 +24,25 @@
 
 #include "Timer.hpp"
 #include "Application.hpp"
+#include "focus_platform.h"
 
 namespace focus {
+
+// Platform time as a Clock::time_point in microseconds.
+static Timer::Clock::time_point timerNow() {
+    static int64_t last = focus_timer_get_time();
+    static int64_t accumulated = 0;
+    int64_t raw = focus_timer_get_time();
+    int64_t delta = raw - last;
+
+    // micros()-backed platforms (Arduino) wrap every ~71.6 minutes.
+    // Accumulate deltas to keep the timeline monotonic across wraps.
+    if (delta < 0) delta += (int64_t)1 << 32; 
+    accumulated += delta;
+    last = raw;
+
+    return Timer::Clock::time_point(std::chrono::microseconds(accumulated));
+}
 
 Timer::Timer(Clock::time_point fireDate,
              std::chrono::milliseconds interval,
@@ -42,14 +59,14 @@ Timer::Timer(Clock::time_point fireDate,
 bool Timer::run(std::shared_ptr<Application> application) {
     if (!valid) return true;
 
-    if (Clock::now() < fireDate) return false;
+    if (timerNow() < fireDate) return false;
 
     callback(*this);
 
     if (!repeats || !valid) return !repeats;
 
     if (recomputeInterval) {
-        fireDate = Clock::now() + recomputeInterval();
+        fireDate = timerNow() + recomputeInterval();
     } else {
         fireDate += interval;
     }
@@ -59,7 +76,7 @@ bool Timer::run(std::shared_ptr<Application> application) {
 
 void Timer::reset() {
     if (valid) {
-        fireDate = Clock::now() + interval;
+        fireDate = timerNow() + interval;
     }
 }
 
@@ -77,7 +94,7 @@ std::shared_ptr<Timer> Timer::scheduledTimer(
     Callback callback,
     bool repeats
 ) {
-    auto fireDate = Clock::now() + interval;
+    auto fireDate = timerNow() + interval;
     auto timer = std::shared_ptr<Timer>(
         new Timer(fireDate, interval, std::move(callback), repeats));
     application->addTask(timer);
@@ -106,7 +123,7 @@ std::shared_ptr<Timer> Timer::scheduledTimerForNextMinute(
     bool repeats
 ) {
     auto initialInterval = millisecondsUntilNextMinute();
-    auto fireDate = Clock::now() + initialInterval;
+    auto fireDate = timerNow() + initialInterval;
 
     std::function<std::chrono::milliseconds()> recompute = nullptr;
     if (repeats) {
@@ -126,7 +143,7 @@ std::shared_ptr<Timer> Timer::scheduledTimerForNextHour(
     bool repeats
 ) {
     auto initialInterval = millisecondsUntilNextHour();
-    auto fireDate = Clock::now() + initialInterval;
+    auto fireDate = timerNow() + initialInterval;
 
     std::function<std::chrono::milliseconds()> recompute = nullptr;
     if (repeats) {
