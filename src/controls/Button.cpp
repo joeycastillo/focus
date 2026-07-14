@@ -171,6 +171,8 @@ void Button::setSelected(bool value) {
 }
 
 void Button::setTitle(const std::string& title, ControlState state) {
+    auto it = this->titles.find(state);
+    if (it != this->titles.end() && it->second == title) return;
     this->titles[state] = title;
     this->canvasValid = false;
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {

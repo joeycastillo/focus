@@ -7,10 +7,15 @@
 
 #include "test_harness.hpp"
 #include "MockGlyphProvider.hpp"
+#include "RecordingDisplay.hpp"
 #include "TextLayout.hpp"
 #include "ArabicShaping.hpp"
 #include "View.hpp"
 #include "Application.hpp"
+#include "Window.hpp"
+#include "LabelView.hpp"
+#include "Button.hpp"
+#include "ProgressView.hpp"
 #include "Display.hpp"
 #include "Utf8.hpp"
 #include <cstdlib>
@@ -159,4 +164,49 @@ TEST(display_flush_dispatches_via_base) {
                         focus::Rect = {{0,0},{0,0}}) override {}
     } minimal;
     static_cast<focus::Display*>(&minimal)->flush({{0, 0}, {1, 1}});
+}
+
+// --- No-op value setters ---
+// Writing the value a view already displays must not dirty the window;
+// on unbuffered displays every needless repaint reaches the panel.
+
+TEST(value_setters_skip_invalidation_when_unchanged) {
+    auto display = std::make_shared<RecordingDisplay>(160, 128);
+    auto window = std::make_shared<Window>(display, MakeSize(160, 128));
+
+    auto label = std::make_shared<LabelView>(MakeRect(0, 0, 100, 10), "hello");
+    auto button = std::make_shared<Button>(MakeRect(0, 20, 100, 20), "Play");
+    auto progress = std::make_shared<ProgressView>(MakeRect(0, 50, 100, 8));
+    window->addSubview(label);
+    window->addSubview(button);
+    window->addSubview(progress);
+    progress->setProgress(0.5f);
+    window->clearNeedsDisplay();
+
+    label->setText("hello");
+    button->setTitle("Play");
+    progress->setProgress(0.5f);
+    ASSERT_FALSE(window->needsDisplay());
+
+    label->setText("world");
+    ASSERT_TRUE(window->needsDisplay());
+    window->clearNeedsDisplay();
+
+    button->setTitle("Pause");
+    ASSERT_TRUE(window->needsDisplay());
+    window->clearNeedsDisplay();
+
+    button->setTitle("Held", ControlState::Selected);
+    ASSERT_TRUE(window->needsDisplay());
+    window->clearNeedsDisplay();
+    button->setTitle("Held", ControlState::Selected);
+    ASSERT_FALSE(window->needsDisplay());
+
+    progress->setProgress(1.0f);
+    ASSERT_TRUE(window->needsDisplay());
+    window->clearNeedsDisplay();
+
+    // Clamped writes compare post-clamp: 1.5 clamps to the current 1.0.
+    progress->setProgress(1.5f);
+    ASSERT_FALSE(window->needsDisplay());
 }

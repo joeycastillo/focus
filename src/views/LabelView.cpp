@@ -76,6 +76,7 @@ void LabelView::drawContent(int x, int y, Rect clipRect) {
 }
 
 void LabelView::setText(std::string text) {
+    if (text == this->text) return;
     this->text = text;
     this->canvasValid = false;
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
