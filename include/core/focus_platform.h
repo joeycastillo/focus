@@ -28,6 +28,11 @@ static inline int64_t focus_timer_get_time() {
     // gesture misbehaving at the wrap instant — acceptable here.
     return (int64_t)micros();
 }
+#elif defined(FOCUS_PLATFORM_PICO)
+#include "pico/time.h"
+static inline int64_t focus_timer_get_time() {
+    return (int64_t)time_us_64();
+}
 #else
 #include <chrono>
 static inline int64_t focus_timer_get_time() {
