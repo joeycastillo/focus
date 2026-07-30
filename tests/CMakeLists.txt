@@ -56,6 +56,7 @@ set(TEST_SOURCES
     test_regressions.cpp
     test_geometry.cpp
     test_clipping.cpp
+    test_navigation_bar.cpp
     test_scroll_view.cpp
     test_text_view.cpp
     test_locale.cpp

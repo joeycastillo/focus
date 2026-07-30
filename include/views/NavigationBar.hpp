@@ -41,6 +41,7 @@
 namespace focus {
 
 class Button;
+class HStack;
 
 /**
  * @brief A navigation bar with a back button and centered title.
@@ -78,11 +79,17 @@ public:
 private:
     NavigationBar(int width);
 
+    /// Rebuild the layout stack so it contains exactly the present slots.
+    void setSlotPresence(bool back, bool right);
+
+    std::shared_ptr<HStack> layout;
     std::shared_ptr<Button> backButton;
     std::shared_ptr<LabelView> titleLabel;
     std::shared_ptr<Button> rightButton;
     std::function<void()> backAction;
     std::function<void()> rightAction;
+    bool backPresent = false;
+    bool rightPresent = false;
 };
 
 }  // namespace focus

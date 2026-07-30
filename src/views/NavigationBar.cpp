@@ -45,40 +45,29 @@ std::shared_ptr<NavigationBar> NavigationBar::create(int width) {
     int buttonWidth = FocusMetrics::get().navBarButtonWidth;
 
     // HStack handles horizontal layout and d-pad navigation
-    auto layout = std::make_shared<HStack>(
+    bar->layout = std::make_shared<HStack>(
         MakeRect(padding, padding, width - 2 * padding, height - 2 * padding));
-    layout->setSpacing(padding);
-    layout->setOpaque(false);
+    bar->layout->setSpacing(padding);
+    bar->layout->setOpaque(false);
 
-    // Back button, left-aligned, initially hidden
+    // Back button, left-aligned
     bar->backButton = std::make_shared<Button>(
         MakeRect(0, 0, buttonWidth, 0), _LS("nav.back", "Back"));
-    bar->backButton->setHidden(true);
     bar->backButton->setAction(
         [raw = bar.get()](Event, std::weak_ptr<View>) {
             if (raw->backAction) raw->backAction();
         },
         FOCUS_EVENT_TOUCH_UP_INSIDE);
-    layout->addSubview(bar->backButton);
 
     // Title label, flexible width, centered
     bar->titleLabel = std::make_shared<LabelView>(RectZero, "");
     bar->titleLabel->setTextAlignment(TextAlignment::Center);
     bar->titleLabel->setOpaque(false);
-    layout->addSubview(bar->titleLabel);
+    bar->layout->addSubview(bar->titleLabel);
 
-    // Right button, right-aligned, initially hidden
-    bar->rightButton = std::make_shared<Button>(
-        MakeRect(0, 0, buttonWidth, 0), "");
-    bar->rightButton->setHidden(true);
-    bar->rightButton->setAction(
-        [raw = bar.get()](Event, std::weak_ptr<View>) {
-            if (raw->rightAction) raw->rightAction();
-        },
-        FOCUS_EVENT_TOUCH_UP_INSIDE);
-    layout->addSubview(bar->rightButton);
-
-    bar->addSubview(layout);
+    // The right button is created lazily in setRightButton; most bars
+    // never need one.
+    bar->addSubview(bar->layout);
 
     return bar;
 }
@@ -92,7 +81,25 @@ void NavigationBar::setTitle(const std::string& title) {
 }
 
 void NavigationBar::setBackButtonVisible(bool visible) {
-    this->backButton->setHidden(!visible);
+    this->setSlotPresence(visible, this->rightPresent);
+}
+
+void NavigationBar::setSlotPresence(bool back, bool right) {
+    if (back == this->backPresent && right == this->rightPresent) return;
+
+    if (this->backPresent) this->layout->removeSubview(this->backButton);
+    this->layout->removeSubview(this->titleLabel);
+    if (this->rightPresent) this->layout->removeSubview(this->rightButton);
+
+    this->backPresent = back;
+    this->rightPresent = right;
+
+    // Re-zero the title's frame: the stack records a child's preferred size
+    // when it is added, and zero width means flexible.
+    this->titleLabel->setFrame(RectZero);
+    if (back) this->layout->addSubview(this->backButton);
+    this->layout->addSubview(this->titleLabel);
+    if (right) this->layout->addSubview(this->rightButton);
 }
 
 void NavigationBar::setBackAction(std::function<void()> action) {
@@ -101,12 +108,20 @@ void NavigationBar::setBackAction(std::function<void()> action) {
 
 void NavigationBar::setRightButton(const std::string& title, std::function<void()> action) {
     this->rightAction = action;
-    if (title.empty()) {
-        this->rightButton->setHidden(true);
-    } else {
-        this->rightButton->setTitle(title);
-        this->rightButton->setHidden(false);
+    if (!title.empty()) {
+        if (!this->rightButton) {
+            this->rightButton = std::make_shared<Button>(
+                MakeRect(0, 0, FocusMetrics::get().navBarButtonWidth, 0), title);
+            this->rightButton->setAction(
+                [this](Event, std::weak_ptr<View>) {
+                    if (this->rightAction) this->rightAction();
+                },
+                FOCUS_EVENT_TOUCH_UP_INSIDE);
+        } else {
+            this->rightButton->setTitle(title);
+        }
     }
+    this->setSlotPresence(this->backPresent, !title.empty());
 }
 
 void NavigationBar::drawContent(int x, int y, Rect clipRect) {
