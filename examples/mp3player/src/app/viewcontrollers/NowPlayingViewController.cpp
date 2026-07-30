@@ -8,6 +8,7 @@
 #include "Button.hpp"
 #include "Timer.hpp"
 #include "NotificationCenter.hpp"
+#include "Locale.hpp"
 #include "Focus.hpp"
 #include <cstdio>
 
@@ -16,7 +17,7 @@ using namespace focus;
 NowPlayingViewController::NowPlayingViewController(std::shared_ptr<PlayerApp> application) : ViewController(application) {
     // Title is shown in the navigation bar while this controller is atop the stack.
     // Has no effect for a view that's not in a navigation controller.
-    this->setTitle("Now Playing");
+    this->setTitle(_LS("nowplaying.title", "Now Playing"));
 }
 
 // Build the view hierarchy here. Focus calls createView() once, lazily, the
@@ -71,7 +72,7 @@ void NowPlayingViewController::createView() {
     // In a HStack, a nonzero width is fixed, but a zero width triggers flexible layout.
     // The width of 0 here (and in the previous button above and next button below) means
     // the button will share the available space with other views in the stack.
-    this->playPauseButton = std::make_shared<Button>(MakeRect(0, 0, 0, 20), "Pause");
+    this->playPauseButton = std::make_shared<Button>(MakeRect(0, 0, 0, 20), "||");
     this->playPauseButton->setAction([this](Event, std::weak_ptr<View>) {
         if (auto app = std::static_pointer_cast<PlayerApp>(this->application.lock())) {
             app->togglePlayPause();
@@ -152,7 +153,7 @@ void NowPlayingViewController::updateProgress() {
     this->progressView->setProgress(duration ? (float)elapsed / (float)duration : 0.0f);
     std::string durationText = duration ? formatTime(duration) : "--:--";
     this->timeLabel->setText(formatTime(elapsed) + " / " + durationText);
-    this->playPauseButton->setTitle(app->getEngine().isPlaying() ? "Pause" : "Play");
+    this->playPauseButton->setTitle(app->getEngine().isPlaying() ? "||" : "|>");
 }
 
 std::string NowPlayingViewController::formatTime(uint32_t ms) {

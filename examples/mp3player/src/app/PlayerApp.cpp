@@ -2,11 +2,21 @@
 #include "app/PlayerNotifications.hpp"
 #include "app/RefreshTask.hpp"
 #include "app/viewcontrollers/LibraryViewController.hpp"
+#include "app/Localization.h"
 
 #include "Window.hpp"
 #include "Display.hpp"
+#include "Locale.hpp"
 #include "NotificationCenter.hpp"
 #include "NavigationViewController.hpp"
+
+#include <cstring>
+
+// This is for locale demonstration. IRL you can set locales at runtime via Locale::withIdentifier, 
+// but for this example we hard-code it as "en" or "es" and check once in PlayerApp::setup().
+#ifndef MP3PLAYER_LOCALE
+#define MP3PLAYER_LOCALE "en"
+#endif
 
 using namespace focus;
 
@@ -16,6 +26,11 @@ PlayerApp::PlayerApp(const std::shared_ptr<Window>& window,
     : Application(window), display(display), engine(engine) {}
 
 void PlayerApp::setup() {
+    // On devices with a filesystem, we can load an en.strings or es.strings file.
+    // In this case, we just defined them in app/Localization.h and load them here.
+    // This is the table that the _LS/_LF calls will eventually consult.
+    const char* strings = (std::strcmp(MP3PLAYER_LOCALE, "es") == 0) ? strings_es : strings_en;
+    Locale::setCurrentLocale(Locale::fromMemory(MP3PLAYER_LOCALE, (const uint8_t*)strings, std::strlen(strings)));
     this->addTask(std::make_shared<RefreshTask>(this->display));
     this->library = this->engine->scanLibrary();
 

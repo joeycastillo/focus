@@ -7,6 +7,7 @@
 #include "NavigationViewController.hpp"
 #include "Focus.hpp"
 #include "Color.hpp"
+#include "Locale.hpp"
 
 using namespace focus;
 
@@ -28,13 +29,21 @@ LibraryViewController::LibraryViewController(std::shared_ptr<Application> applic
     // our root view, and calls back into this class as both its data source (how many
     // items, what each contains) and its delegate (who's in focus, what's getting
     // selected). All we have to do is configure it here and answer some callbacks.
-    this->setTitle("Music");
-    this->accessibilityIdentifier = "library";
 
     // Configure layout up front; the base applies it when the view is built. A vertical
     // list of rows, each 24px tall and full-width (0 means "fill up this axis").
     this->setItemSize(MakeSize(0, 24));
     this->setLayout(CollectionViewLayout::VerticalList);
+
+    // Set a title. This has no visual effect unless the view is embedded in a container
+    // view controller like a NavigationViewController, but in this case, we are, so the
+    // title appears up top.
+    // Also note that we don't set a literal string, but instead use the _LS or
+    // "localized string" call. The first parameter is the key to look up in the strings
+    // file; the second serves as the fallback text if not found, as well as a comment
+    // for any automated tooling aimed at string extraction.
+    this->setTitle(_LS("library.title", "Music"));
+    this->accessibilityIdentifier = "library";
 }
 
 bool LibraryViewController::libraryIsEmpty() const {
@@ -59,9 +68,13 @@ std::shared_ptr<CollectionViewCell> LibraryViewController::cellForItemAtIndex(
         auto app = std::static_pointer_cast<PlayerApp>(this->application.lock());
         if (!app) return cell;
         if (index == 0) {
-            text = "No music found in " + app->getEngine().libraryLocationHint();
+            // Above, we used the _LS call to get a localized string. Here, we use _LF
+            // to use a localized formatted string. Same syntax, but you can also insert
+            // things into your string. This is position aware if you have several args:
+            // "This is item {0} of {1}" and "Of {1} items, this is {0}" both work.
+            text = _LF("library.empty", "No music found in {0}", app->getEngine().libraryLocationHint());
         } else {
-            text = "Rescan";
+            text = _LS("library.rescan", "Rescan");
         }
     } else {
         auto app = std::static_pointer_cast<PlayerApp>(this->application.lock());
