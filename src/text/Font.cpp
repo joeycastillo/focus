@@ -28,6 +28,7 @@
 #include "StyledGlyphProvider.hpp"
 #include "FallbackGlyphProvider.hpp"
 #include "BasicGlyphProvider.hpp"
+#include "focus_config.h"
 
 namespace focus {
 
@@ -199,6 +200,7 @@ void Font::setFallbackResolver(std::function<Font::FallbackFont(const GlyphProvi
 }
 
 std::shared_ptr<GlyphProvider> Font::loadFontFile(const std::string& name) {
+#if FOCUS_HAS_FILESYSTEM
     for (const auto& path : searchPaths) {
         std::string baseName = name;
         // Strip any existing extension
@@ -220,6 +222,10 @@ std::shared_ptr<GlyphProvider> Font::loadFontFile(const std::string& name) {
         if (bdf->isValid()) return bdf;
     }
     return nullptr;
+#else
+    (void)name;
+    return nullptr;
+#endif
 }
 
 std::string Font::getTitle() const {

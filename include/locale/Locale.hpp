@@ -30,6 +30,8 @@
 #include <vector>
 #include <map>
 #include <type_traits>
+#include <cstdint>
+#include <cstddef>
 
 namespace focus {
 
@@ -65,6 +67,15 @@ public:
      * @param identifier Locale identifier (e.g., "en", "es", "fr")
      */
     static Locale* withIdentifier(const std::string& identifier);
+
+    /**
+     * Load a locale directly from an in-memory .strings blob (UTF-8 text,
+     * same format as the file loader). Populates the cache under `identifier`
+     * so a later withIdentifier(identifier) returns it. Non-owning: the parsed
+     * strings are copied out, so `data` need only outlive this call.
+     * @return the loaded (or already-cached) locale, or nullptr if empty.
+     */
+    static Locale* fromMemory(const std::string& identifier, const uint8_t* data, size_t size);
 
     /**
      * Set the active locale for the application.
@@ -143,6 +154,7 @@ private:
 
     static Locale* loadLocaleFile(const std::string& identifier);
     static std::map<std::string, std::string> parseFile(const std::string& path);
+    static std::map<std::string, std::string> parseStrings(const uint8_t* data, size_t size);
 };
 
 // ---------------------------------------------------------------------------

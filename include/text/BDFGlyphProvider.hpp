@@ -37,11 +37,14 @@
 #pragma once
 
 #include "GlyphProvider.hpp"
+#include "focus_config.h"
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace focus {
+
+#if FOCUS_HAS_FILESYSTEM
 
 /**
  * @brief Parsed data for a single BDF glyph.
@@ -117,5 +120,7 @@ private:
     uint32_t defaultChar = 0;   ///< DEFAULT_CHAR codepoint for missing glyphs.
     bool valid = false;         ///< Whether the BDF file was parsed successfully.
 };
+
+#endif  // FOCUS_HAS_FILESYSTEM
 
 }  // namespace focus

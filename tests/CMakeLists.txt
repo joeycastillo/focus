@@ -37,6 +37,7 @@ set(INCLUDE_DIRS
 # --- Test source files ---
 set(TEST_SOURCES
     main.cpp
+    test_focus_config.cpp
     test_utf8.cpp
     test_measure_line_wrap.cpp
     test_color.cpp
@@ -57,6 +58,8 @@ set(TEST_SOURCES
     test_clipping.cpp
     test_scroll_view.cpp
     test_text_view.cpp
+    test_locale.cpp
+    test_packed_font_memory.cpp
 )
 
 # --- Build the test executable ---
@@ -91,6 +94,20 @@ target_include_directories(utf8-bmp-test PRIVATE
 )
 target_compile_definitions(utf8-bmp-test PRIVATE UNICODE_BMP_ONLY)
 target_compile_options(utf8-bmp-test PRIVATE -Wall -Wextra)
+
+# --- Filesystem-free build: whole framework compiled with FOCUS_HAS_FILESYSTEM=0,
+#     plus a small main that exercises the memory factories. Proves the file code
+#     is genuinely excludable and the fromMemory paths stand alone. ---
+add_executable(focus-test-nofs
+    test_no_filesystem.cpp
+    ${FOCUS_SOURCES}
+)
+target_include_directories(focus-test-nofs PRIVATE ${INCLUDE_DIRS})
+target_compile_definitions(focus-test-nofs PRIVATE
+    FOCUS_HAS_FILESYSTEM=0
+    FONTS_DIR="${FOCUS_TEST_FONTS_DIR}/"
+)
+target_compile_options(focus-test-nofs PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 # --- Header include-order guard (compile-only) -----------------------------
 # Every public header must compile when Arduino.h's round()/abs()/min()/max()

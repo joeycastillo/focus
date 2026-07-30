@@ -34,6 +34,8 @@
 #pragma once
 
 #include "GlyphProvider.hpp"
+#include <memory>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -66,6 +68,13 @@ class PackedFontGlyphProvider : public GlyphProvider {
 public:
     PackedFontGlyphProvider(const std::string& bdpFilePath);
 
+    /**
+     * Build a provider from an in-memory BDP blob (same bytes as a .bdp file).
+     * Non-owning: glyphs are copied out, so `data` need only outlive this call.
+     * @return the provider, or nullptr if the blob is not valid BDP.
+     */
+    static std::shared_ptr<PackedFontGlyphProvider> fromMemory(const uint8_t* data, size_t size);
+
     uint8_t getPointSize() const override;
     Size getMaxSize() const override;
     Point getOffset() const override;
@@ -83,7 +92,9 @@ public:
     static std::string readTitle(const std::string& path);
 
 private:
+    PackedFontGlyphProvider() = default;
     bool loadBDPFile(const std::string& path);
+    bool loadBDP(const uint8_t* data, size_t size);
     void convertGlyphToDisplayFormat(BDPGlyph& glyph);
 
     std::unordered_map<uint32_t, BDPGlyph> glyphs;

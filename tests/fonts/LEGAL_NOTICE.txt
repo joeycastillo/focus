@@ -41,3 +41,9 @@ CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
 DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOURCE CODE.
+
+spleen-8x16.bdp
+---------------
+Spleen bitmap font, © 2018-2024 Frederic Cambus, released under the
+BSD 2-Clause License. Converted to Focus's BDP format via tools/bdf2bdp.
+Used here as a small binary fixture for the PackedFontGlyphProvider tests.

@@ -38,10 +38,13 @@
 #pragma once
 
 #include "GlyphProvider.hpp"
+#include "focus_config.h"
 #include <memory>
 #include <string>
 #include <cstdint>
+#if FOCUS_HAS_FILESYSTEM
 #include <cstdio>
+#endif
 
 namespace focus {
 
@@ -55,12 +58,14 @@ namespace focus {
  */
 class UnifontGlyphProvider : public GlyphProvider {
 public:
+#if FOCUS_HAS_FILESYSTEM
     /**
      * @brief Load Unifont from a file path.
      * @param path Path to unifont.bin file.
      * @return A shared_ptr to the provider, or nullptr if loading failed.
      */
     static std::shared_ptr<UnifontGlyphProvider> fromFile(const std::string& path);
+#endif
 
     /**
      * @brief Load Unifont from a memory buffer (e.g., memory-mapped flash).
@@ -91,7 +96,9 @@ private:
     const uint8_t* data = nullptr;
     size_t dataSize = 0;
     bool ownsData = false;
+#if FOCUS_HAS_FILESYSTEM
     mutable FILE* fileHandle = nullptr;
+#endif
 
     // Parsed header info
     bool valid = false;

@@ -37,6 +37,9 @@ jobs:
       - name: UTF-8 BMP-only decoder tests
         run: ./build/utf8-bmp-test
 
+      - name: Filesystem-free build + smoke
+        run: ./build/focus-test-nofs
+
   pygamer-build:
     name: PyGamer example (SAMD51 / arm-gcc)
     runs-on: ubuntu-latest

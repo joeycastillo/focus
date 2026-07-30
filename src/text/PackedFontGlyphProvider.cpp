@@ -23,83 +23,78 @@
  */
 
 #include "PackedFontGlyphProvider.hpp"
-#include <cstdio>
+#include "focus_config.h"
 #include <cstring>
 #include <algorithm>
+#if FOCUS_HAS_FILESYSTEM
+#include <cstdio>
+#endif
 
 namespace focus {
 
 PackedFontGlyphProvider::PackedFontGlyphProvider(const std::string& bdpFilePath) {
+#if FOCUS_HAS_FILESYSTEM
     valid = loadBDPFile(bdpFilePath);
+#else
+    (void)bdpFilePath;
+    valid = false;
+#endif
 }
 
-bool PackedFontGlyphProvider::loadBDPFile(const std::string& path) {
-    FILE* f = fopen(path.c_str(), "rb");
-    if (!f) {
+std::shared_ptr<PackedFontGlyphProvider>
+PackedFontGlyphProvider::fromMemory(const uint8_t* data, size_t size) {
+    auto provider = std::shared_ptr<PackedFontGlyphProvider>(new PackedFontGlyphProvider());
+    provider->valid = provider->loadBDP(data, size);
+    if (!provider->valid) return nullptr;
+    return provider;
+}
+
+bool PackedFontGlyphProvider::loadBDP(const uint8_t* data, size_t size) {
+    if (!data || size < 16) return false;
+
+    if (data[0] != 'B' || data[1] != 'D' || data[2] != 'P' || data[3] != 0x01) {
         return false;
     }
 
-    // Read 16-byte header
-    uint8_t header[16];
-    if (fread(header, 1, 16, f) != 16) {
-        fclose(f);
-        return false;
-    }
-
-    // Validate magic
-    if (header[0] != 'B' || header[1] != 'D' || header[2] != 'P' || header[3] != 0x01) {
-        fclose(f);
-        return false;
-    }
-
-    pixelSize = header[4];
-    fontAscent = header[5];
-    fontDescent = header[6];
-    maxSize.width = header[7];
-    maxSize.height = header[8];
-    uint8_t titleLength = header[9];
+    pixelSize = data[4];
+    fontAscent = data[5];
+    fontDescent = data[6];
+    maxSize.width = data[7];
+    maxSize.height = data[8];
+    uint8_t titleLength = data[9];
 
     uint16_t numGlyphs;
-    memcpy(&numGlyphs, &header[10], 2);
-    memcpy(&defaultChar, &header[12], 4);
+    memcpy(&numGlyphs, &data[10], 2);
+    memcpy(&defaultChar, &data[12], 4);
 
-    // Read title if present
+    size_t pos = 16;
+
+    if (pos + titleLength > size) return false;
     if (titleLength > 0) {
-        std::vector<char> titleBuf(titleLength);
-        if (fread(titleBuf.data(), 1, titleLength, f) != titleLength) {
-            fclose(f);
-            return false;
-        }
-        title.assign(titleBuf.data(), titleLength);
+        title.assign(reinterpret_cast<const char*>(data + pos), titleLength);
+        pos += titleLength;
     }
 
-    // Read glyph table (9 bytes per entry)
     struct GlyphEntry {
         uint32_t codepoint;
-        uint8_t advance;
-        uint8_t width;
-        uint8_t height;
-        int8_t xOffset;
-        int8_t yOffset;
+        uint8_t advance, width, height;
+        int8_t xOffset, yOffset;
     };
 
     std::vector<GlyphEntry> entries(numGlyphs);
-    for (uint16_t i = 0; i < numGlyphs; i++) {
-        uint8_t buf[9];
-        if (fread(buf, 1, 9, f) != 9) {
-            fclose(f);
-            return false;
-        }
-        memcpy(&entries[i].codepoint, buf, 4);
-        entries[i].advance = buf[4];
-        entries[i].width = buf[5];
-        entries[i].height = buf[6];
-        entries[i].xOffset = static_cast<int8_t>(buf[7]);
-        entries[i].yOffset = static_cast<int8_t>(buf[8]);
+    for (uint16_t i = 0; i < numGlyphs; ++i) {
+        if (pos + 9 > size) return false;
+        const uint8_t* b = data + pos;
+        memcpy(&entries[i].codepoint, b, 4);
+        entries[i].advance = b[4];
+        entries[i].width   = b[5];
+        entries[i].height  = b[6];
+        entries[i].xOffset = static_cast<int8_t>(b[7]);
+        entries[i].yOffset = static_cast<int8_t>(b[8]);
+        pos += 9;
     }
 
-    // Read bitmap data (sequential, same order as glyph table)
-    for (uint16_t i = 0; i < numGlyphs; i++) {
+    for (uint16_t i = 0; i < numGlyphs; ++i) {
         size_t bitmapSize = ((entries[i].width + 7) / 8) * entries[i].height;
 
         BDPGlyph glyph;
@@ -111,17 +106,15 @@ bool PackedFontGlyphProvider::loadBDPFile(const std::string& path) {
         glyph.bitmap.resize(bitmapSize);
 
         if (bitmapSize > 0) {
-            if (fread(glyph.bitmap.data(), 1, bitmapSize, f) != bitmapSize) {
-                fclose(f);
-                return false;
-            }
+            if (pos + bitmapSize > size) return false;
+            memcpy(glyph.bitmap.data(), data + pos, bitmapSize);
+            pos += bitmapSize;
         }
 
         convertGlyphToDisplayFormat(glyph);
         glyphs[entries[i].codepoint] = std::move(glyph);
     }
 
-    fclose(f);
     return !glyphs.empty();
 }
 
@@ -186,35 +179,37 @@ GlyphMetrics PackedFontGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT code
     return GlyphMetrics{glyph.advance, glyph.width, glyph.height, glyph.xOffset, 0};
 }
 
+#if FOCUS_HAS_FILESYSTEM
+bool PackedFontGlyphProvider::loadBDPFile(const std::string& path) {
+    FILE* f = fopen(path.c_str(), "rb");
+    if (!f) return false;
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (sz <= 0) { fclose(f); return false; }
+    std::vector<uint8_t> buf(static_cast<size_t>(sz));
+    size_t rd = fread(buf.data(), 1, static_cast<size_t>(sz), f);
+    fclose(f);
+    if (rd != static_cast<size_t>(sz)) return false;
+    return loadBDP(buf.data(), buf.size());
+}
+
 std::string PackedFontGlyphProvider::readTitle(const std::string& path) {
     FILE* f = fopen(path.c_str(), "rb");
     if (!f) return "";
-
     uint8_t header[16];
-    if (fread(header, 1, 16, f) != 16) {
-        fclose(f);
-        return "";
-    }
-
+    if (fread(header, 1, 16, f) != 16) { fclose(f); return ""; }
     if (header[0] != 'B' || header[1] != 'D' || header[2] != 'P' || header[3] != 0x01) {
         fclose(f);
         return "";
     }
-
     uint8_t titleLength = header[9];
-    if (titleLength == 0) {
-        fclose(f);
-        return "";
-    }
-
+    if (titleLength == 0) { fclose(f); return ""; }
     std::vector<char> buf(titleLength);
-    if (fread(buf.data(), 1, titleLength, f) != titleLength) {
-        fclose(f);
-        return "";
-    }
-
+    if (fread(buf.data(), 1, titleLength, f) != titleLength) { fclose(f); return ""; }
     fclose(f);
     return std::string(buf.data(), titleLength);
 }
+#endif  // FOCUS_HAS_FILESYSTEM
 
 }  // namespace focus

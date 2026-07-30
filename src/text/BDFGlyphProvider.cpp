@@ -23,6 +23,9 @@
  */
 
 #include "BDFGlyphProvider.hpp"
+#include "focus_config.h"
+#if FOCUS_HAS_FILESYSTEM
+
 #include "FocusLog.hpp"
 #include <fstream>
 #include <sstream>
@@ -235,3 +238,5 @@ GlyphMetrics BDFGlyphProvider::metricsForCodepoint(UNICODE_CODEPOINT codepoint, 
 }
 
 }  // namespace focus
+
+#endif  // FOCUS_HAS_FILESYSTEM

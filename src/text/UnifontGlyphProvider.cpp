@@ -40,15 +40,18 @@ UnifontGlyphProvider::UnifontGlyphProvider() {
 }
 
 UnifontGlyphProvider::~UnifontGlyphProvider() {
+#if FOCUS_HAS_FILESYSTEM
     if (fileHandle) {
         fclose(fileHandle);
         fileHandle = nullptr;
     }
+#endif
     if (ownsData && data) {
         delete[] data;
     }
 }
 
+#if FOCUS_HAS_FILESYSTEM
 std::shared_ptr<UnifontGlyphProvider> UnifontGlyphProvider::fromFile(const std::string& path) {
     FILE* f = fopen(path.c_str(), "rb");
     if (!f) {
@@ -75,6 +78,7 @@ std::shared_ptr<UnifontGlyphProvider> UnifontGlyphProvider::fromFile(const std::
 
     return provider;
 }
+#endif
 
 std::shared_ptr<UnifontGlyphProvider> UnifontGlyphProvider::fromMemory(
     const uint8_t* data, size_t size, bool ownsData)
@@ -103,7 +107,9 @@ void UnifontGlyphProvider::readData(uint32_t offset, void* dest, size_t len) con
         } else {
             memset(dest, 0, len);
         }
-    } else if (fileHandle) {
+    }
+#if FOCUS_HAS_FILESYSTEM
+    else if (fileHandle) {
         // File access
         fseek(fileHandle, offset, SEEK_SET);
         size_t read = fread(dest, 1, len, fileHandle);
@@ -111,6 +117,7 @@ void UnifontGlyphProvider::readData(uint32_t offset, void* dest, size_t len) con
             memset((uint8_t*)dest + read, 0, len - read);
         }
     }
+#endif
 }
 
 bool UnifontGlyphProvider::parseHeader() {

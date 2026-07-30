@@ -24,7 +24,11 @@
 
 #include "Locale.hpp"
 #include "NotificationCenter.hpp"
+#include "focus_config.h"
+#if FOCUS_HAS_FILESYSTEM
 #include <fstream>
+#include <iterator>
+#endif
 
 namespace focus {
 
@@ -42,14 +46,28 @@ Locale* Locale::withIdentifier(const std::string& identifier) {
     if (it != localeCache.end()) {
         return it->second;
     }
-
+#if FOCUS_HAS_FILESYSTEM
     auto locale = loadLocaleFile(identifier);
     if (locale) {
         localeCache[identifier] = locale;
         return locale;
     }
-
+#endif
     return nullptr;
+}
+
+Locale* Locale::fromMemory(const std::string& identifier, const uint8_t* data, size_t size) {
+    auto it = localeCache.find(identifier);
+    if (it != localeCache.end()) {
+        return it->second;
+    }
+    auto strings = parseStrings(data, size);
+    if (strings.empty()) {
+        return nullptr;
+    }
+    auto* locale = new Locale(identifier, std::move(strings));
+    localeCache[identifier] = locale;
+    return locale;
 }
 
 void Locale::setCurrentLocale(Locale* locale) {
@@ -122,6 +140,49 @@ bool Locale::isValid() const {
     return valid;
 }
 
+std::map<std::string, std::string> Locale::parseStrings(const uint8_t* data, size_t size) {
+    std::map<std::string, std::string> result;
+    if (!data) return result;
+
+    size_t i = 0;
+    while (i < size) {
+        size_t start = i;
+        while (i < size && data[i] != '\n') ++i;
+        std::string line(reinterpret_cast<const char*>(data + start), i - start);
+        if (i < size) ++i;  // consume newline
+
+        // Embedded blobs sized with sizeof() carry a trailing NUL; drop it.
+        while (!line.empty() && line.back() == '\0') line.pop_back();
+
+        if (line.empty() || line[0] == '#') continue;
+
+        auto eq = line.find('=');
+        if (eq == std::string::npos) continue;
+
+        std::string key = line.substr(0, eq);
+        std::string value = line.substr(eq + 1);
+
+        std::string processed;
+        processed.reserve(value.size());
+        for (size_t j = 0; j < value.size(); ++j) {
+            if (value[j] == '\\' && j + 1 < value.size()) {
+                switch (value[j + 1]) {
+                    case 'n': processed += '\n'; ++j; break;
+                    case 't': processed += '\t'; ++j; break;
+                    case '\\': processed += '\\'; ++j; break;
+                    case '"': processed += '"'; ++j; break;
+                    default: processed += value[j]; break;
+                }
+            } else {
+                processed += value[j];
+            }
+        }
+        result[key] = processed;
+    }
+    return result;
+}
+
+#if FOCUS_HAS_FILESYSTEM
 Locale* Locale::loadLocaleFile(const std::string& identifier) {
     for (const auto& path : searchPaths) {
         std::string filePath = path + identifier + ".strings";
@@ -134,43 +195,12 @@ Locale* Locale::loadLocaleFile(const std::string& identifier) {
 }
 
 std::map<std::string, std::string> Locale::parseFile(const std::string& path) {
-    std::map<std::string, std::string> result;
-    std::ifstream file(path);
-    if (!file.is_open()) return result;
-
-    std::string line;
-    while (std::getline(file, line)) {
-        // Skip empty lines and comments
-        if (line.empty() || line[0] == '#') continue;
-
-        // Find the first '=' separator
-        auto eq = line.find('=');
-        if (eq == std::string::npos) continue;
-
-        std::string key = line.substr(0, eq);
-        std::string value = line.substr(eq + 1);
-
-        // Process escape sequences in value
-        std::string processed;
-        processed.reserve(value.size());
-        for (size_t i = 0; i < value.size(); ++i) {
-            if (value[i] == '\\' && i + 1 < value.size()) {
-                switch (value[i + 1]) {
-                    case 'n': processed += '\n'; ++i; break;
-                    case 't': processed += '\t'; ++i; break;
-                    case '\\': processed += '\\'; ++i; break;
-                    case '"': processed += '"'; ++i; break;
-                    default: processed += value[i]; break;
-                }
-            } else {
-                processed += value[i];
-            }
-        }
-
-        result[key] = processed;
-    }
-
-    return result;
+    std::ifstream file(path, std::ios::binary);
+    if (!file.is_open()) return {};
+    std::string contents((std::istreambuf_iterator<char>(file)),
+                         std::istreambuf_iterator<char>());
+    return parseStrings(reinterpret_cast<const uint8_t*>(contents.data()), contents.size());
 }
+#endif  // FOCUS_HAS_FILESYSTEM
 
 }  // namespace focus
