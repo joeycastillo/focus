@@ -61,6 +61,7 @@ set(TEST_SOURCES
     test_text_view.cpp
     test_locale.cpp
     test_packed_font_memory.cpp
+    test_task_busyness.cpp
 )
 
 # --- Build the test executable ---

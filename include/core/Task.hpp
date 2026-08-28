@@ -62,6 +62,35 @@ public:
      *         false until its work is done, then true to remove itself.
      */
     virtual bool run(std::shared_ptr<Application> application) = 0;
+
+    /**
+     * @brief Whether this task has work that needs the run loop at full speed.
+     *
+     * By default the run loop calls every task as fast as it can, forever. On
+     * real hardware that's wasteful: when nothing is happening, an application
+     * may want to stretch out iterations — yield to the host OS, poll at a
+     * slower cadence, or enter a platform-specific sleep state between passes.
+     * Focus is platform-agnostic and does none of this itself, but an app can
+     * implement such a pacing policy (perhaps in a task!), and that task needs
+     * to know whether slowing the loop down would stall work in progress.
+     *
+     * isBusy is our answer to this. A Task should return true while it's doing
+     * work that only advances when run() is called, often incremental progress
+     * that it wants to do across run loop invocations without blocking the UI.
+     * Return false when slower iterations are fine, even for a task that does
+     * something every time it runs.
+     *
+     * Waiting on an outside event doesn't count as busy, but give a thought to
+     * how the event gets noticed. On hardware where a touch or a button press
+     * fires an interrupt that wakes the loop, an input task holds no work until
+     * the event arrives. On hardware that has to poll to catch the event, the
+     * answer is still not to claim busy — a bool can't say how slow is too
+     * slow, only "never slow down," which would keep the loop at full speed
+     * forever. A board like that needs a floor on how slow the loop may go
+     * while idle, and the floor belongs to the pacing policy. Busy describes
+     * the work a task already has, not the work that might show up.
+     */
+    virtual bool isBusy() const { return false; }
 };
 
 }  // namespace focus
