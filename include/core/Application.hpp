@@ -170,6 +170,14 @@ public:
     uint32_t loopCount() const { return loopCounter_.load(std::memory_order_relaxed); }
 
     /**
+     * @brief Check whether any registered task reports itself busy.
+     *
+     * True if any task's isBusy() returns true. Safe to call from within a
+     * task's run() method.
+     */
+    bool anyTaskBusy() const;
+
+    /**
      * @brief Request the application to stop its run loop.
      *
      * The run loop will exit after the current iteration completes.

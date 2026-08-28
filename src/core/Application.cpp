@@ -70,6 +70,13 @@ void Application::run() {
     }
 }
 
+bool Application::anyTaskBusy() const {
+    for (auto& task : this->tasks) {
+        if (task->isBusy()) return true;
+    }
+    return false;
+}
+
 int32_t Application::detectSwipe(int dx, int dy, int64_t durationUs) {
     int absDx = abs(dx);
     int absDy = abs(dy);
