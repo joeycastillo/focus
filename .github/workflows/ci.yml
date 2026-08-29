@@ -29,7 +29,7 @@ jobs:
       # included first. A build failure means a header reached the STL unguarded
       # (see include/core/detail/stl_guard.h).
       - name: Build (unit tests + header include-order guard)
-        run: cmake --build build -j
+        run: cmake --build build -j "$(nproc)"
 
       - name: Unit tests
         run: ./build/focus-test
