@@ -28,6 +28,7 @@
 #include "Display.hpp"
 #include "Font.hpp"
 #include "TextLayout.hpp"
+#include "ArabicShaping.hpp"
 #include "Utf8.hpp"
 #include <cstdlib>
 
@@ -145,17 +146,26 @@ void TextView::rebuildIndex() {
     if (!codepoints) return;
     utf8_parse(this->text.c_str(), codepoints);
 
-    // Mirrors TextLayout::measureTextHeight so recorded positions and
-    // heightForWidth always agree.
+    // Byte lengths come from the pre-shape codepoints: line records must
+    // slice the original UTF-8 string, and shaping substitutes codepoints
+    // with different encoded lengths.
+    std::vector<uint8_t> byteLengths(len);
+    for (size_t i = 0; i < len; i++) {
+        byteLengths[i] = (uint8_t)TextLayout::bytesForCodepoint(codepoints[i]);
+    }
+    shapeArabicIfNeeded(codepoints, len);
+
+    // Mirrors TextLayout::measureTextHeight — same shaping, same newline
+    // model — so recorded positions and heightForWidth always agree.
     int16_t lineSpacing = TextLayout::calculateLineSpacing(provider);
     int16_t paragraphSpacing = TextLayout::calculateParagraphSpacing(provider);
     int16_t lineHeight = TextLayout::getLineHeight(provider, this->textScale, lineSpacing);
-    int16_t paragraphHeight = TextLayout::getParagraphHeight(provider, this->textScale, paragraphSpacing);
 
     int16_t y = 0;
     size_t offset = 0;
     uint32_t byteOffset = 0;
     uint8_t emphasis = 0;
+    bool lastWasNewline = false;
 
     while (offset < len) {
         WordWrapResult result = TextLayout::measureLineWrap(
@@ -173,17 +183,28 @@ void TextView::rebuildIndex() {
         record.emphasisAtStart = emphasis;
         record.hasTrailingHyphen = result.needsHyphen;
 
+        // Track emphasis and whether this line drew anything visible.
+        bool hasDrawable = false;
         for (size_t i = 0; i < consumed; i++) {
             UNICODE_CODEPOINT cp = codepoints[offset + i];
-            applyEmphasisShift(cp, emphasis);
-            byteOffset += (uint32_t)TextLayout::bytesForCodepoint(cp);
+            byteOffset += byteLengths[offset + i];
+            if (applyEmphasisShift(cp, emphasis)) continue;
+            if (cp >= 0x20 && cp != TextControlCode::SoftHyphen) hasDrawable = true;
         }
         record.endByte = byteOffset;
         this->lines.push_back(record);
         if (consumed > this->maxLineCodepoints) this->maxLineCodepoints = consumed;
 
         if (result.codepointsConsumed < 0) break;  // last line: no trailing spacing
-        y += result.isParagraphBreak ? paragraphHeight : lineHeight;
+        if (result.isParagraphBreak) {
+            // Mirror writeCodepoint: a blank line after a newline adds
+            // paragraph spacing alone; any other newline is a line break.
+            y += (lastWasNewline && !hasDrawable) ? paragraphSpacing : lineHeight;
+            lastWasNewline = true;
+        } else {
+            y += lineHeight;
+            lastWasNewline = false;
+        }
         offset += consumed;
     }
 
@@ -233,6 +254,10 @@ void TextView::drawContent(int x, int y, Rect clipRect) {
             if (count == this->maxLineCodepoints) break;  // defensive: BMP-only byte drift
             lineCodepoints[count++] = cp;
         }
+
+        // Shape this line's slice; per-line shaping matches whole-text
+        // shaping except at a force-break inside a word.
+        shapeArabicIfNeeded(lineCodepoints.data(), count);
 
         scratch->renderLine(lineCodepoints.data(), count,
                             record.emphasisAtStart, record.hasTrailingHyphen,

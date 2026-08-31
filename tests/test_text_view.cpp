@@ -228,3 +228,64 @@ TEST(text_view_parity_rtl_runs) {
     // Arabic runs exercise bidi reordering and shaping inside the LTR paragraph.
     assertParity("aa \xD9\x85\xD8\xB1\xD8\xAD\xD8\xA8\xD8\xA7 bb", 40, TextAlignment::Left);
 }
+
+// Provider that records every codepoint requested for drawing, so tests
+// can assert shaped presentation forms reach the glyph lookup.
+class CodepointRecordingProvider : public MockGlyphProvider {
+public:
+    CodepointRecordingProvider() : MockGlyphProvider(8, 12) {
+        memset(this->bitmap, 0xFF, sizeof(this->bitmap));
+    }
+    const uint8_t* glyphForCodepoint(UNICODE_CODEPOINT codepoint,
+                                     focus::FontStyle emphasis = focus::FontStyle::Regular) const override {
+        this->drawn.push_back(codepoint);
+        return MockGlyphProvider::glyphForCodepoint(codepoint, emphasis);
+    }
+    mutable std::vector<UNICODE_CODEPOINT> drawn;
+};
+
+TEST(text_view_renders_shaped_arabic) {
+    // Three lam-alef words, wrapped narrow so they land on separate
+    // lines. Each line's decoded byte slice must be shaped before
+    // rendering: the ligature U+FEFB is requested, isolated lam is not.
+    // This also proves byte offsets index the ORIGINAL string — offsets
+    // computed from shaped codepoints would slice garbage UTF-8 and the
+    // ligature count would be wrong.
+    auto provider = std::make_shared<CodepointRecordingProvider>();
+    auto display = std::make_shared<RecordingDisplay>(480, 800);
+    auto window = std::make_shared<Window>(display, MakeSize(480, 800));
+    // "لا لا لا" — lam+alef, space, repeated; 24px width wraps each word.
+    auto tv = std::make_shared<TextView>(MakeRect(0, 0, 24, 0),
+        "\xD9\x84\xD8\xA7 \xD9\x84\xD8\xA7 \xD9\x84\xD8\xA7");
+    tv->setFont(Font::withProvider(provider));
+    tv->setFrame(MakeRect(0, 0, 24, tv->heightForWidth(24)));
+    window->addSubview(tv);
+    display->reset();
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    int ligatures = 0, isolatedLams = 0;
+    for (UNICODE_CODEPOINT cp : provider->drawn) {
+        if (cp == 0xFEFB) ligatures++;
+        if (cp == 0x0644) isolatedLams++;
+    }
+    ASSERT_EQ(ligatures, 3);
+    ASSERT_EQ(isolatedLams, 0);
+}
+
+TEST(text_view_newline_spacing_matches_renderer_model) {
+    // "aaaa\nbbbb\n\ncccc" under the renderer's model: bbbb at y=14
+    // (single \n = line pitch 14), blank line adds paragraphSpacing (4),
+    // cccc at y=32; height 14+14+4+12 = 44. Old model: bbbb at y=16,
+    // cccc at y=48, height 60. pixel(0,15) is the discriminator — inside
+    // bbbb's rows (14..25) new, inside the spacing gap (below 16) old.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<TextView> tv;
+    auto window = makeTextWindow(display, tv, "aaaa\nbbbb\n\ncccc", 40);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(tv->heightForWidth(40), 44);
+    ASSERT_EQ(display->pixel(0, 15), 1);    // bbbb starts at y=14, not 16
+    ASSERT_EQ(display->pixel(0, 19), 1);    // bbbb at y=14..25
+    ASSERT_EQ(display->pixel(0, 37), 1);    // cccc at y=32..43
+    ASSERT_EQ(display->pixel(0, 29), 0xFF); // gap where the blank line sits
+}
