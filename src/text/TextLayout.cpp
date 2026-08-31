@@ -23,6 +23,7 @@
  */
 
 #include "TextLayout.hpp"
+#include "ArabicShaping.hpp"
 #include "Utf8.hpp"
 #include <cstring>
 #include <cstdlib>
@@ -332,6 +333,7 @@ int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, c
     if (codepoints == nullptr) return 0;
 
     utf8_parse(utf8String, codepoints);
+    shapeArabicIfNeeded(codepoints, len);
 
     int16_t width = 0;
     uint8_t emphasis = 0;

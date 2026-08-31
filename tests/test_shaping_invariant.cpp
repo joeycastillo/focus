@@ -6,6 +6,8 @@
 
 #include "test_harness.hpp"
 #include "ArabicShaping.hpp"
+#include "TextLayout.hpp"
+#include "MockGlyphProvider.hpp"
 #include <cstring>
 #include <vector>
 
@@ -42,4 +44,33 @@ TEST(shaping_is_idempotent) {
     // And the direct shaper is equally idempotent on shaped input.
     shapeArabic(cps, len);
     ASSERT_EQ(memcmp(cps, once, sizeof(cps)), 0);
+}
+
+// Mock that gives U+200B its correct zero advance so ligature collapse
+// is observable; everything else keeps the fixed 8px advance.
+class ZeroWidthAwareProvider : public MockGlyphProvider {
+public:
+    ZeroWidthAwareProvider() : MockGlyphProvider(8, 12) {}
+    focus::GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint,
+                                            focus::FontStyle emphasis = focus::FontStyle::Regular) const override {
+        if (codepoint == 0x200B) return focus::GlyphMetrics{0, 0, 12, 0, 0};
+        return MockGlyphProvider::metricsForCodepoint(codepoint, emphasis);
+    }
+};
+
+TEST(measure_text_width_counts_lam_alef_once) {
+    // Unshaped lam+alef is two glyphs; shaped it is one ligature plus a
+    // zero-width space. The invariant means measurement sees the ligature.
+    ZeroWidthAwareProvider provider;
+    int16_t w = TextLayout::measureTextWidth("\xD9\x84\xD8\xA7", 1, &provider);
+    ASSERT_EQ(w, (int16_t)8);
+}
+
+TEST(measure_text_width_pre_shaped_equals_logical) {
+    // Passing the already-shaped string measures the same as the logical
+    // string: internal shaping must not double-transform shaped input.
+    ZeroWidthAwareProvider provider;
+    int16_t logical = TextLayout::measureTextWidth("\xD9\x84\xD8\xA7", 1, &provider);
+    int16_t shaped = TextLayout::measureTextWidth("\xEF\xBB\xBB\xE2\x80\x8B", 1, &provider);
+    ASSERT_EQ(logical, shaped);
 }
