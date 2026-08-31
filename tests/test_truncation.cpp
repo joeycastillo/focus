@@ -251,3 +251,28 @@ TEST(truncation_tail_ellipsis_inherits_emphasis_at_cut) {
     ASSERT_TRUE(sawItalicEllipsis);
 }
 
+TEST(truncation_retriggers_after_set_frame) {
+    // Truncated at 40px; widening to 80px makes the text fit, so the
+    // re-rendered label draws everything and no ellipsis.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "aaaa aaaa", 40, 12, makeBlankEllipsisFont());
+    label->setTruncationMode(TruncationMode::Tail);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+    ASSERT_EQ(display->pixel(32, 5), 0xFF);  // truncated: ellipsis cell blank
+
+    label->setFrame(MakeRect(0, 0, 80, 12));
+    display->reset();
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+    ASSERT_EQ(display->pixel(64, 5), 1);     // ninth glyph drawn: no truncation
+    ASSERT_EQ(display->pixel(72, 5), 0xFF);  // and nothing appended after it
+}
+
+TEST(truncation_does_not_modify_stored_text) {
+    auto label = std::make_shared<LabelView>(MakeRect(0, 0, 40, 12), "aaaa aaaa");
+    label->setFont(makeBlankEllipsisFont());
+    label->setTruncationMode(TruncationMode::Tail);
+    ASSERT_STREQ(label->getText(), "aaaa aaaa");
+    ASSERT_STREQ(label->accessibilityLabel(), "aaaa aaaa");
+}
+
