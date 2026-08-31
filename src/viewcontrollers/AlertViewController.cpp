@@ -132,11 +132,13 @@ void AlertViewController::createView() {
     if (titleFont) {
         titleLabel->setFont(titleFont);
     }
+    titleLabel->accessibilityIdentifier = "alert-title";
     contentStack->addSubview(titleLabel);
 
     // Message label
     auto messageLabel = std::make_shared<LabelView>(
         MakeRect(0, 0, 0, messageHeight), this->alertMessage);
+    messageLabel->accessibilityIdentifier = "alert-message";
     contentStack->addSubview(messageLabel);
 
     // Buttons
@@ -148,6 +150,7 @@ void AlertViewController::createView() {
             for (int i = 0; i < numButtons; i++) {
                 auto button = std::make_shared<Button>(
                     RectZero, this->buttonLabels[i]);
+                button->accessibilityIdentifier = "alert-button-" + std::to_string(i);
                 int buttonIndex = i;
                 auto weakApp = this->application;
                 auto completion = this->completion;
@@ -173,6 +176,7 @@ void AlertViewController::createView() {
             for (int i = 0; i < numButtons; i++) {
                 auto button = std::make_shared<Button>(
                     MakeRect(0, 0, 0, buttonHeight), this->buttonLabels[i]);
+                button->accessibilityIdentifier = "alert-button-" + std::to_string(i);
                 int buttonIndex = i;
                 auto weakApp = this->application;
                 auto completion = this->completion;
