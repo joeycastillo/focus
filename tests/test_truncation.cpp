@@ -122,6 +122,38 @@ TEST(truncation_tail_exact_fit_draws_no_ellipsis) {
     ASSERT_EQ(display->pixel(33, 5), 0xFF);  // nothing appended after them
 }
 
+TEST(truncation_tail_ignores_trailing_newlines) {
+    // "aaaa\n\n" overflows the one-line frame only with blank lines, so
+    // nothing visible is cut and no ellipsis appears. Solid font: a
+    // spurious ellipsis would light x=32..39, which None leaves dark.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "aaaa\n\n", 40, 12, makeSolidFont());
+    label->setTruncationMode(TruncationMode::Tail);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(display->pixel(0, 5), 1);       // the four glyphs render
+    ASSERT_EQ(display->pixel(31, 5), 1);
+    ASSERT_EQ(display->pixel(32, 5), 0xFF);   // no ellipsis: same as None
+    ASSERT_EQ(display->pixel(39, 5), 0xFF);
+}
+
+TEST(truncation_tail_ignores_trailing_spaces) {
+    // "aaaa    " overflows only by spaces, so the line wraps normally and
+    // the fifth cell holds the space glyph (solid in the mock face), just
+    // as None renders it. Blank-ellipsis font: truncating instead would
+    // leave x=32..39 dark.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "aaaa    ", 40, 12, makeBlankEllipsisFont());
+    label->setTruncationMode(TruncationMode::Tail);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(display->pixel(31, 5), 1);      // prefix "aaaa"
+    ASSERT_EQ(display->pixel(32, 5), 1);      // fifth cell: the space glyph
+    ASSERT_EQ(display->pixel(39, 5), 1);
+}
+
 TEST(truncation_tail_stops_at_paragraph_break) {
     // "aa\nzz" in a one-line label: the truncated line is "aa…" — the
     // walk must not pull text from past the newline onto this line.

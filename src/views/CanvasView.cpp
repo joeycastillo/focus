@@ -821,6 +821,22 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
     }
 }
 
+// True when at least one codepoint in the run would paint a glyph — the set
+// writeCodepoint renders nothing for is skipped.
+static bool runHasVisibleCodepoint(const UNICODE_CODEPOINT *codepoints, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        UNICODE_CODEPOINT cp = codepoints[i];
+        if (cp <= 0x20) continue;
+        if (cp == TextControlCode::SoftHyphen) continue;
+        if ((cp >= 0xFE00 && cp <= 0xFE0F) ||
+            (cp >= 0xE0100 && cp <= 0xE01FF)) continue;
+        unicode_info_t traits = getTraitsForCodepoint(cp);
+        if (traits.is.nsm || traits.is.controlchar) continue;
+        return true;
+    }
+    return false;
+}
+
 int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider) {
     int16_t width = 0;
     int16_t lastAdvance = 0;
@@ -898,11 +914,13 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
         }
 
         // Tail truncation: when the next line can't fit below this one and
-        // text remains past this line's break, render this line as an
-        // ellipsized prefix and stop.
+        // visible text remains past this line's break, render this line as
+        // an ellipsized prefix and stop.
         if (this->truncationMode == TruncationMode::Tail &&
             result.codepointsConsumed >= 0 &&
-            pos + (size_t)numGlyphsToDraw < len) {
+            pos + (size_t)numGlyphsToDraw < len &&
+            runHasVisibleCodepoint(codepoints + pos + numGlyphsToDraw,
+                                   len - pos - numGlyphsToDraw)) {
             int16_t lineHeight = TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
             int16_t thisAdvance = result.isParagraphBreak
                 ? TextLayout::getParagraphHeight(glyphProvider, this->textSize, this->paragraphSpacing)
