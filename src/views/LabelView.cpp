@@ -48,6 +48,7 @@ void LabelView::renderCanvas() {
             MakeRect(0, 0, this->frame.size.width, this->frame.size.height));
     }
     this->canvas->setCanvasRotation(this->canvasRotation);
+    this->canvas->setTruncationMode(this->truncationMode);
     if (this->font) {
         this->canvas->setFont(this->font);
     }
@@ -106,6 +107,14 @@ std::shared_ptr<Font> LabelView::getFont() const {
 
 void LabelView::setTextAlignment(TextAlignment alignment) {
     this->textAlignment = alignment;
+    this->canvasValid = false;
+    if (std::shared_ptr<Window> window = this->getWindow().lock()) {
+        this->setNeedsDisplayInRect(this->frame);
+    }
+}
+
+void LabelView::setTruncationMode(TruncationMode mode) {
+    this->truncationMode = mode;
     this->canvasValid = false;
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);

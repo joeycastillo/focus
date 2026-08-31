@@ -123,6 +123,11 @@ public:
     // byte range into the provided vector (cleared before each drawText call).
     void setWordMapOutput(std::vector<WordPosition> *output);
 
+    // Truncation — when Tail, drawText() ends the last line that fits
+    // vertically with an ellipsis instead of clipping the overflow.
+    void setTruncationMode(TruncationMode mode);
+    TruncationMode getTruncationMode() const { return truncationMode; }
+
     /// Get the logical canvas width (accounts for canvas rotation).
     /// For 0°/180° this is the frame width; for 90°/270° it is the frame height.
     int getCanvasWidth() const { return (canvasRotation & 1) ? frame.size.height : frame.size.width; }
@@ -173,6 +178,7 @@ protected:
     bool pendingOverprintUnderline = false;  // Set when BS follows _, triggers underscore redraw
     bool lastWasNewline = false;  // Tracks consecutive newlines for paragraph detection
     TextAlignment textAlignment = TextAlignment::Left;
+    TruncationMode truncationMode = TruncationMode::None;
 
     // Emphasis depth tracked from SO/SI control codes (0-3). static_cast to
     // FontStyle for glyph queries (0=regular, 1=italic, 2=bold, 3=bold+italic).

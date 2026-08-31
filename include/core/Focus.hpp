@@ -243,6 +243,12 @@ enum class TextAlignment {
     Justified, ///< Distribute words evenly across the full width.
 };
 
+/// @brief Controls what happens to text that overflows its layout rect.
+enum class TruncationMode : uint8_t {
+    None,  ///< Overflowing text clips at the layout edge (default).
+    Tail,  ///< The last line that fits ends with an ellipsis.
+};
+
 /// @brief Controls how a view's subviews are navigated with directional events.
 ///
 /// When a view receives directional navigation events and the focused view is one

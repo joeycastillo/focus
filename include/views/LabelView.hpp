@@ -83,6 +83,12 @@ public:
     void setCanvasRotation(int degrees);
     /// @brief Get the canvas rotation in degrees (0, 90, 180, or 270).
     int getCanvasRotation() const { return this->canvasRotation; }
+    /// @brief Set what happens to text that overflows the frame.
+    /// TruncationMode::Tail ends the last fitting line with an ellipsis;
+    /// the stored text is never modified, only what is drawn.
+    void setTruncationMode(TruncationMode mode);
+    /// @brief Get the truncation mode.
+    TruncationMode getTruncationMode() const { return this->truncationMode; }
 
     /// @brief Returns the displayed text.
     std::string accessibilityLabel() const override;
@@ -96,6 +102,7 @@ protected:
     uint8_t textScale = 1;         ///< Text rendering scale factor.
     std::shared_ptr<Font> font;    ///< Custom font, or nullptr for system font.
     TextAlignment textAlignment = TextAlignment::Left; ///< Text alignment.
+    TruncationMode truncationMode = TruncationMode::None; ///< Overflow handling.
     int canvasRotation = 0;        ///< Canvas rotation in degrees (0/90/180/270).
     std::shared_ptr<CanvasView> canvas; ///< Internal canvas for rendered text.
     bool canvasValid = false;           ///< Whether the canvas needs re-rendering.
