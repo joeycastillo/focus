@@ -317,3 +317,33 @@ TEST(truncation_does_not_modify_stored_text) {
     ASSERT_STREQ(label->getText(), "aaaa aaaa");
     ASSERT_STREQ(label->accessibilityLabel(), "aaaa aaaa");
 }
+
+TEST(truncation_tail_agrees_with_none_at_hard_breaks) {
+    // "aaaa\nzzzz" in a 40x26 frame: the renderer advances the single
+    // newline by lineHeight (14), so zzzz's rows (14..25) fit exactly.
+    // The old paragraphHeight charge (16) made Tail truncate line 0
+    // while None drew both lines. Ruled 2026-08-31: they must agree.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "aaaa\nzzzz", 40, 26, makeSolidFont());
+    label->setTruncationMode(TruncationMode::Tail);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(display->pixel(0, 5), 1);      // line 0
+    ASSERT_EQ(display->pixel(0, 19), 1);     // zzzz on line 1, y=14..25
+    ASSERT_EQ(display->pixel(31, 19), 1);    // all four z glyphs drawn
+    ASSERT_EQ(display->pixel(32, 5), 0xFF);  // and no ellipsis on line 0
+}
+
+TEST(label_view_blank_line_advances_paragraph_spacing) {
+    // Renderer-arithmetic pin: "a\n\nb" puts b's rows at y=18 (14 + 4),
+    // locking the model the measurement layer now mirrors.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "a\n\nb", 40, 40, makeSolidFont());
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(display->pixel(0, 5), 1);      // a at y=0..11
+    ASSERT_EQ(display->pixel(0, 23), 1);     // b at y=18..29
+    ASSERT_EQ(display->pixel(0, 15), 0xFF);  // gap between them
+}
