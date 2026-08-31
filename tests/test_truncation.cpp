@@ -9,6 +9,7 @@
 #include "Window.hpp"
 #include "LabelView.hpp"
 #include "Font.hpp"
+#include <cstring>
 #include <utility>
 #include <vector>
 
@@ -316,4 +317,3 @@ TEST(truncation_does_not_modify_stored_text) {
     ASSERT_STREQ(label->getText(), "aaaa aaaa");
     ASSERT_STREQ(label->accessibilityLabel(), "aaaa aaaa");
 }
-

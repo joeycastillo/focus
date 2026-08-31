@@ -29,7 +29,8 @@
  * LabelView displays a UTF-8 text string rendered with a configurable font
  * and text scale. The text is word-wrapped within the view's frame and rendered
  * to an internal CanvasView, which is cached and re-rendered only when the
- * text, font, or frame changes. Text that overflows the frame clips by
+ * text, font, text scale, alignment, canvas rotation, frame, or truncation
+ * mode changes. Text that overflows the frame clips by
  * default; setTruncationMode(TruncationMode::Tail) ends the last fitting
  * line with an ellipsis instead. Truncation is presentation only — getText()
  * and accessibilityLabel() always return the full string.

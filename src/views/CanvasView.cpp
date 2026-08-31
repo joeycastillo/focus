@@ -467,7 +467,6 @@ void CanvasView::setTruncationMode(TruncationMode mode) {
     this->truncationMode = mode;
 }
 
-
 int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const char *utf8String,
                          TextAlignment alignment) {
     GlyphProvider *glyphProvider = nullptr;
