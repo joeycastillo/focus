@@ -9,6 +9,8 @@
 #include "Window.hpp"
 #include "LabelView.hpp"
 #include "Font.hpp"
+#include <utility>
+#include <vector>
 
 using namespace focus;
 
@@ -164,5 +166,88 @@ TEST(truncation_tail_frame_narrower_than_ellipsis) {
 
     ASSERT_EQ(display->pixel(0, 5), 1);      // clipped ellipsis pixels
     ASSERT_EQ(display->pixel(3, 5), 1);
+}
+
+// Provider without U+2026 whose '.' glyph is blank: under the "..."
+// fallback the dots' cells stay background, revealing which ellipsis
+// path ran (U+2026 would leave x=16..31 solid prefix instead).
+class NoEllipsisGlyphProvider : public MockGlyphProvider {
+public:
+    NoEllipsisGlyphProvider() : MockGlyphProvider(8, 12) {
+        memset(this->bitmap, 0xFF, sizeof(this->bitmap));
+        this->limitedGlyphSet = {'a', ' ', '.'};  // hasGlyph(0x2026) == false
+    }
+    const uint8_t* glyphForCodepoint(UNICODE_CODEPOINT codepoint,
+                                     focus::FontStyle emphasis = focus::FontStyle::Regular) const override {
+        if (codepoint == '.') return this->blank;
+        return MockGlyphProvider::glyphForCodepoint(codepoint, emphasis);
+    }
+private:
+    uint8_t blank[32 * 6] = {};
+};
+
+TEST(truncation_tail_falls_back_to_three_periods) {
+    // No U+2026 in the face: the ellipsis is "..." (24px), budget 16,
+    // so only "aa" survives and x=16 onward is the blank dots region.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "aaaa aaaa", 40, 12,
+                                  Font::withProvider(std::make_shared<NoEllipsisGlyphProvider>()));
+    label->setTruncationMode(TruncationMode::Tail);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(display->pixel(8, 5), 1);      // prefix "aa"
+    ASSERT_EQ(display->pixel(15, 5), 1);
+    ASSERT_EQ(display->pixel(20, 5), 0xFF);  // dots region, not prefix glyphs
+}
+
+TEST(truncation_tail_centers_prefix_and_ellipsis_as_one_unit) {
+    // Width 60: line one force-breaks after 8 glyphs (64px) with text
+    // still to come, so it truncates — prefix 6 glyphs + ellipsis = 56px,
+    // slack 4, so the truncated line is centered at x=2..57.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "aaaaaaaa aaaa", 60, 12, makeSolidFont());
+    label->setTruncationMode(TruncationMode::Tail);
+    label->setTextAlignment(TextAlignment::Center);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(display->pixel(1, 5), 0xFF);   // left slack
+    ASSERT_EQ(display->pixel(2, 5), 1);      // centered run starts
+    ASSERT_EQ(display->pixel(57, 5), 1);     // centered run ends
+    ASSERT_EQ(display->pixel(58, 5), 0xFF);  // right slack
+}
+
+// Provider that records the emphasis each glyph was requested with.
+class EmphasisRecordingProvider : public MockGlyphProvider {
+public:
+    EmphasisRecordingProvider() : MockGlyphProvider(8, 12) {
+        memset(this->bitmap, 0xFF, sizeof(this->bitmap));
+    }
+    bool supportsEmphasis(focus::FontStyle emphasis) const override { return true; }
+    const uint8_t* glyphForCodepoint(UNICODE_CODEPOINT codepoint,
+                                     focus::FontStyle emphasis = focus::FontStyle::Regular) const override {
+        this->drawn.push_back({codepoint, emphasis});
+        return MockGlyphProvider::glyphForCodepoint(codepoint, emphasis);
+    }
+    mutable std::vector<std::pair<UNICODE_CODEPOINT, focus::FontStyle>> drawn;
+};
+
+TEST(truncation_tail_ellipsis_inherits_emphasis_at_cut) {
+    // "aa" then SO (italic on) then "bbbbbb": the cut lands inside the
+    // italic run, so the ellipsis must be requested at Italic.
+    auto provider = std::make_shared<EmphasisRecordingProvider>();
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "aa\x0E" "bbbbbb", 40, 12,
+                                  Font::withProvider(provider));
+    label->setTruncationMode(TruncationMode::Tail);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    bool sawItalicEllipsis = false;
+    for (const auto& entry : provider->drawn) {
+        if (entry.first == 0x2026 && entry.second == FontStyle::Italic) sawItalicEllipsis = true;
+    }
+    ASSERT_TRUE(sawItalicEllipsis);
 }
 
