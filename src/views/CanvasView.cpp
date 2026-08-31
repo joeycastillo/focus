@@ -516,17 +516,8 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
         this->codepointByteOffsets = offsets;
     }
 
-    // Auto-detect Arabic codepoints (U+0621–U+06D2) and shape if present
-    bool needsShaping = false;
-    for (size_t i = 0; i < len; i++) {
-        if (codepoints[i] >= 0x0621 && codepoints[i] <= 0x06D2) {
-            needsShaping = true;
-            break;
-        }
-    }
-    if (needsShaping) {
-        shapeArabic(codepoints, len);
-    }
+    shapeArabicIfNeeded(codepoints, len);
+
     size_t retVal = this->writeCodepoints(codepoints, len, glyphProvider);
 
     if (this->codepointByteOffsets) {

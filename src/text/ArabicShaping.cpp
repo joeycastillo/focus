@@ -26,6 +26,8 @@
 #include "UnicodeArabicPresentation.hpp"
 #include "UnicodeTraits.hpp"
 
+#if FOCUS_HAS_TEXT_SHAPING
+
 namespace focus {
 
 using namespace UnicodeArabicPresentation;
@@ -127,4 +129,16 @@ void shapeArabic(UNICODE_CODEPOINT* codepoints, size_t len) {
     }
 }
 
+void shapeArabicIfNeeded(UNICODE_CODEPOINT* codepoints, size_t len) {
+    // Scan for shapeable Arabic codepoints; shape in place when found.
+    for (size_t i = 0; i < len; i++) {
+        if (codepoints[i] >= 0x0621 && codepoints[i] <= 0x06D2) {
+            shapeArabic(codepoints, len);
+            return;
+        }
+    }
+}
+
 }  // namespace focus
+
+#endif  // FOCUS_HAS_TEXT_SHAPING

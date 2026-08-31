@@ -19,6 +19,9 @@
  */
 
 #include "UnicodeArabicPresentation.hpp"
+#include "focus_config.h"
+
+#if FOCUS_HAS_TEXT_SHAPING
 
 namespace focus {
 
@@ -231,3 +234,5 @@ UNICODE_CODEPOINT getForm(UNICODE_CODEPOINT base, Form form) {
 } // namespace UnicodeArabicPresentation
 
 }  // namespace focus
+
+#endif  // FOCUS_HAS_TEXT_SHAPING

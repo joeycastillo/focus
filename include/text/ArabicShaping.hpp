@@ -35,8 +35,11 @@
 
 #include <cstddef>
 #include "Utf8.hpp"
+#include "focus_config.h"
 
 namespace focus {
+
+#if FOCUS_HAS_TEXT_SHAPING
 
 /**
  * @brief Shape Arabic text by replacing base characters with contextual forms.
@@ -49,5 +52,18 @@ namespace focus {
  * @param len Number of codepoints in the array.
  */
 void shapeArabic(UNICODE_CODEPOINT* codepoints, size_t len);
+
+/// Shape Arabic text in place if any codepoint is in U+0621-U+06D2.
+/// Idempotent: shaped output lies outside the detection range, so calling
+/// this on already-shaped text leaves the buffer unchanged.
+void shapeArabicIfNeeded(UNICODE_CODEPOINT* codepoints, size_t len);
+
+#else
+
+// Shaping compiled out: both entry points are inert.
+inline void shapeArabic(UNICODE_CODEPOINT*, size_t) {}
+inline void shapeArabicIfNeeded(UNICODE_CODEPOINT*, size_t) {}
+
+#endif  // FOCUS_HAS_TEXT_SHAPING
 
 }  // namespace focus
