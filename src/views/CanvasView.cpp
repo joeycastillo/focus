@@ -897,6 +897,24 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             numGlyphsToDraw = result.codepointsConsumed;
         }
 
+        // Tail truncation: when the next line can't fit below this one and
+        // text remains past this line's break, render this line as an
+        // ellipsized prefix and stop.
+        if (this->truncationMode == TruncationMode::Tail &&
+            result.codepointsConsumed >= 0 &&
+            pos + (size_t)numGlyphsToDraw < len) {
+            int16_t lineHeight = TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
+            int16_t thisAdvance = result.isParagraphBreak
+                ? TextLayout::getParagraphHeight(glyphProvider, this->textSize, this->paragraphSpacing)
+                : lineHeight;
+            int16_t rowHeight = (int16_t)(this->glyphRowCount * this->textSize);
+            int16_t layoutBottom = this->textLayoutRect.origin.y + this->textLayoutRect.size.height;
+            if (this->cursor.y + thisAdvance + rowHeight > layoutBottom) {
+                this->renderTruncatedLine(codepoints + pos, len - pos, glyphProvider);
+                return retVal;
+            }
+        }
+
         // A line that breaks at a soft hyphen renders a synthesized hyphen at
         // its end — the U+00AD itself paints nothing. Reserve the hyphen's
         // width before alignment so justification's slack distribution can't
@@ -937,6 +955,57 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
     }
 
     return retVal;
+}
+
+void CanvasView::renderTruncatedLine(UNICODE_CODEPOINT *codepoints, size_t len,
+                                     GlyphProvider *glyphProvider) {
+    int16_t effectiveWidth = this->textLayoutRect.size.width;
+
+    // Ellipsis is U+2026 when the face has it, else three periods.
+    UNICODE_CODEPOINT ellipsisRun[3] = {0x2026, 0x2026, 0x2026};
+    size_t ellipsisLen = 1;
+    if (!glyphProvider->hasGlyph(0x2026)) {
+        ellipsisRun[0] = ellipsisRun[1] = ellipsisRun[2] = '.';
+        ellipsisLen = 3;
+    }
+
+    // Longest prefix whose width plus the ellipsis (at the emphasis depth
+    // in effect at the cut) stays inside the layout width. Stream control
+    // codes ride along at zero width; the walk stops at a paragraph break.
+    uint8_t depth = this->emphasisDepth;
+    size_t cut = 0;
+    int16_t width = 0;
+    for (size_t i = 0; i < len; i++) {
+        UNICODE_CODEPOINT cp = codepoints[i];
+        if (cp == '\n') break;
+        if (!applyEmphasisShift(cp, depth) && cp >= 0x20 &&
+            cp != TextControlCode::SoftHyphen) {
+            width += glyphProvider->metricsForCodepoint(
+                cp, static_cast<FontStyle>(depth)).advance * this->textSize;
+        }
+        int16_t ellipsisWidth = 0;
+        for (size_t j = 0; j < ellipsisLen; j++) {
+            ellipsisWidth += glyphProvider->metricsForCodepoint(
+                ellipsisRun[j], static_cast<FontStyle>(depth)).advance * this->textSize;
+        }
+        if (width + ellipsisWidth <= effectiveWidth) cut = i + 1;
+        if (width >= effectiveWidth) break;
+    }
+
+    // Drop whitespace left dangling before the ellipsis.
+    while (cut > 0 && codepoints[cut - 1] == 0x20) cut--;
+
+    // One scratch run of prefix + ellipsis, so alignment and bidi treat
+    // the truncated result as an ordinary final line.
+    std::vector<UNICODE_CODEPOINT> run(codepoints, codepoints + cut);
+    for (size_t j = 0; j < ellipsisLen; j++) run.push_back(ellipsisRun[j]);
+
+    // The scratch run's indices don't map to source bytes; keep the word map out.
+    std::vector<WordPosition> *savedWordMap = this->wordMapOutput;
+    this->wordMapOutput = nullptr;
+    renderBidiLine(run.data(), 0, run.size(), 1, effectiveWidth,
+                   this->textLayoutRect.origin.x, glyphProvider);
+    this->wordMapOutput = savedWordMap;
 }
 
 size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider) {

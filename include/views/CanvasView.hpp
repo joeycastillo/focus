@@ -203,6 +203,11 @@ protected:
     /// Emit a single glyph at the current cursor position and advance the cursor.
     size_t writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *glyphProvider);
 
+    /// Render the remaining text as the longest prefix that fits with an
+    /// ellipsis appended, as one line through renderBidiLine. Called from
+    /// writeCodepoints in TruncationMode::Tail for the last fitting line.
+    void renderTruncatedLine(UNICODE_CODEPOINT *codepoints, size_t len, GlyphProvider *glyphProvider);
+
 private:
     int rowBytes;                 // Monochrome: (width+7)/8; Grayscale: width; RGB565: width*2
     int planeSize;                // Monochrome buffer size = ((width+7)/8) * height
