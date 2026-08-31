@@ -119,3 +119,50 @@ TEST(truncation_tail_exact_fit_draws_no_ellipsis) {
     ASSERT_EQ(display->pixel(31, 5), 1);     // all four glyphs drawn
     ASSERT_EQ(display->pixel(33, 5), 0xFF);  // nothing appended after them
 }
+
+TEST(truncation_tail_stops_at_paragraph_break) {
+    // "aa\nzz" in a one-line label: the truncated line is "aa…" — the
+    // walk must not pull text from past the newline onto this line.
+    // Solid font: the ellipsis drawn ON this line (x=16..23) is the
+    // discriminator — a walk that runs past the newline would push the
+    // ellipsis onto a second, clipped line, leaving x=16..23 dark.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "aa\nzz", 40, 12, makeSolidFont());
+    label->setTruncationMode(TruncationMode::Tail);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(display->pixel(8, 5), 1);      // second 'a'
+    ASSERT_EQ(display->pixel(17, 5), 1);     // ellipsis on this line, x=16..23
+    ASSERT_EQ(display->pixel(30, 5), 0xFF);  // nothing from past the newline
+}
+
+TEST(truncation_tail_trims_space_before_ellipsis) {
+    // Width 48, budget 40: the walk keeps "aaaa " (40px), then the trim
+    // drops the dangling space, so the run is "aaaa" + ellipsis at
+    // x=32..39 (blank cell). Without the trim, the space's solid glyph
+    // would light x=32..39.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "aaaa aaaa", 48, 12, makeBlankEllipsisFont());
+    label->setTruncationMode(TruncationMode::Tail);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(display->pixel(31, 5), 1);     // prefix "aaaa"
+    ASSERT_EQ(display->pixel(35, 5), 0xFF);  // ellipsis cell where the space would be
+    ASSERT_EQ(display->pixel(44, 5), 0xFF);  // untouched beyond the ellipsis
+}
+
+TEST(truncation_tail_frame_narrower_than_ellipsis) {
+    // 4px frame: no prefix fits; the ellipsis renders alone and clips.
+    // Solid font so the ellipsis is visible; must not crash.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "aaaa", 4, 12, makeSolidFont());
+    label->setTruncationMode(TruncationMode::Tail);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(display->pixel(0, 5), 1);      // clipped ellipsis pixels
+    ASSERT_EQ(display->pixel(3, 5), 1);
+}
+
