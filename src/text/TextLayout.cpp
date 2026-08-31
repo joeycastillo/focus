@@ -378,15 +378,16 @@ int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidt
     if (codepoints == nullptr) return 0;
 
     utf8_parse(utf8String, codepoints);
+    shapeArabicIfNeeded(codepoints, len);
 
     int16_t lineSpacing = calculateLineSpacing(glyphProvider);
     int16_t paragraphSpacing = calculateParagraphSpacing(glyphProvider);
     int16_t lineHeight = getLineHeight(glyphProvider, textSize, lineSpacing);
-    int16_t paragraphHeight = getParagraphHeight(glyphProvider, textSize, paragraphSpacing);
 
     int16_t totalHeight = 0;
     size_t offset = 0;
     uint8_t emphasis = 0;
+    bool lastWasNewline = false;
 
     while (offset < len) {
         WordWrapResult result = measureLineWrap(
@@ -404,15 +405,23 @@ int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidt
             break;
         }
 
-        // Track SO/SI emphasis changes through consumed codepoints
+        // Track emphasis and whether this line drew anything visible.
+        bool hasDrawable = false;
         for (int32_t i = 0; i < result.codepointsConsumed; i++) {
-            applyEmphasisShift(codepoints[offset + i], emphasis);
+            UNICODE_CODEPOINT cp = codepoints[offset + i];
+            if (applyEmphasisShift(cp, emphasis)) continue;
+            if (cp >= 0x20 && cp != TextControlCode::SoftHyphen) hasDrawable = true;
         }
 
         if (result.isParagraphBreak) {
-            totalHeight += paragraphHeight;
+            // Mirror writeCodepoint: a blank line after a newline adds
+            // paragraph spacing alone; any other newline is a line break.
+            totalHeight += (lastWasNewline && !hasDrawable)
+                ? paragraphSpacing : lineHeight;
+            lastWasNewline = true;
         } else {
             totalHeight += lineHeight;
+            lastWasNewline = false;
         }
 
         offset += result.codepointsConsumed;

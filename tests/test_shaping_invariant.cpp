@@ -74,3 +74,35 @@ TEST(measure_text_width_pre_shaped_equals_logical) {
     int16_t shaped = TextLayout::measureTextWidth("\xEF\xBB\xBB\xE2\x80\x8B", 1, &provider);
     ASSERT_EQ(logical, shaped);
 }
+
+TEST(measure_text_height_single_newline_charges_line_height) {
+    // "a\nb" at generous width: line "a\n" charges lineHeight (14), the
+    // final line charges glyph rows (12). Old model charged the newline
+    // paragraphHeight (16) for a total of 28.
+    MockGlyphProvider provider(8, 12);
+    ASSERT_EQ(TextLayout::measureTextHeight("a\nb", 80, 1, &provider), (int16_t)26);
+}
+
+TEST(measure_text_height_blank_line_charges_paragraph_spacing) {
+    // "a\n\nb": 14 (a's line) + 4 (blank line: paragraphSpacing alone,
+    // mirroring writeCodepoint's consecutive-newline branch) + 12 (b).
+    // Old model: 16 + 16 + 12 = 44.
+    MockGlyphProvider provider(8, 12);
+    ASSERT_EQ(TextLayout::measureTextHeight("a\n\nb", 80, 1, &provider), (int16_t)30);
+}
+
+TEST(measure_text_height_leading_blank_line_is_a_line_break) {
+    // "\nb": the first \n has no preceding newline, so it charges
+    // lineHeight (14), not paragraphSpacing — exactly as the renderer's
+    // lastWasNewline starts false. Total 14 + 12 = 26.
+    MockGlyphProvider provider(8, 12);
+    ASSERT_EQ(TextLayout::measureTextHeight("\nb", 80, 1, &provider), (int16_t)26);
+}
+
+TEST(measure_text_height_shapes_arabic) {
+    // Pre-shaped and logical strings wrap identically, so heights agree.
+    ZeroWidthAwareProvider provider;
+    int16_t logical = TextLayout::measureTextHeight("\xD9\x84\xD8\xA7", 40, 1, &provider);
+    int16_t shaped = TextLayout::measureTextHeight("\xEF\xBB\xBB\xE2\x80\x8B", 40, 1, &provider);
+    ASSERT_EQ(logical, shaped);
+}
