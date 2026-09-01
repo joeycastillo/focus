@@ -114,6 +114,21 @@ target_compile_definitions(focus-test-nofs PRIVATE
 )
 target_compile_options(focus-test-nofs PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+# --- Shaping-free build: whole framework compiled with
+#     FOCUS_HAS_TEXT_SHAPING=0. Proves the shaper and its tables are
+#     genuinely excludable and measurement stays consistent (unshaped)
+#     with rendering. ---
+add_executable(focus-test-noshaping
+    test_no_shaping.cpp
+    ${FOCUS_SOURCES}
+)
+target_include_directories(focus-test-noshaping PRIVATE ${INCLUDE_DIRS})
+target_compile_definitions(focus-test-noshaping PRIVATE
+    FOCUS_HAS_TEXT_SHAPING=0
+    FONTS_DIR="${FOCUS_TEST_FONTS_DIR}/"
+)
+target_compile_options(focus-test-noshaping PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
 # --- Header include-order guard (compile-only) -----------------------------
 # Every public header must compile when Arduino.h's round()/abs()/min()/max()
 # function-like macros are already defined — i.e. when a translation unit

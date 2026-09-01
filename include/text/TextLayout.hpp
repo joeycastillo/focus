@@ -127,6 +127,16 @@ public:
 
     /**
      * Measure where to wrap a line of text.
+     *
+     * measureLineWrap is shape-agnostic: pass presentation-ready
+     * codepoints. If your text may contain Arabic, run shapeArabic (or
+     * shapeArabicIfNeeded) on the buffer first, and record any
+     * byte-length bookkeeping BEFORE shaping — presentation forms have
+     * different UTF-8 lengths than the letters they replace. Shaping is
+     * idempotent, so already-shaped input passes through unchanged.
+     * The string-level APIs (measureTextWidth, measureTextHeight,
+     * CanvasView::drawText) handle all of this internally.
+     *
      * @param codepoints Array of Unicode codepoints to measure
      * @param len Number of codepoints in the array
      * @param layoutWidth Width of the layout area in pixels
