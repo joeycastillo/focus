@@ -15,8 +15,8 @@
 
 using namespace focus;
 
-// Mock glyphs are 8px advance, 12 rows; lineSpacing 2 -> line pitch 14;
-// paragraphSpacing 12/3 = 4 -> paragraph pitch 16.
+// Mock glyphs are 8px advance, 12 rows; lineSpacing 2 -> line pitch 14.
+// A blank line adds paragraphSpacing 12/3 = 4 instead of a line pitch.
 static std::shared_ptr<Font> makeMockFont() {
     auto provider = std::make_shared<MockGlyphProvider>(8, 12);
     memset(provider->bitmap, 0xFF, sizeof(provider->bitmap));  // solid glyphs
@@ -101,6 +101,45 @@ TEST(text_view_soft_hyphen_renders_trailing_hyphen) {
     ASSERT_EQ(blitCount(*display), 2);
     ASSERT_EQ(display->pixel(39, 5), 1);   // hyphen occupies the reserved slot
     ASSERT_EQ(display->pixel(0, 19), 1);   // second line starts at x=0, y=14..26
+}
+
+namespace {
+// Gives U+200B its correct zero advance, so a shaped lam-alef ligature
+// occupies one 8px cell where the unshaped pair occupies two.
+class ZeroWidthAwareMockProvider : public MockGlyphProvider {
+public:
+    ZeroWidthAwareMockProvider() : MockGlyphProvider(8, 12) {
+        memset(this->bitmap, 0xFF, sizeof(this->bitmap));  // solid glyphs
+    }
+    focus::GlyphMetrics metricsForCodepoint(UNICODE_CODEPOINT codepoint,
+                                            focus::FontStyle emphasis = focus::FontStyle::Regular) const override {
+        if (codepoint == 0x200B) return focus::GlyphMetrics{0, 0, 12, 0, 0};
+        return MockGlyphProvider::metricsForCodepoint(codepoint, emphasis);
+    }
+};
+}  // namespace
+
+TEST(text_view_line_index_wraps_on_shaped_widths) {
+    // "لا لا لا" at width 24. Shaped, each word is one 8px ligature plus a
+    // zero-width space, so the index holds two lines and the second carries
+    // both remaining words. Unshaped the words are 16px and it takes three
+    // lines, leaving the second line half as wide and a third at y=28.
+    auto display = std::make_shared<RecordingDisplay>(480, 800);
+    auto window = std::make_shared<Window>(display, MakeSize(480, 800));
+    auto tv = std::make_shared<TextView>(MakeRect(0, 0, 24, 0),
+                                         "\xD9\x84\xD8\xA7 \xD9\x84\xD8\xA7 \xD9\x84\xD8\xA7");
+    tv->setFont(Font::withProvider(std::make_shared<ZeroWidthAwareMockProvider>()));
+    ASSERT_EQ(tv->heightForWidth(24), 14 + 12);
+
+    // Frame taller than the text, so an unshaped third line would show.
+    tv->setFrame(MakeRect(0, 0, 24, 40));
+    window->addSubview(tv);
+    display->reset();
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(blitCount(*display), 2);
+    ASSERT_EQ(display->pixel(23, 19), 1);     // line 1 runs the full 24px
+    ASSERT_EQ(display->pixel(0, 30), 0xFF);   // and there is no line 2
 }
 
 TEST(text_view_inside_scroll_view_shows_correct_band) {

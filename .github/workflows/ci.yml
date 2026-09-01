@@ -40,6 +40,9 @@ jobs:
       - name: Filesystem-free build + smoke
         run: ./build/focus-test-nofs
 
+      - name: Shaping-free build + smoke
+        run: ./build/focus-test-noshaping
+
   pygamer-build:
     name: PyGamer example (SAMD51 / arm-gcc)
     runs-on: ubuntu-latest

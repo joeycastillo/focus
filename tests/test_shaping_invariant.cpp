@@ -9,7 +9,6 @@
 #include "TextLayout.hpp"
 #include "MockGlyphProvider.hpp"
 #include <cstring>
-#include <vector>
 
 using namespace focus;
 
@@ -33,7 +32,7 @@ TEST(shape_if_needed_leaves_latin_untouched) {
 TEST(shaping_is_idempotent) {
     // Shape a mixed buffer twice; the second pass must change nothing.
     // The detect range (U+0621-U+06D2) excludes shapeArabic's own output,
-    // so this is the load-bearing pass-through contract.
+    // so this is the pass-through contract.
     UNICODE_CODEPOINT cps[] = {'a', ' ', 0x0644, 0x0627, ' ', 0x0645, 'z'};
     size_t len = sizeof(cps) / sizeof(cps[0]);
     shapeArabicIfNeeded(cps, len);
@@ -97,6 +96,15 @@ TEST(measure_text_height_leading_blank_line_is_a_line_break) {
     // lastWasNewline starts false. Total 14 + 12 = 26.
     MockGlyphProvider provider(8, 12);
     ASSERT_EQ(TextLayout::measureTextHeight("\nb", 80, 1, &provider), (int16_t)26);
+}
+
+TEST(measure_text_height_wraps_on_shaped_widths) {
+    // "لا لا لا" at width 24. Shaped, each word is one 8px ligature plus a
+    // zero-width space, so two lines fit: 14 + 12 = 26. Unshaped the words
+    // are 16px wide and it takes three lines: 14 + 14 + 12 = 40.
+    ZeroWidthAwareProvider provider;
+    const char* text = "\xD9\x84\xD8\xA7 \xD9\x84\xD8\xA7 \xD9\x84\xD8\xA7";
+    ASSERT_EQ(TextLayout::measureTextHeight(text, 24, 1, &provider), (int16_t)26);
 }
 
 TEST(measure_text_height_shapes_arabic) {
