@@ -912,15 +912,20 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             runHasVisibleCodepoint(codepoints + pos + numGlyphsToDraw,
                                    len - pos - numGlyphsToDraw)) {
             int16_t lineHeight = TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);
-            // Mirror writeCodepoint's newline advance: a lone \n following
-            // another newline adds paragraph spacing; any other line ending
-            // advances one line height.
+            // Mirror writeCodepoint's newline advance: a line that draws
+            // nothing after a newline adds paragraph spacing; any other
+            // line ending advances one line height.
             int16_t thisAdvance = lineHeight;
             if (result.isParagraphBreak) {
-                bool blankLine = (numGlyphsToDraw == 1 && codepoints[pos] == '\n');
-                if (blankLine && this->lastWasNewline) {
-                    thisAdvance = (int16_t)this->paragraphSpacing;
+                uint8_t depth = this->emphasisDepth;
+                bool hasDrawable = false;
+                for (int32_t i = 0; i < numGlyphsToDraw; i++) {
+                    UNICODE_CODEPOINT cp = codepoints[pos + i];
+                    if (applyEmphasisShift(cp, depth)) continue;
+                    if (cp >= 0x20 && cp != TextControlCode::SoftHyphen) hasDrawable = true;
                 }
+                thisAdvance = (this->lastWasNewline && !hasDrawable)
+                    ? (int16_t)this->paragraphSpacing : lineHeight;
             }
             int16_t rowHeight = (int16_t)(this->glyphRowCount * this->textSize);
             int16_t layoutBottom = this->textLayoutRect.origin.y + this->textLayoutRect.size.height;

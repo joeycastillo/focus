@@ -335,6 +335,26 @@ TEST(truncation_tail_agrees_with_none_at_hard_breaks) {
     ASSERT_EQ(display->pixel(32, 5), 0xFF);  // and no ellipsis on line 0
 }
 
+TEST(truncation_tail_charges_paragraph_spacing_for_crlf_blank_lines) {
+    // "a\r\n\r\nbbbb bbbb" in a 40x30 frame. The renderer charges the CRLF
+    // blank line paragraphSpacing (4), putting the b line at y=18 where its
+    // rows 18..29 fit; the hook must charge the same 4, not a line height.
+    // Charging 14 makes it truncate at the blank line instead, leaving the
+    // b line unrendered. Blank-ellipsis font: the truncated b line is
+    // "bbbb" at x=0..31 with a background cell at x=32..39.
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<LabelView> label;
+    auto window = makeLabelWindow(display, label, "a\r\n\r\nbbbb bbbb", 40, 30,
+                                  makeBlankEllipsisFont());
+    label->setTruncationMode(TruncationMode::Tail);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+
+    ASSERT_EQ(display->pixel(0, 5), 1);       // 'a' on line 0
+    ASSERT_EQ(display->pixel(0, 23), 1);      // b line at y=18..29
+    ASSERT_EQ(display->pixel(31, 23), 1);     // its four glyphs
+    ASSERT_EQ(display->pixel(32, 23), 0xFF);  // ellipsis cell (blank glyph)
+}
+
 TEST(label_view_blank_line_advances_paragraph_spacing) {
     // Renderer-arithmetic pin: "a\n\nb" puts b's rows at y=18 (14 + 4),
     // locking the model the measurement layer now mirrors.
