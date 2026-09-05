@@ -269,6 +269,50 @@ TEST(text_view_parity_rtl_runs) {
     assertParity("aa \xD9\x85\xD8\xB1\xD8\xAD\xD8\xA8\xD8\xA7 bb", 40, TextAlignment::Left);
 }
 
+// A wrapped line ends with the whitespace it broke at, which paints
+// nothing. Alignment measures the line without it, so a line whose
+// trailing space hangs past the edge still sits where its visible glyphs
+// belong. "ab cd fg": "ab cd" is 40px, the space after it makes 48.
+
+static std::shared_ptr<RecordingDisplay> drawAligned(const char* text, int width,
+                                                     TextAlignment alignment) {
+    std::shared_ptr<RecordingDisplay> display;
+    std::shared_ptr<TextView> tv;
+    auto window = makeTextWindow(display, tv, text, width);
+    tv->setTextAlignment(alignment);
+    window->draw(0, 0, MakeRect(0, 0, 480, 800));
+    return display;
+}
+
+TEST(text_view_right_alignment_ignores_hanging_space) {
+    // 44px wide: "ab cd" fits with 4px of slack; glyphs sit at x=4..43.
+    auto display = drawAligned("ab cd fg", 44, TextAlignment::Right);
+    ASSERT_EQ(display->pixel(3, 5), 0xFF);
+    ASSERT_EQ(display->pixel(4, 5), 1);
+    ASSERT_EQ(display->pixel(43, 5), 1);
+    ASSERT_EQ(display->pixel(43, 19), 1);   // "fg" on line 1 is flush right too
+}
+
+TEST(text_view_center_alignment_ignores_hanging_space) {
+    // 46px wide: 6px of slack, 3px each side; glyphs sit at x=3..42.
+    // (Mock glyphs are solid, space included, so the hanging space paints
+    // a block past x=42; only the left edge is asserted.)
+    auto display = drawAligned("ab cd fg", 46, TextAlignment::Center);
+    ASSERT_EQ(display->pixel(2, 5), 0xFF);
+    ASSERT_EQ(display->pixel(3, 5), 1);
+    ASSERT_EQ(display->pixel(42, 5), 1);
+}
+
+TEST(text_view_justified_alignment_ignores_hanging_space) {
+    // 44px wide: the one real gap absorbs the 4px of slack, so "cd" lands
+    // at x=28..43 instead of 24..39.
+    auto display = drawAligned("ab cd fg", 44, TextAlignment::Justified);
+    ASSERT_EQ(display->pixel(15, 5), 1);
+    ASSERT_EQ(display->pixel(27, 5), 0xFF);
+    ASSERT_EQ(display->pixel(28, 5), 1);
+    ASSERT_EQ(display->pixel(43, 5), 1);
+}
+
 // Provider that records every codepoint requested for drawing, so tests
 // can assert shaped presentation forms reach the glyph lookup.
 class CodepointRecordingProvider : public MockGlyphProvider {

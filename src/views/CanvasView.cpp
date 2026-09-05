@@ -548,9 +548,15 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
     int16_t justifyGapsEmitted = 0;
     int16_t justifyMaxGaps = 0;
 
-    // Apply text alignment offset for this line
+    // Apply text alignment offset for this line. A wrapped line ends with
+    // the whitespace it broke at; it paints nothing and measureLineWrap
+    // never charged it, so measure the line without it.
     if (this->textAlignment != TextAlignment::Left) {
-        int16_t lineWidth = measureCodepointsWidth(codepoints + lineStart, lineLen, glyphProvider);
+        size_t visibleLen = lineLen;
+        if (getTraitsForCodepoint(codepoints[lineStart + lineLen - 1]).is.whitespace) {
+            visibleLen--;
+        }
+        int16_t lineWidth = measureCodepointsWidth(codepoints + lineStart, visibleLen, glyphProvider);
         int16_t slack = effectiveWidth - lineWidth;
         if (slack > 0) {
             if (this->textAlignment == TextAlignment::Center) {
@@ -570,21 +576,13 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
                 for (size_t k = 0; k < lineLen; k++) {
                     if (codepoints[lineStart + k] == 0x20) numSpaces++;
                 }
-                // Word-wrapped lines include a trailing space at the break
-                // point. Exclude it from justification: it's not a visible
-                // inter-word gap, and its width should become part of the
-                // slack distributed across the real gaps.
-                bool hasTrailingSpace = (lineLen > 0 && codepoints[lineStart + lineLen - 1] == 0x20);
+                // The trailing space is not an inter-word gap.
+                bool hasTrailingSpace = (codepoints[lineStart + lineLen - 1] == 0x20);
                 int16_t interWordGaps = hasTrailingSpace ? numSpaces - 1 : numSpaces;
                 if (interWordGaps > 0) {
-                    int16_t adjustedSlack = slack;
-                    if (hasTrailingSpace) {
-                        adjustedSlack += measureCodepointsWidth(
-                            &codepoints[lineStart + lineLen - 1], 1, glyphProvider);
-                    }
                     justifyMaxGaps = interWordGaps;
-                    justifyExtraPerGap = adjustedSlack / interWordGaps;
-                    justifyRemainder = adjustedSlack % interWordGaps;
+                    justifyExtraPerGap = slack / interWordGaps;
+                    justifyRemainder = slack % interWordGaps;
                 }
                 // Cursor stays at left edge — justified starts flush left
             }
