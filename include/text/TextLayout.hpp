@@ -145,9 +145,15 @@ public:
      * @param initialCursorX Starting X position (for continuing partial lines across chunks)
      * @param initialEmphasis Emphasis style in effect at the start of the line
      * @param hyphenator Optional algorithmic hyphenator consulted when a word
-     *        overflows the line and contains no soft hyphens; pass nullptr to
+     *        overflows the line and contains no soft hyphens; it is offered
+     *        the whole word, not just the part that fit. Pass nullptr to
      *        wrap at word boundaries only
      * @return WordWrapResult containing wrap position and metadata
+     *
+     * A wrapped line ends with the whitespace it broke at. That whitespace
+     * paints nothing, so its advance is never charged against layoutWidth:
+     * a word that fits stays on the line even when the space after it
+     * would not. Visible break opportunities (hyphens, ideographs) must fit.
      */
     static WordWrapResult measureLineWrap(
         UNICODE_CODEPOINT* codepoints,

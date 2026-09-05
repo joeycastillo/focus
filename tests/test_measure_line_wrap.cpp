@@ -388,3 +388,153 @@ TEST(measureTextWidth_ignores_soft_hyphen) {
     ASSERT_EQ(TextLayout::measureTextWidth("ab\xC2\xAD" "cd", 1, &gp),
               TextLayout::measureTextWidth("abcd", 1, &gp));
 }
+
+// --- trailing whitespace at the break ---
+// The whitespace that ends a wrapped line paints nothing, so its advance is
+// never charged against the layout width. Visible break opportunities
+// (hyphens, ideographs) still have to fit.
+
+// Hyphenator that records the word it was offered; offers no positions.
+struct CapturingHyphenator : public Hyphenator {
+    mutable int calls = 0;
+    mutable UNICODE_CODEPOINT word[32];
+    mutable size_t wordLen = 0;
+    size_t findBreakPositions(const UNICODE_CODEPOINT* w, size_t n,
+                              size_t*, size_t) const override {
+        calls++;
+        wordLen = n < 32 ? n : 32;
+        for (size_t i = 0; i < wordLen; i++) word[i] = w[i];
+        return 0;
+    }
+};
+
+TEST(measureLineWrap_trailing_space_overflow_keeps_word) {
+    // "ab cde" = 48px fills the line exactly; the space after "cde" would
+    // land at 56. The word stays on the line and the space breaks it.
+    MockGlyphProvider gp(8);
+    size_t len;
+    UNICODE_CODEPOINT* cps = toCodepoints("ab cde fg", &len);
+
+    WordWrapResult r = TextLayout::measureLineWrap(cps, len, 48, 1, &gp);
+    ASSERT_TRUE(r.wrapped);
+    ASSERT_FALSE(r.needsHyphen);
+    ASSERT_EQ(r.codepointsConsumed, (int32_t)7);  // "ab cde " consumed
+
+    free(cps);
+}
+
+TEST(measureLineWrap_trailing_space_overflow_first_word) {
+    // Same rule when there is no earlier break on the line.
+    MockGlyphProvider gp(8);
+    size_t len;
+    UNICODE_CODEPOINT* cps = toCodepoints("abcde fg", &len);
+
+    WordWrapResult r = TextLayout::measureLineWrap(cps, len, 40, 1, &gp);
+    ASSERT_TRUE(r.wrapped);
+    ASSERT_EQ(r.codepointsConsumed, (int32_t)6);  // "abcde " consumed
+
+    free(cps);
+}
+
+TEST(measureLineWrap_trailing_thin_space_overflow_keeps_word) {
+    // U+2009 is whitespace with a break opportunity: same treatment as U+0020.
+    MockGlyphProvider gp(8);
+    UNICODE_CODEPOINT cps[] = {'a', 'b', 0x2009, 'c', 'd', 'e', 0x2009, 'f', 'g'};
+
+    WordWrapResult r = TextLayout::measureLineWrap(cps, 9, 48, 1, &gp);
+    ASSERT_TRUE(r.wrapped);
+    ASSERT_EQ(r.codepointsConsumed, (int32_t)7);
+}
+
+TEST(measureLineWrap_overflowing_ideograph_not_a_candidate) {
+    // Every ideograph is a break opportunity, but a visible one that
+    // overflows must not be pulled onto the line (8521a0d).
+    MockGlyphProvider gp(8);
+    UNICODE_CODEPOINT cps[] = {0x4E2D, 0x4E2D, 0x4E2D, 0x4E2D, 0x4E2D, 0x4E2D};
+
+    WordWrapResult r = TextLayout::measureLineWrap(cps, 6, 40, 1, &gp);
+    ASSERT_TRUE(r.wrapped);
+    ASSERT_EQ(r.codepointsConsumed, (int32_t)5);
+}
+
+TEST(measureLineWrap_overflowing_hyphen_minus_not_a_candidate) {
+    // A hyphen-minus that overflows is visible: the line breaks at the
+    // earlier space instead.
+    MockGlyphProvider gp(8);
+    size_t len;
+    UNICODE_CODEPOINT* cps = toCodepoints("ab cde-fg", &len);
+
+    WordWrapResult r = TextLayout::measureLineWrap(cps, len, 48, 1, &gp);
+    ASSERT_TRUE(r.wrapped);
+    ASSERT_EQ(r.codepointsConsumed, (int32_t)3);  // "ab " consumed
+
+    free(cps);
+}
+
+TEST(measureLineWrap_hyphenator_not_consulted_when_space_overflows) {
+    // "ab cdefg" = 64px fits; the trailing space breaks the line, so there
+    // is no overflowing word to hyphenate.
+    MockGlyphProvider gp(8);
+    size_t len;
+    UNICODE_CODEPOINT* cps = toCodepoints("ab cdefg hi", &len);
+    RecordingHyphenator hyph;
+
+    WordWrapResult r = TextLayout::measureLineWrap(cps, len, 64, 1, &gp, 0,
+                                                   FontStyle::Regular, &hyph);
+    ASSERT_TRUE(r.wrapped);
+    ASSERT_FALSE(r.needsHyphen);
+    ASSERT_EQ(r.codepointsConsumed, (int32_t)9);  // "ab cdefg " consumed
+    ASSERT_EQ(hyph.calls, 0);
+
+    free(cps);
+}
+
+TEST(measureLineWrap_hyphenator_receives_whole_word) {
+    // The cursor crosses the edge at 'f', but the hyphenator is offered
+    // "cdefghij" in full: Liang patterns are anchored on the whole word.
+    MockGlyphProvider gp(8);
+    size_t len;
+    UNICODE_CODEPOINT* cps = toCodepoints("ab cdefghij", &len);
+    CapturingHyphenator hyph;
+
+    TextLayout::measureLineWrap(cps, len, 48, 1, &gp, 0,
+                                FontStyle::Regular, &hyph);
+    ASSERT_EQ(hyph.calls, 1);
+    ASSERT_EQ(hyph.wordLen, (size_t)8);
+    ASSERT_EQ(hyph.word[0], (UNICODE_CODEPOINT)'c');
+    ASSERT_EQ(hyph.word[7], (UNICODE_CODEPOINT)'j');
+
+    free(cps);
+}
+
+TEST(measureLineWrap_hyphenator_word_ends_at_next_space) {
+    // The whole word, and no more: the word stops at the following space.
+    MockGlyphProvider gp(8);
+    size_t len;
+    UNICODE_CODEPOINT* cps = toCodepoints("ab cdefghij kl", &len);
+    CapturingHyphenator hyph;
+
+    TextLayout::measureLineWrap(cps, len, 48, 1, &gp, 0,
+                                FontStyle::Regular, &hyph);
+    ASSERT_EQ(hyph.calls, 1);
+    ASSERT_EQ(hyph.wordLen, (size_t)8);
+
+    free(cps);
+}
+
+TEST(measureLineWrap_soft_hyphen_past_overflow_suppresses_hyphenator) {
+    // "ab cdef·ghij": the cursor crosses the edge at 'f', before the soft
+    // hyphen is reached. The author still owns this word's break points,
+    // so the hyphenator is not consulted and the line breaks at the space.
+    MockGlyphProvider gp(8);
+    UNICODE_CODEPOINT cps[] = {'a', 'b', ' ', 'c', 'd', 'e', 'f', 0x00AD,
+                               'g', 'h', 'i', 'j'};
+    RecordingHyphenator hyph;
+
+    WordWrapResult r = TextLayout::measureLineWrap(cps, 12, 48, 1, &gp, 0,
+                                                   FontStyle::Regular, &hyph);
+    ASSERT_TRUE(r.wrapped);
+    ASSERT_FALSE(r.needsHyphen);
+    ASSERT_EQ(r.codepointsConsumed, (int32_t)3);
+    ASSERT_EQ(hyph.calls, 0);
+}

@@ -192,10 +192,11 @@ WordWrapResult TextLayout::measureLineWrap(
             lastAdvance = advance;
         }
 
-        // Track potential wrap points — only if this character fits on the line.
-        // Must come AFTER the advance so we don't register an overflowing
-        // character as a wrap candidate (causes CJK right-edge clipping).
-        if (traits.is.linebreak && cursorX <= layoutWidth) {
+        // Track potential wrap points. Whitespace at a break paints nothing,
+        // so it's a candidate even when its own advance overflows. A visible
+        // break opportunity (hyphen, ideograph) must fit, or it would be
+        // pulled onto the line and clipped at the right edge.
+        if (traits.is.linebreak && (traits.is.whitespace || cursorX <= layoutWidth)) {
             wrapCandidate = position;
         }
 
@@ -221,24 +222,49 @@ WordWrapResult TextLayout::measureLineWrap(
         }
     }
     // Try hyphenation on the overflowing word before falling back to word wrap.
-    // The overflowing word starts after the last wrap candidate (space) and extends
-    // to the current position. We extract it, find legal break positions, and check
-    // if any prefix + hyphen fits within the layout width.
+    // The overflowing word runs from the last wrap candidate to the next break
+    // opportunity, which may lie past the overflow point: Liang patterns are
+    // anchored on the whole word. We extract it, find legal break positions,
+    // and check if any prefix + hyphen fits within the layout width.
     else if (hyphenator != nullptr) {
-        // Identify the overflowing word boundaries in the codepoint array
         size_t wordStart = (wrapCandidate > 0) ? wrapCandidate + 1 : 0;
         // Skip any leading control characters (SO/SI/BS) that aren't part of the word
-        while (wordStart < position && codepoints[wordStart] < 0x20) {
+        while (wordStart < len && codepoints[wordStart] < 0x20) {
             wordStart++;
         }
-        size_t wordEnd = position; // one past the last codepoint we processed
+        // Scan to the word's end. SO/SI are transparent; any other control
+        // code or break opportunity ends the word. A soft hyphen ahead of
+        // the overflow point still means the author owns this word's
+        // breaks, so the hyphenator is not consulted.
+        size_t wordEnd = wordStart;
+        bool softHyphenAhead = false;
+        while (wordEnd < len) {
+            UNICODE_CODEPOINT wcp = codepoints[wordEnd];
+            if (wcp == TextControlCode::SoftHyphen) {
+                softHyphenAhead = true;
+                break;
+            }
+            if (wcp < 0x20) {
+                if (wcp != TextControlCode::EmphasisIncrease &&
+                    wcp != TextControlCode::EmphasisDecrease) break;
+            } else {
+                unicode_info_t wtraits;
+                if (wcp < 0x80) {
+                    wtraits.packed = _unicode_info_0000_33FF[wcp];
+                } else {
+                    wtraits = getTraitsForCodepoint(wcp);
+                }
+                if (wtraits.is.linebreak) break;
+            }
+            wordEnd++;
+        }
         // Trim trailing control characters
         while (wordEnd > wordStart && codepoints[wordEnd - 1] < 0x20) {
             wordEnd--;
         }
         size_t wordLen = wordEnd - wordStart;
 
-        if (wordLen >= 4) {
+        if (!softHyphenAhead && wordLen >= 4) {
             size_t breakPositions[32];
             size_t breakCount = hyphenator->findBreakPositions(
                 codepoints + wordStart, wordLen, breakPositions, 32);
@@ -249,6 +275,8 @@ WordWrapResult TextLayout::measureLineWrap(
                     // breakPositions[bi] is the index within the word of the last codepoint in the prefix.
                     // The split point in the full codepoint array is wordStart + breakPositions[bi] + 1.
                     size_t splitCodepoint = wordStart + breakPositions[bi] + 1;
+                    // A split at or past the overflow point can never fit.
+                    if (splitCodepoint >= position) continue;
 
                     // Measure width from line start to split point + hyphen
                     int16_t prefixWidth = initialCursorX;

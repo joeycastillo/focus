@@ -121,9 +121,9 @@ public:
 
 TEST(text_view_line_index_wraps_on_shaped_widths) {
     // "لا لا لا" at width 24. Shaped, each word is one 8px ligature plus a
-    // zero-width space, so the index holds two lines and the second carries
-    // both remaining words. Unshaped the words are 16px and it takes three
-    // lines, leaving the second line half as wide and a third at y=28.
+    // zero-width space, so two words fill line 0 exactly (the space after
+    // them hangs past the edge) and the index holds two lines. Unshaped the
+    // words are 16px and it takes three lines, with a third at y=28.
     auto display = std::make_shared<RecordingDisplay>(480, 800);
     auto window = std::make_shared<Window>(display, MakeSize(480, 800));
     auto tv = std::make_shared<TextView>(MakeRect(0, 0, 24, 0),
@@ -138,7 +138,8 @@ TEST(text_view_line_index_wraps_on_shaped_widths) {
     window->draw(0, 0, MakeRect(0, 0, 480, 800));
 
     ASSERT_EQ(blitCount(*display), 2);
-    ASSERT_EQ(display->pixel(23, 19), 1);     // line 1 runs the full 24px
+    ASSERT_EQ(display->pixel(23, 5), 1);      // line 0 runs the full 24px
+    ASSERT_EQ(display->pixel(0, 19), 1);      // line 1 carries the last word
     ASSERT_EQ(display->pixel(0, 30), 0xFF);   // and there is no line 2
 }
 
