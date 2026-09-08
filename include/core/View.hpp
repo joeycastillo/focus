@@ -138,7 +138,9 @@ public:
      * Behaves like addSubview() but places the view at @p index; an index at
      * or past the end appends. The subview's superview and window references
      * are set automatically. If attached to a window, inserting a subview
-     * marks the display as dirty.
+     * marks the display as dirty. If the view is already a child of this
+     * view, it is removed first and @p index is interpreted after the
+     * removal.
      *
      * @param view The view to insert as a child.
      * @param index The position in the subview order (0 is drawn first).

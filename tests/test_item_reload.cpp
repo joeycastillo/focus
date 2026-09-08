@@ -285,6 +285,32 @@ TEST(reload_restores_focus_to_the_same_descendant) {
     ASSERT_TRUE(window->getFocusedView().lock() == newCell->getSubviews()[1]);
 }
 
+TEST(reload_falls_back_to_the_first_focusable_when_the_ordinal_is_gone) {
+    std::shared_ptr<ReloadTestWindow> window;
+    RecordingDataSource ds;
+    ds.controlsPerCell = 3;
+    auto cv = makeList(window, ds, nullptr, 7);
+    cv->getSubviews()[1]->getSubviews()[2]->becomeFocused();   // the third control in the row
+
+    ds.controlsPerCell = 1;   // the replacement is one control short of that ordinal
+    cv->reloadItemAtIndex(1);
+
+    ASSERT_TRUE(window->getFocusedView().lock() == ds.cells[1]->getSubviews()[0]);
+}
+
+TEST(reload_falls_back_to_the_cell_when_it_has_no_focusables) {
+    std::shared_ptr<ReloadTestWindow> window;
+    RecordingDataSource ds;
+    ds.controlsPerCell = 3;
+    auto cv = makeList(window, ds, nullptr, 7);
+    cv->getSubviews()[1]->getSubviews()[1]->becomeFocused();
+
+    ds.controlsPerCell = 0;   // the replacement holds nothing focusable
+    cv->reloadItemAtIndex(1);
+
+    ASSERT_TRUE(window->getFocusedView().lock() == ds.cells[1]);
+}
+
 TEST(reload_leaves_focus_alone_elsewhere) {
     std::shared_ptr<ReloadTestWindow> window;
     RecordingDataSource ds;
@@ -367,12 +393,18 @@ TEST(paginated_collection_view_forwards_reload_item) {
     pv->reloadData();
     auto chrome = pv->getSubviews();   // the collection view plus its arrow indicators
     ds.requests.clear();
+    window->clearNeedsDisplay();
 
     pv->reloadItemAtIndex(1);
 
     ASSERT_EQ(ds.requests.size(), (size_t)1);
     ASSERT_EQ(ds.requests[1], 1);
     ASSERT_TRUE(pv->getSubviews() == chrome);
+    // Arrows put the collection view between the two indicators.
+    Rect cvFrame = pv->getSubviews()[1]->getFrame();
+    // The wrapper sits at window (10,0); row 1 is 20px down inside the collection view.
+    ASSERT_TRUE(RectsEqual(window->getDirtyRect(),
+                           MakeRect(10 + cvFrame.origin.x, 0 + cvFrame.origin.y + 20, 80, 20)));
 }
 
 namespace {
