@@ -37,6 +37,7 @@
 #include "Control.hpp"
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace focus {
 
@@ -66,6 +67,13 @@ public:
     void didBecomeFocused() override;
     void didResignFocus() override;
     void appearanceDidChange() override;
+
+    /// @brief Returns the tab's label text.
+    std::string accessibilityLabel() const override;
+    /// @brief Returns AccessibilityRole::Tab.
+    AccessibilityRole accessibilityRole() const override;
+    /// @brief Returns "selected" for the active tab, otherwise empty.
+    std::string accessibilityValue() const override;
 
 protected:
     std::string label;                      ///< The tab label text.

@@ -85,6 +85,7 @@ void TabViewController::rebuildTabBar() {
 
     for (size_t i = 0; i < this->tabs.size(); i++) {
         auto item = std::make_shared<TabItem>(RectZero, this->tabs[i].label);
+        item->accessibilityIdentifier = "tab-item-" + std::to_string(i);
         if (this->font) item->setFont(this->font);
         item->setSelected(i == this->selectedIndex);
 
@@ -119,6 +120,7 @@ void TabViewController::createView() {
     this->tabBar = std::make_shared<HStack>(
         MakeRect(0, 0, windowSize.width, barHeight));
     this->tabBar->setOpaque(false);
+    this->tabBar->accessibilityIdentifier = "tab-bar";
     this->view->addSubview(this->tabBar);
 
     // Content area below the tab bar

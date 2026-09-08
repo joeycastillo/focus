@@ -53,6 +53,10 @@ class HStack;
  *
  * Child view controllers can access their TabViewController via
  * ViewController::getTabViewController().
+ *
+ * Tab items carry index-stable accessibility identifiers, tab-item-0 through
+ * tab-item-N-1 in addTab() order, and the tab bar itself carries tab-bar, so
+ * scripted drivers and accessibility tools can address them without coordinates.
  * @ingroup viewcontrollers
  */
 class TabViewController : public ViewController {

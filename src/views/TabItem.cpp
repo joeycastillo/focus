@@ -128,4 +128,16 @@ void TabItem::didResignFocus() {
     this->canvasValid = false;
 }
 
+std::string TabItem::accessibilityLabel() const {
+    return this->label;
+}
+
+AccessibilityRole TabItem::accessibilityRole() const {
+    return AccessibilityRole::Tab;
+}
+
+std::string TabItem::accessibilityValue() const {
+    return this->selected ? "selected" : "";
+}
+
 }  // namespace focus
