@@ -66,6 +66,12 @@ void CollectionViewController::reloadData() {
     }
 }
 
+void CollectionViewController::reloadItemAtIndex(size_t index) {
+    if (this->paginatedView) {
+        this->paginatedView->reloadItemAtIndex(index);
+    }
+}
+
 void CollectionViewController::createView() {
     auto app = this->application.lock();
     Size size = app ? app->getWindow()->getContentRect().size : MakeSize(480, 768);

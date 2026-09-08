@@ -80,6 +80,11 @@ void PaginatedCollectionView::reloadData() {
     updateIndicators();
 }
 
+void PaginatedCollectionView::reloadItemAtIndex(size_t index) {
+    // Count and page are unchanged by contract, so the indicators stay as they are.
+    this->collectionView->reloadItemAtIndex(index);
+}
+
 void PaginatedCollectionView::goToNextPage() {
     size_t current = this->collectionView->getCurrentPage();
     size_t total = this->collectionView->getPageCount();

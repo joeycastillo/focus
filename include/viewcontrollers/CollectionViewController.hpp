@@ -94,6 +94,9 @@ public:
 
     /// @brief Reload all items from the data source.
     void reloadData();
+    /// @brief Rebuild the cell for one item, if it is on the current page.
+    /// See PagedCollectionView::reloadItemAtIndex() for the contract.
+    void reloadItemAtIndex(size_t index);
 
     void viewDidLayoutSubviews() override;
     void viewDidAppear() override;

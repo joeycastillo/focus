@@ -351,3 +351,66 @@ TEST(reload_keeps_grid_navigation_order) {
     ASSERT_TRUE(cv->handleEvent(up));
     ASSERT_TRUE(window->getFocusedView().lock() == ds.cells[1]);
 }
+
+// --- Passthroughs ---
+
+TEST(paginated_collection_view_forwards_reload_item) {
+    auto window = std::make_shared<ReloadTestWindow>(MakeSize(100, 100));
+    RecordingDataSource ds;
+    for (size_t i = 0; i < 7; i++) ds.names.push_back("item " + std::to_string(i));
+    auto pv = std::make_shared<PaginatedCollectionView>(MakeRect(10, 0, 80, 100));
+    pv->setLayout(CollectionViewLayout::VerticalList);
+    pv->setItemSize(MakeSize(0, 20));
+    pv->setPaginationStyle(PaginationStyle::Arrows);
+    pv->setDataSource(&ds);
+    window->addSubview(pv);
+    pv->reloadData();
+    auto chrome = pv->getSubviews();   // the collection view plus its arrow indicators
+    ds.requests.clear();
+
+    pv->reloadItemAtIndex(1);
+
+    ASSERT_EQ(ds.requests.size(), (size_t)1);
+    ASSERT_EQ(ds.requests[1], 1);
+    ASSERT_TRUE(pv->getSubviews() == chrome);
+}
+
+namespace {
+
+// Five-row collection controller that counts cell requests per index.
+class ReloadCountingVC : public CollectionViewController {
+public:
+    ReloadCountingVC(std::shared_ptr<Application> app) : CollectionViewController(app) {
+        this->setItemSize(MakeSize(0, 20));
+        this->setLayout(CollectionViewLayout::VerticalList);
+    }
+    std::map<size_t, int> requests;
+    size_t numberOfItems() const override { return 5; }
+    std::shared_ptr<CollectionViewCell> cellForItemAtIndex(size_t index, Rect frame) override {
+        this->requests[index]++;
+        return std::make_shared<CollectionViewCell>(frame);
+    }
+};
+
+}  // namespace
+
+TEST(collection_view_controller_forwards_reload_item) {
+    auto window = std::make_shared<ReloadTestWindow>(MakeSize(100, 100));
+    auto app = std::make_shared<ReloadTestApplication>(window);
+    window->setApp(app);
+
+    // Before the view exists there is nothing to reload, and no crash.
+    auto detached = std::make_shared<ReloadCountingVC>(app);
+    detached->reloadItemAtIndex(0);
+    ASSERT_TRUE(detached->requests.empty());
+
+    auto vc = std::make_shared<ReloadCountingVC>(app);
+    app->setRootViewController(vc);
+    ASSERT_FALSE(vc->requests.empty());
+    vc->requests.clear();
+
+    vc->reloadItemAtIndex(1);
+
+    ASSERT_EQ(vc->requests.size(), (size_t)1);
+    ASSERT_EQ(vc->requests[1], 1);
+}

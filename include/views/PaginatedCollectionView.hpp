@@ -85,6 +85,9 @@ public:
 
     /// @brief Reload all items from the data source, showing the first page.
     void reloadData();
+    /// @brief Rebuild the cell for one item, if it is on the current page.
+    /// See PagedCollectionView::reloadItemAtIndex() for the contract.
+    void reloadItemAtIndex(size_t index);
     /// @brief Navigate to the next page (no-op if already on the last page).
     void goToNextPage();
     /// @brief Navigate to the previous page (no-op if already on the first page).
