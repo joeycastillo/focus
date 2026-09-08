@@ -46,7 +46,9 @@ class CollectionViewCell;
  *
  * Set a data source, item size, and layout, then call reloadData() to populate
  * the first page. Use goToPage() to navigate between pages. For pagination chrome
- * (arrows, footer, page indicator) wrap this in a PaginatedCollectionView.
+ * (arrows, footer, page indicator) wrap this in a PaginatedCollectionView. Call
+ * reloadItemAtIndex() when one item's content changed and the count, order, and
+ * sizes did not.
  * @ingroup views
  */
 class PagedCollectionView : public CollectionView {
@@ -56,6 +58,17 @@ public:
 
     /// @brief Reload all items from the data source, showing the first page.
     void reloadData() override;
+    /**
+     * @brief Rebuild the cell for one item, if it is on the current page.
+     *
+     * If the index is not on the current page, does nothing: the item is
+     * built fresh whenever its page is next loaded. Use this when an item's
+     * content changed but the item count, order, and size did not; call
+     * reloadData() when any of those did. The data source must return a
+     * non-null cell for every item. Only that cell's rect is invalidated,
+     * and focus inside the old cell moves to the same place in the new one.
+     */
+    void reloadItemAtIndex(size_t index);
     /// @brief Navigate to a specific page (0-based).
     void goToPage(size_t page);
 
@@ -77,6 +90,8 @@ private:
     std::vector<size_t> pageBoundaries;
 
     size_t calculateItemsPerPage() const;
+    /// @brief Item range [startIndex, endIndex) of a page; false if the page has none.
+    bool pageRange(size_t page, size_t& startIndex, size_t& endIndex) const;
     void computePageBoundaries();
     void loadPage(size_t page);
     void removeCurrentPageViews();

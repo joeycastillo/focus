@@ -27,8 +27,27 @@
 #include "CollectionViewDelegate.hpp"
 #include "CollectionViewCell.hpp"
 #include "Window.hpp"
+#include "FocusLog.hpp"
 
 namespace focus {
+
+static const char *TAG = "PagedCollectionView";
+
+namespace {
+
+// Focusable, non-hidden descendants in depth-first order, via the public View API.
+void collectFocusable(const std::shared_ptr<View>& view, std::vector<std::shared_ptr<View>>& out) {
+    for (const auto& child : view->getSubviews()) {
+        if (child->isHidden()) continue;
+        if (child->canBecomeFocused()) {
+            out.push_back(child);
+            continue;
+        }
+        collectFocusable(child, out);
+    }
+}
+
+}  // namespace
 
 PagedCollectionView::PagedCollectionView(Rect rect) : CollectionView(rect) {
 }
@@ -173,26 +192,30 @@ void PagedCollectionView::wireCell(std::shared_ptr<CollectionViewCell> cell, siz
     };
 }
 
-void PagedCollectionView::loadPage(size_t page) {
-    if (!this->dataSource) return;
-    if (this->dataSourceOwner.has_value() && this->dataSourceOwner->expired()) return;
+bool PagedCollectionView::pageRange(size_t page, size_t& startIndex, size_t& endIndex) const {
+    if (!this->dataSource) return false;
+    if (this->dataSourceOwner.has_value() && this->dataSourceOwner->expired()) return false;
 
     size_t totalItems = this->dataSource->numberOfItems(this);
-
-    size_t startIndex, endIndex;
     if (this->variableItemSizes) {
-        if (page >= this->pageBoundaries.size()) return;
+        if (page >= this->pageBoundaries.size()) return false;
         startIndex = this->pageBoundaries[page];
         endIndex = (page + 1 < this->pageBoundaries.size())
             ? this->pageBoundaries[page + 1] : totalItems;
     } else {
         size_t itemsPerPage = this->calculateItemsPerPage();
-        if (itemsPerPage == 0) return;
+        if (itemsPerPage == 0) return false;
         startIndex = page * itemsPerPage;
-        if (startIndex >= totalItems) return;
+        if (startIndex >= totalItems) return false;
         endIndex = startIndex + itemsPerPage;
         if (endIndex > totalItems) endIndex = totalItems;
     }
+    return true;
+}
+
+void PagedCollectionView::loadPage(size_t page) {
+    size_t startIndex, endIndex;
+    if (!this->pageRange(page, startIndex, endIndex)) return;
 
     int s = this->itemSpacing;
     int columns = 1;
@@ -336,6 +359,70 @@ void PagedCollectionView::reloadData() {
 
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         this->setNeedsDisplayInRect(this->frame);
+    }
+}
+
+void PagedCollectionView::reloadItemAtIndex(size_t index) {
+    if (!this->dataLoaded) return;
+    size_t startIndex, endIndex;
+    if (!this->pageRange(this->currentPage, startIndex, endIndex)) return;
+    if (index < startIndex || index >= endIndex) return;
+
+    size_t position = index - startIndex;
+    if (position >= this->subviews.size()) return;
+    std::shared_ptr<View> oldCell = this->subviews[position];
+    Rect frame = oldCell->getFrame();
+
+    if (this->variableItemSizes) {
+        Size size = this->dataSource->sizeForItemAtIndex(this, index);
+        bool vertical = (this->layout == CollectionViewLayout::VerticalList);
+        int expected = vertical ? frame.size.height : frame.size.width;
+        int reported = vertical ? size.height : size.width;
+        if (reported != expected) {
+            FOCUS_LOGW(TAG, "reloadItemAtIndex(%u): size changed (%d -> %d); call reloadData() when sizes change",
+                       (unsigned)index, expected, reported);
+        }
+    }
+
+    // Where focus sits inside the old cell, if it does.
+    bool focusInside = false;
+    bool descendantFocused = false;
+    int focusOrdinal = -1;
+    if (auto window = this->getWindow().lock()) {
+        if (auto focused = window->getFocusedView().lock()) {
+            for (View* v = focused.get(); v; v = v->getSuperview()) {
+                if (v == oldCell.get()) { focusInside = true; break; }
+            }
+            if (focusInside && focused != oldCell) {
+                descendantFocused = true;
+                std::vector<std::shared_ptr<View>> focusables;
+                collectFocusable(oldCell, focusables);
+                for (size_t i = 0; i < focusables.size(); i++) {
+                    if (focusables[i] == focused) { focusOrdinal = (int)i; break; }
+                }
+            }
+        }
+    }
+
+    auto cell = this->dataSource->cellForItemAtIndex(this, index, frame);
+    if (!cell) {
+        FOCUS_LOGW(TAG, "reloadItemAtIndex(%u): data source returned no cell; keeping the old one", (unsigned)index);
+        return;
+    }
+    this->wireCell(cell, index);
+    this->removeSubview(oldCell);
+    this->insertSubview(cell, position);
+
+    if (focusInside) {
+        std::shared_ptr<View> target;
+        if (focusOrdinal >= 0) {
+            std::vector<std::shared_ptr<View>> focusables;
+            collectFocusable(cell, focusables);
+            if ((size_t)focusOrdinal < focusables.size()) target = focusables[(size_t)focusOrdinal];
+        }
+        if (!target && descendantFocused) target = cell->firstFocusableDescendant();
+        if (!target) target = cell;
+        target->becomeFocused();
     }
 }
 
