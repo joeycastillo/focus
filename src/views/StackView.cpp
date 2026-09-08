@@ -23,6 +23,7 @@
  */
 
 #include "StackView.hpp"
+#include <cstddef>
 
 namespace focus {
 
@@ -56,11 +57,21 @@ void StackView::setMargins(int uniform) {
 }
 
 void StackView::addSubview(std::shared_ptr<View> view) {
+    this->insertSubview(view, this->subviews.size());
+}
+
+void StackView::insertSubview(std::shared_ptr<View> view, size_t index) {
+    // Re-inserting an existing child: drop it first so the index lands after removal.
+    if (view->getSuperview() == this) {
+        this->removeSubview(view);
+    }
+    if (index > this->subviews.size()) index = this->subviews.size();
     bool vertical = (this->axis == Axis::Vertical);
     int preferredSize = vertical ? view->getFrame().size.height
                                  : view->getFrame().size.width;
-    this->preferredSizes.push_back(preferredSize);
-    View::addSubview(view);
+    this->preferredSizes.insert(this->preferredSizes.begin() + static_cast<std::ptrdiff_t>(index),
+                                preferredSize);
+    View::insertSubview(view, index);
     this->layoutSubviews();
 }
 

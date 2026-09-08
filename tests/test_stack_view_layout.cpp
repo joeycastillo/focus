@@ -115,3 +115,23 @@ TEST(stack_view_horizontal) {
     // Height fills the stack
     ASSERT_EQ(a->getFrame().size.height, 100);
 }
+
+TEST(stack_view_insert_subview_keeps_preferred_sizes_aligned) {
+    // VStack 300px: A fixed 30, B flexible, then C fixed 20 inserted at index 1
+    // → [A=30, C=20, B=250]
+    auto stack = std::make_shared<StackView>(MakeRect(0, 0, 200, 300), StackView::Axis::Vertical);
+    auto a = std::make_shared<View>(MakeRect(0, 0, 200, 30));
+    auto b = std::make_shared<View>(MakeRect(0, 0, 0, 0));
+    auto c = std::make_shared<View>(MakeRect(0, 0, 200, 20));
+    stack->addSubview(a);
+    stack->addSubview(b);
+    stack->insertSubview(c, 1);
+
+    ASSERT_EQ(stack->getSubviews().size(), (size_t)3);
+    ASSERT_EQ(a->getFrame().origin.y, 0);
+    ASSERT_EQ(a->getFrame().size.height, 30);
+    ASSERT_EQ(c->getFrame().origin.y, 30);
+    ASSERT_EQ(c->getFrame().size.height, 20);
+    ASSERT_EQ(b->getFrame().origin.y, 50);
+    ASSERT_EQ(b->getFrame().size.height, 250);
+}

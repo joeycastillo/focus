@@ -103,6 +103,8 @@ public:
     virtual void layoutSubviews();
 
     void addSubview(std::shared_ptr<View> view) override;
+    /// @brief Insert a child at @p index, keeping the preferred size list aligned.
+    void insertSubview(std::shared_ptr<View> view, size_t index) override;
     void removeSubview(std::shared_ptr<View> view) override;
     void setFrame(Rect rect) override;
 
