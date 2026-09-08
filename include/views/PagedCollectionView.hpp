@@ -39,6 +39,8 @@
 
 namespace focus {
 
+class CollectionViewCell;
+
 /**
  * @brief A paginated collection of item views driven by a data source.
  *
@@ -78,6 +80,8 @@ private:
     void computePageBoundaries();
     void loadPage(size_t page);
     void removeCurrentPageViews();
+    /// @brief Route a cell's select, long-press, and focus events to the delegate.
+    void wireCell(std::shared_ptr<CollectionViewCell> cell, size_t index);
 };
 
 }  // namespace focus

@@ -141,6 +141,38 @@ void PagedCollectionView::removeCurrentPageViews() {
     }
 }
 
+void PagedCollectionView::wireCell(std::shared_ptr<CollectionViewCell> cell, size_t index) {
+    if (!this->delegate) return;
+    if (this->delegateOwner.has_value() && this->delegateOwner->expired()) return;
+
+    CollectionViewDelegate* liveDelegate = this->delegate;
+    CollectionView* cv = this;
+    // Capture the delegate owner weak_ptr so lambdas can verify
+    // the delegate is still alive before invoking it.
+    std::weak_ptr<void> ownerWeak = this->delegateOwner.value_or(std::weak_ptr<void>{});
+    bool hasOwner = this->delegateOwner.has_value();
+    cell->setAction(
+        [liveDelegate, cv, index, ownerWeak, hasOwner](Event, std::weak_ptr<View>) {
+            if (hasOwner && ownerWeak.expired()) return;
+            liveDelegate->didSelectItemAtIndex(cv, index);
+        },
+        FOCUS_EVENT_TOUCH_UP_INSIDE);
+    cell->setAction(
+        [liveDelegate, cv, index, ownerWeak, hasOwner](Event, std::weak_ptr<View>) {
+            if (hasOwner && ownerWeak.expired()) return;
+            liveDelegate->didLongPressItemAtIndex(cv, index);
+        },
+        FOCUS_EVENT_LONG_PRESS);
+    cell->onFocusChanged = [liveDelegate, cv, index, ownerWeak, hasOwner](CollectionViewCell& c, bool focused) {
+        if (hasOwner && ownerWeak.expired()) return;
+        if (focused) {
+            liveDelegate->didFocusItemAtIndex(cv, index, c);
+        } else {
+            liveDelegate->didUnfocusItemAtIndex(cv, index, c);
+        }
+    };
+}
+
 void PagedCollectionView::loadPage(size_t page) {
     if (!this->dataSource) return;
     if (this->dataSourceOwner.has_value() && this->dataSourceOwner->expired()) return;
@@ -167,14 +199,6 @@ void PagedCollectionView::loadPage(size_t page) {
     if (this->layout == CollectionViewLayout::Grid) {
         columns = (this->frame.size.width + s) / (this->itemSize.width + s);
         if (columns < 1) columns = 1;
-    }
-
-    // Check if we have a live delegate for automatic cell action wiring
-    CollectionViewDelegate* liveDelegate = nullptr;
-    if (this->delegate) {
-        if (!this->delegateOwner.has_value() || !this->delegateOwner->expired()) {
-            liveDelegate = this->delegate;
-        }
     }
 
     int runningOffset = 0;
@@ -221,34 +245,7 @@ void PagedCollectionView::loadPage(size_t page) {
 
         auto cell = this->dataSource->cellForItemAtIndex(this, i, itemFrame);
         if (cell) {
-            if (liveDelegate) {
-                size_t globalIndex = i;
-                CollectionView* cv = this;
-                // Capture the delegate owner weak_ptr so lambdas can verify
-                // the delegate is still alive before invoking it.
-                std::weak_ptr<void> ownerWeak = this->delegateOwner.value_or(std::weak_ptr<void>{});
-                bool hasOwner = this->delegateOwner.has_value();
-                cell->setAction(
-                    [liveDelegate, cv, globalIndex, ownerWeak, hasOwner](Event, std::weak_ptr<View>) {
-                        if (hasOwner && ownerWeak.expired()) return;
-                        liveDelegate->didSelectItemAtIndex(cv, globalIndex);
-                    },
-                    FOCUS_EVENT_TOUCH_UP_INSIDE);
-                cell->setAction(
-                    [liveDelegate, cv, globalIndex, ownerWeak, hasOwner](Event, std::weak_ptr<View>) {
-                        if (hasOwner && ownerWeak.expired()) return;
-                        liveDelegate->didLongPressItemAtIndex(cv, globalIndex);
-                    },
-                    FOCUS_EVENT_LONG_PRESS);
-                cell->onFocusChanged = [liveDelegate, cv, globalIndex, ownerWeak, hasOwner](CollectionViewCell& c, bool focused) {
-                    if (hasOwner && ownerWeak.expired()) return;
-                    if (focused) {
-                        liveDelegate->didFocusItemAtIndex(cv, globalIndex, c);
-                    } else {
-                        liveDelegate->didUnfocusItemAtIndex(cv, globalIndex, c);
-                    }
-                };
-            }
+            this->wireCell(cell, i);
             this->addSubview(cell);
         }
     }
