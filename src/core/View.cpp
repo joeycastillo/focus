@@ -164,11 +164,16 @@ void View::drawContent(int x, int y, Rect clipRect) {
 }
 
 void View::addSubview(std::shared_ptr<View> view) {
+    this->insertSubview(view, this->subviews.size());
+}
+
+void View::insertSubview(std::shared_ptr<View> view, size_t index) {
     if (view->superview) {
         view->superview->removeSubview(view);
     }
     view->superview = this;
-    this->subviews.push_back(view);
+    if (index > this->subviews.size()) index = this->subviews.size();
+    this->subviews.insert(this->subviews.begin() + static_cast<std::ptrdiff_t>(index), view);
     if (std::shared_ptr<Window> window = this->getWindow().lock()) {
         view->setWindow(window);
         // Child frames live in this view's coordinate space.

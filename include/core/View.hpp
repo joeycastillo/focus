@@ -133,6 +133,19 @@ public:
     virtual void addSubview(std::shared_ptr<View> view);
 
     /**
+     * @brief Insert a child view at a position in the subview order.
+     *
+     * Behaves like addSubview() but places the view at @p index; an index at
+     * or past the end appends. The subview's superview and window references
+     * are set automatically. If attached to a window, inserting a subview
+     * marks the display as dirty.
+     *
+     * @param view The view to insert as a child.
+     * @param index The position in the subview order (0 is drawn first).
+     */
+    virtual void insertSubview(std::shared_ptr<View> view, size_t index);
+
+    /**
      * @brief Remove a child view from this view's hierarchy.
      *
      * If the removed view was focused, focus is transferred to the superview.
