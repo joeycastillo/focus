@@ -66,6 +66,8 @@ using NotificationCallback = std::function<void(const Notification&)>;
  *
  * Supports re-entrant posting (posting from within a callback) and
  * automatic cleanup of observations tied to destroyed owner objects.
+ *
+ * Not thread-safe. Every method must be called on the main thread.
  * @ingroup core
  */
 class NotificationCenter {

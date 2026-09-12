@@ -78,6 +78,8 @@ public:
      * The task's run() method is called once per loop iteration. If the
      * run() method returns true, the task is removed from the list.
      *
+     * Must be called on the main thread.
+     *
      * @param task The task to add.
      */
     void addTask(std::shared_ptr<Task> task);

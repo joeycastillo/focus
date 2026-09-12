@@ -6,6 +6,8 @@ If you ever wrote an iOS app back in the day, Focus should feel instantly famili
 
 Focus is single-threaded and cooperative: there are no background threads or preemptive scheduling. The application run loop calls registered tasks one at a time, and each task yields quickly so the loop stays responsive. This makes Focus predictable and easy to reason about on bare-metal or RTOS targets.
 
+This does not prevent your application from running other threads or servicing interrupts, but Focus makes no attempt to protect itself from them. Code that runs off the run loop must not touch views, view controllers, timers, the notification center or the application itself, beyond the few accessors documented as safe to call from any thread. Instead, have the other thread write to an atomic or a mutex-guarded buffer, and have a task's `run()` pick it up on the loop.
+
 **Key features:**
 
 - View hierarchy with dirty-rect tracking for efficient partial redraws
