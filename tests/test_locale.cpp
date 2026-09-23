@@ -202,6 +202,21 @@ TEST(registered_plural_rule_overrides_builtin) {
     ASSERT_TRUE(pluralLocale("pt_PT")->pluralCategory(1) == P::One);
 }
 
+TEST(registered_plural_rule_precedence) {
+    using P = PluralCategory;
+    Locale::setPluralRule("xr", [](uint64_t) { return P::Few; });
+    Locale::setPluralRule("xr_ZZ", [](uint64_t) { return P::Many; });
+    ASSERT_TRUE(pluralLocale("xr_ZZ")->pluralCategory(1) == P::Many);
+    ASSERT_TRUE(pluralLocale("xr_YY")->pluralCategory(1) == P::Few);
+    Locale::setPluralRule("xr", nullptr);
+    Locale::setPluralRule("xr_ZZ", nullptr);
+
+    Locale::setPluralRule("pt", [](uint64_t) { return P::Few; });
+    ASSERT_TRUE(pluralLocale("pt_PT")->pluralCategory(1) == P::Few);
+    Locale::setPluralRule("pt", nullptr);
+    ASSERT_TRUE(pluralLocale("pt_PT")->pluralCategory(1) == P::One);
+}
+
 TEST(lp_without_catalog_uses_english_forms) {
     LocaleScope scope(nullptr, nullptr);
     ASSERT_STREQ(_LP("items", "{0} item", "{0} items", 1), "1 item");
