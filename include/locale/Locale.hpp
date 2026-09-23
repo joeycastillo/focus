@@ -44,6 +44,9 @@ using PluralRule = PluralCategory (*)(uint64_t n);
 /**
  * Locale provides a Font-style cached factory for loading localized string tables.
  * Locale files are simple key=value text files (UTF-8, .strings extension).
+ * A file can name a parent with a line like "@parent=en". The parent's strings
+ * are merged in when the file loads, and the file's own strings take precedence.
+ * Keys starting with "@" are reserved for directives like this one.
  *
  * Usage:
  *   // At app startup
@@ -64,6 +67,9 @@ using PluralRule = PluralCategory (*)(uint64_t n);
  * active and fallback locales; all other cached locales are freed.
  * Any Locale* previously obtained via withIdentifier() (other than
  * the active/fallback) is invalidated by clearCache().
+ * Parents are merged in at load and not kept in memory, except a parent
+ * loaded with fromMemory(), which must be loaded before its child and
+ * stays cached until clearCache().
  * @ingroup locale
  */
 class Locale {
@@ -80,6 +86,7 @@ public:
      * same format as the file loader). Populates the cache under `identifier`
      * so a later withIdentifier(identifier) returns it. Non-owning: the parsed
      * strings are copied out, so `data` need only outlive this call.
+     * If the blob names a parent, load the parent first.
      * @return the loaded (or already-cached) locale, or nullptr if empty.
      */
     static Locale* fromMemory(const std::string& identifier, const uint8_t* data, size_t size);
@@ -169,6 +176,8 @@ private:
     static Locale* fallbackLocale;
 
     static Locale* loadLocaleFile(const std::string& identifier);
+    static std::map<std::string, std::string> readStrings(const std::string& identifier, std::vector<std::string>& chain);
+    static void mergeParents(std::map<std::string, std::string>& strings, std::vector<std::string>& chain);
     static std::map<std::string, std::string> parseFile(const std::string& path);
     static std::map<std::string, std::string> parseStrings(const uint8_t* data, size_t size);
 };

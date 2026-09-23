@@ -27,6 +27,15 @@ int main() {
         failed++;
     }
 
+    static const char parentBlob[] = "a=Parent A\nb=Parent B\n";
+    static const char childBlob[] = "@parent=nofs_en\nb=Child B\n";
+    Locale::fromMemory("nofs_en", (const uint8_t*)parentBlob, sizeof(parentBlob) - 1);
+    Locale* child = Locale::fromMemory("nofs_en_GB", (const uint8_t*)childBlob, sizeof(childBlob) - 1);
+    if (!child || child->getString("a") != "Parent A" || child->getString("b") != "Child B") {
+        fprintf(stderr, "FAIL: Locale::fromMemory with @parent\n");
+        failed++;
+    }
+
     std::vector<uint8_t> bytes = readAllBytes(FONTS_DIR "spleen-8x16.bdp");
     auto font = PackedFontGlyphProvider::fromMemory(bytes.data(), bytes.size());
     if (!font || !font->isValid() || !font->hasGlyph('A')) {

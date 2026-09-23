@@ -25,6 +25,8 @@
 #include "Locale.hpp"
 #include "NotificationCenter.hpp"
 #include "focus_config.h"
+#include "FocusLog.hpp"
+#include <algorithm>
 #include <initializer_list>
 #if FOCUS_HAS_FILESYSTEM
 #include <fstream>
@@ -32,6 +34,8 @@
 #endif
 
 namespace focus {
+
+static const char *TAG = "Locale";
 
 // Static member initialization
 std::map<std::string, Locale*> Locale::localeCache;
@@ -138,6 +142,8 @@ Locale* Locale::fromMemory(const std::string& identifier, const uint8_t* data, s
         return it->second;
     }
     auto strings = parseStrings(data, size);
+    std::vector<std::string> chain = {identifier};
+    mergeParents(strings, chain);
     if (strings.empty()) {
         return nullptr;
     }
@@ -272,16 +278,58 @@ std::map<std::string, std::string> Locale::parseStrings(const uint8_t* data, siz
     return result;
 }
 
-#if FOCUS_HAS_FILESYSTEM
-Locale* Locale::loadLocaleFile(const std::string& identifier) {
-    for (const auto& path : searchPaths) {
-        std::string filePath = path + identifier + ".strings";
-        auto strings = parseFile(filePath);
-        if (!strings.empty()) {
-            return new Locale(identifier, std::move(strings));
+void Locale::mergeParents(std::map<std::string, std::string>& strings, std::vector<std::string>& chain) {
+    auto declared = strings.find("@parent");
+    std::string parent = declared != strings.end() ? declared->second : std::string();
+    // Remove directives; they aren't strings.
+    for (auto it = strings.begin(); it != strings.end();) {
+        if (!it->first.empty() && it->first[0] == '@') {
+            it = strings.erase(it);
+        } else {
+            ++it;
         }
     }
-    return nullptr;
+    if (parent.empty()) return;
+    if (std::find(chain.begin(), chain.end(), parent) != chain.end()) {
+        FOCUS_LOGW(TAG, "%s: parent %s is already in its chain", chain.back().c_str(), parent.c_str());
+        return;
+    }
+    std::map<std::string, std::string> inherited;
+    auto cached = localeCache.find(parent);
+    if (cached != localeCache.end()) {
+        inherited = cached->second->strings;
+    } else {
+#if FOCUS_HAS_FILESYSTEM
+        chain.push_back(parent);
+        inherited = readStrings(parent, chain);
+        chain.pop_back();
+#endif
+    }
+    if (inherited.empty()) {
+        FOCUS_LOGW(TAG, "%s: parent %s not found", chain.back().c_str(), parent.c_str());
+        return;
+    }
+    // The child's strings win; the parent fills in the rest.
+    strings.merge(inherited);
+}
+
+#if FOCUS_HAS_FILESYSTEM
+Locale* Locale::loadLocaleFile(const std::string& identifier) {
+    std::vector<std::string> chain = {identifier};
+    auto strings = readStrings(identifier, chain);
+    if (strings.empty()) return nullptr;
+    return new Locale(identifier, std::move(strings));
+}
+
+std::map<std::string, std::string> Locale::readStrings(const std::string& identifier, std::vector<std::string>& chain) {
+    for (const auto& path : searchPaths) {
+        auto strings = parseFile(path + identifier + ".strings");
+        if (!strings.empty()) {
+            mergeParents(strings, chain);
+            return strings;
+        }
+    }
+    return {};
 }
 
 std::map<std::string, std::string> Locale::parseFile(const std::string& path) {

@@ -4,6 +4,7 @@
 #include <cstring>
 #include <fstream>
 #include <filesystem>
+#include <initializer_list>
 #include <limits>
 #include <utility>
 #include <vector>
@@ -261,4 +262,109 @@ TEST(lp_negative_count_keeps_its_sign) {
         "files.one={0} one\nfiles.few={0} few\nfiles.many={0} many\n"), nullptr);
     ASSERT_STREQ(_LP("files", "{0} file", "{0} files", -21), "-21 one");
     ASSERT_STREQ(_LP("files", "{0} file", "{0} files", -2), "-2 few");
+}
+
+// Writes catalogs to the temp directory and searches only there; removes them after.
+struct CatalogDir {
+    std::vector<std::filesystem::path> paths;
+    explicit CatalogDir(std::initializer_list<std::pair<const char*, const char*>> catalogs) {
+        auto dir = std::filesystem::temp_directory_path();
+        Locale::clearSearchPaths();
+        Locale::addLocaleSearchPath(dir.string());
+        for (const auto& [identifier, contents] : catalogs) {
+            paths.push_back(dir / (std::string(identifier) + ".strings"));
+            std::ofstream out(paths.back());
+            out << contents;
+        }
+    }
+    ~CatalogDir() {
+        for (const auto& path : paths) std::filesystem::remove(path);
+        Locale::clearSearchPaths();
+    }
+};
+
+TEST(locale_parent_strings_fill_in_under_the_child) {
+    CatalogDir dir({{"fp1", "a=Parent A\nb=Parent B\n"},
+                    {"fp1_GB", "@parent=fp1\n@future=x\nb=Child B\n"}});
+    Locale* locale = Locale::withIdentifier("fp1_GB");
+    ASSERT_TRUE(locale != nullptr);
+    ASSERT_STREQ(locale->getString("a"), "Parent A");
+    ASSERT_STREQ(locale->getString("b"), "Child B");
+    ASSERT_STREQ(locale->getString("@parent"), "");
+    ASSERT_STREQ(locale->getString("@future"), "");
+}
+
+TEST(locale_parent_is_not_cached) {
+    CatalogDir dir({{"fp2", "a=Parent A\n"}, {"fp2_GB", "@parent=fp2\nb=Child B\n"}});
+    ASSERT_STREQ(Locale::withIdentifier("fp2_GB")->getString("a"), "Parent A");
+    std::filesystem::remove(dir.paths[0]);
+    ASSERT_TRUE(Locale::withIdentifier("fp2") == nullptr);
+}
+
+TEST(locale_parent_chain_resolves_three_levels) {
+    CatalogDir dir({{"fp3", "a=A\n"},
+                    {"fp3_001", "@parent=fp3\nb=B\n"},
+                    {"fp3_AU", "@parent=fp3_001\nc=C\n"}});
+    Locale* locale = Locale::withIdentifier("fp3_AU");
+    ASSERT_TRUE(locale != nullptr);
+    ASSERT_STREQ(locale->getString("a"), "A");
+    ASSERT_STREQ(locale->getString("b"), "B");
+    ASSERT_STREQ(locale->getString("c"), "C");
+}
+
+TEST(locale_missing_parent_leaves_child_standalone) {
+    CatalogDir dir({{"fp4_GB", "@parent=fp4_missing\nb=Child B\n"}});
+    Locale* locale = Locale::withIdentifier("fp4_GB");
+    ASSERT_TRUE(locale != nullptr);
+    ASSERT_STREQ(locale->getString("b"), "Child B");
+}
+
+TEST(locale_parent_only_catalog_loads) {
+    CatalogDir dir({{"fp5", "a=A\n"}, {"fp5_CA", "@parent=fp5\n"}});
+    Locale* locale = Locale::withIdentifier("fp5_CA");
+    ASSERT_TRUE(locale != nullptr);
+    ASSERT_STREQ(locale->getString("a"), "A");
+}
+
+TEST(locale_parent_cycle_terminates) {
+    CatalogDir dir({{"fp6a", "@parent=fp6b\na=A\n"}, {"fp6b", "@parent=fp6a\nb=B\n"}});
+    Locale* locale = Locale::withIdentifier("fp6a");
+    ASSERT_TRUE(locale != nullptr);
+    ASSERT_STREQ(locale->getString("a"), "A");
+    ASSERT_STREQ(locale->getString("b"), "B");
+}
+
+TEST(locale_blob_merges_parent_loaded_first) {
+    Locale::clearSearchPaths();
+    memoryLocale("mp_en", "a=Parent A\nb=Parent B\n");
+    Locale* locale = memoryLocale("mp_en_GB", "@parent=mp_en\nb=Child B\n");
+    ASSERT_TRUE(locale != nullptr);
+    ASSERT_STREQ(locale->getString("a"), "Parent A");
+    ASSERT_STREQ(locale->getString("b"), "Child B");
+}
+
+TEST(locale_blob_loaded_before_parent_stands_alone) {
+    Locale::clearSearchPaths();
+    Locale* locale = memoryLocale("mc_en_GB", "@parent=mc_en\nb=Child B\n");
+    memoryLocale("mc_en", "a=Parent A\n");
+    ASSERT_TRUE(locale != nullptr);
+    ASSERT_STREQ(locale->getString("a"), "");
+    ASSERT_STREQ(locale->getString("b"), "Child B");
+}
+
+TEST(lp_uses_parent_forms_the_child_does_not_override) {
+    Locale::clearSearchPaths();
+    memoryLocale("pp_en", "items.one={0} item\nitems.other={0} items\n");
+    LocaleScope scope(memoryLocale("pp_en_GB", "@parent=pp_en\nitems.other={0} things\n"), nullptr);
+    ASSERT_STREQ(_LP("items", "{0} x", "{0} xs", 1), "1 item");
+    ASSERT_STREQ(_LP("items", "{0} x", "{0} xs", 2), "2 things");
+}
+
+TEST(clear_cache_frees_a_blob_parent) {
+    Locale::clearSearchPaths();
+    memoryLocale("cc_en", "a=Parent A\n");
+    LocaleScope scope(memoryLocale("cc_en_GB", "@parent=cc_en\nb=Child B\n"), nullptr);
+    Locale::clearCache();
+    ASSERT_TRUE(Locale::withIdentifier("cc_en") == nullptr);
+    ASSERT_STREQ(Locale::withIdentifier("cc_en_GB")->getString("a"), "Parent A");
 }
