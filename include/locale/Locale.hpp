@@ -152,7 +152,7 @@ public:
 
     /**
      * Use `rule` for `language` (e.g. "ga" or "pt_PT"), overriding any built-in rule.
-     * Pass nullptr to remove it.
+     * A rule for a language also covers its regional identifiers. Pass nullptr to remove it.
      */
     static void setPluralRule(const std::string& language, PluralRule rule);
 

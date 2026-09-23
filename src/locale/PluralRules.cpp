@@ -121,7 +121,7 @@ struct RuleEntry {
     PluralRule rule;
 };
 
-// Sorted by identifier. Languages that use the default rule are omitted.
+// Sorted by identifier. Omits languages that use the default rule or a rule not implemented here.
 static constexpr RuleEntry rules[] = {
     {"ak", oneUpToOne}, {"am", oneUpToOne}, {"ar", arabic}, {"ars", arabic},
     {"as", oneUpToOne}, {"be", eastSlavic}, {"bho", oneUpToOne}, {"bm", noPlural},
