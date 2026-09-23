@@ -574,33 +574,54 @@ Focus includes `InMemorySettingsBackend` for testing. Provide your own `Settings
 The Locale system provides string lookup with formatting and pluralization:
 
 ```cpp
-// Setup:
-Locale::addLocaleSearchPath("/locale/");
-Locale::setDefaultLocale(Locale::withIdentifier("en"));
-Locale::setCurrentLocale(Locale::withIdentifier("es"));
-
-// Simple lookup (falls back to default locale if key is missing):
+// Simple lookup:
 std::string s = _LS("save", "Save");
 
-// Formatted string ({0}, {1}, etc.):
+// Formatted string:
 std::string s = _LF("page_of", "Page {0} of {1}", currentPage, totalPages);
 
-// Pluralized string (looks up key.zero, key.one, or key.other):
-std::string s = _LP("items", "{0} items", count);
+// Pluralized string:
+std::string s = _LP("items", "{0} item", "{0} items", count);
 ```
 
-Locale files use a simple `key=value` format:
+Strings can be defined in a strings file, and use a `key=value` format for lookup:
 
 ```
 # en.strings
 save=Save
 page_of=Page {0} of {1}
-items.zero=No items
-items.one=1 item
+items.one={0} item
 items.other={0} items
 ```
 
-Changing the current locale posts a notification so views can update.
+A strings file can define plural categories using the categories `zero`, `one`, `two`, `few`, `many` and `other`. Russian, for example, uses three:
+
+```
+# ru.strings
+items.one={0} предмет
+items.few={0} предмета
+items.many={0} предметов
+```
+
+Focus includes plural rules for many languages; to add one, you can register a rule with `Locale::setPluralRule`.
+
+A regional catalog can hold only what differs from its language by naming a parent on its first line:
+
+```
+# en_GB.strings
+@parent=en
+color=Colour
+```
+
+Applications can set their locale at runtime, and should set a locale at startup:
+
+```cpp
+// Setup:
+Locale::addLocaleSearchPath("/locale/");
+Locale::setCurrentLocale(Locale::withIdentifier("es"));
+```
+
+Changing the current locale posts a `LocaleChanged` notification so views can update.
 
 ## Tasks, Timers, and Notifications
 
