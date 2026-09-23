@@ -294,22 +294,22 @@ void Locale::mergeParents(std::map<std::string, std::string>& strings, std::vect
         FOCUS_LOGW(TAG, "%s: parent %s is already in its chain", chain.back().c_str(), parent.c_str());
         return;
     }
-    std::map<std::string, std::string> inherited;
+    // The child's strings win; the parent fills in the rest.
     auto cached = localeCache.find(parent);
     if (cached != localeCache.end()) {
-        inherited = cached->second->strings;
-    } else {
-#if FOCUS_HAS_FILESYSTEM
-        chain.push_back(parent);
-        inherited = readStrings(parent, chain);
-        chain.pop_back();
-#endif
+        strings.insert(cached->second->strings.begin(), cached->second->strings.end());
+        return;
     }
+    std::map<std::string, std::string> inherited;
+#if FOCUS_HAS_FILESYSTEM
+    chain.push_back(parent);
+    inherited = readStrings(parent, chain);
+    chain.pop_back();
+#endif
     if (inherited.empty()) {
         FOCUS_LOGW(TAG, "%s: parent %s not found", chain.back().c_str(), parent.c_str());
         return;
     }
-    // The child's strings win; the parent fills in the rest.
     strings.merge(inherited);
 }
 
