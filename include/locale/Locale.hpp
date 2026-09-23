@@ -35,6 +35,12 @@
 
 namespace focus {
 
+/// A CLDR plural category.
+enum class PluralCategory : uint8_t { Zero, One, Two, Few, Many, Other };
+
+/// Maps a count's absolute value to its plural category.
+using PluralRule = PluralCategory (*)(uint64_t n);
+
 /**
  * Locale provides a Font-style cached factory for loading localized string tables.
  * Locale files are simple key=value text files (UTF-8, .strings extension).
@@ -140,6 +146,15 @@ public:
     /// Whether this locale was successfully loaded.
     bool isValid() const;
 
+    /// The plural category this locale's language uses for `count`.
+    PluralCategory pluralCategory(int64_t count) const;
+
+    /**
+     * Use `rule` for `language` (e.g. "ga" or "pt_PT"), overriding any built-in rule.
+     * Pass nullptr to remove it.
+     */
+    static void setPluralRule(const std::string& language, PluralRule rule);
+
 private:
     Locale(const std::string& identifier, std::map<std::string, std::string> strings);
 
@@ -188,6 +203,12 @@ namespace detail {
     }
 
     std::string lookupString(const std::string& key);
+
+    // The built-in plural rule for an identifier like "pt_PT", or nullptr.
+    PluralRule builtinPluralRule(const std::string& identifier);
+
+    // The rule for languages without one: one for 1, other otherwise.
+    PluralCategory defaultPluralRule(uint64_t n);
 }
 
 /**

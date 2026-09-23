@@ -4,6 +4,9 @@
 #include <cstring>
 #include <fstream>
 #include <filesystem>
+#include <limits>
+#include <utility>
+#include <vector>
 
 using namespace focus;
 
@@ -96,4 +99,105 @@ TEST(lf_formats_whichever_string_wins) {
     ASSERT_STREQ(_LF("page", "Page {0} of {1}", 1, 2), "P 1/2");
     ASSERT_STREQ(_LF("count", "Count {0}", 3), "N 3");
     ASSERT_STREQ(_LF("none", "Page {0}", 4), "Page 4");
+}
+
+// A placeholder catalog, for reading plural rules only.
+static Locale* pluralLocale(const char* identifier) {
+    static const char blob[] = "x=y\n";
+    return Locale::fromMemory(identifier, (const uint8_t*)blob, sizeof(blob) - 1);
+}
+
+// Integer samples from CLDR 48.2 plurals.xml, one language per built-in rule plus English.
+TEST(plural_rules_match_cldr_samples) {
+    using P = PluralCategory;
+    struct Case {
+        const char* identifier;
+        std::vector<std::pair<uint64_t, P>> samples;
+    };
+    const std::vector<Case> cases = {
+        {"ja", {{0, P::Other}, {1, P::Other}, {2, P::Other}, {3, P::Other}, {4, P::Other}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {100, P::Other}, {1000, P::Other}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+        {"hi", {{0, P::One}, {1, P::One}, {2, P::Other}, {3, P::Other}, {4, P::Other}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {16, P::Other}, {17, P::Other}, {100, P::Other}, {1000, P::Other}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+        {"es", {{0, P::Other}, {1, P::One}, {2, P::Other}, {3, P::Other}, {4, P::Other}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {16, P::Other}, {100, P::Other}, {1000, P::Other}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Many}}},
+        {"fr", {{0, P::One}, {1, P::One}, {2, P::Other}, {3, P::Other}, {4, P::Other}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {16, P::Other}, {17, P::Other}, {100, P::Other}, {1000, P::Other}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Many}}},
+        {"ru", {{0, P::Many}, {1, P::One}, {2, P::Few}, {3, P::Few}, {4, P::Few}, {5, P::Many}, {6, P::Many}, {7, P::Many}, {8, P::Many}, {9, P::Many}, {10, P::Many}, {11, P::Many}, {12, P::Many}, {13, P::Many}, {14, P::Many}, {15, P::Many}, {16, P::Many}, {17, P::Many}, {18, P::Many}, {19, P::Many}, {21, P::One}, {22, P::Few}, {23, P::Few}, {24, P::Few}, {100, P::Many}, {101, P::One}, {102, P::Few}, {1000, P::Many}, {1001, P::One}, {1002, P::Few}, {10000, P::Many}, {100000, P::Many}, {1000000, P::Many}}},
+        {"pl", {{0, P::Many}, {1, P::One}, {2, P::Few}, {3, P::Few}, {4, P::Few}, {5, P::Many}, {6, P::Many}, {7, P::Many}, {8, P::Many}, {9, P::Many}, {10, P::Many}, {11, P::Many}, {12, P::Many}, {13, P::Many}, {14, P::Many}, {15, P::Many}, {16, P::Many}, {17, P::Many}, {18, P::Many}, {19, P::Many}, {22, P::Few}, {23, P::Few}, {24, P::Few}, {100, P::Many}, {102, P::Few}, {1000, P::Many}, {1002, P::Few}, {10000, P::Many}, {100000, P::Many}, {1000000, P::Many}}},
+        {"cs", {{0, P::Other}, {1, P::One}, {2, P::Few}, {3, P::Few}, {4, P::Few}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {16, P::Other}, {17, P::Other}, {18, P::Other}, {19, P::Other}, {100, P::Other}, {1000, P::Other}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+        {"hr", {{0, P::Other}, {1, P::One}, {2, P::Few}, {3, P::Few}, {4, P::Few}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {16, P::Other}, {17, P::Other}, {18, P::Other}, {19, P::Other}, {21, P::One}, {22, P::Few}, {23, P::Few}, {24, P::Few}, {100, P::Other}, {101, P::One}, {102, P::Few}, {1000, P::Other}, {1001, P::One}, {1002, P::Few}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+        {"lt", {{0, P::Other}, {1, P::One}, {2, P::Few}, {3, P::Few}, {4, P::Few}, {5, P::Few}, {6, P::Few}, {7, P::Few}, {8, P::Few}, {9, P::Few}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {16, P::Other}, {17, P::Other}, {18, P::Other}, {19, P::Other}, {20, P::Other}, {21, P::One}, {22, P::Few}, {23, P::Few}, {24, P::Few}, {100, P::Other}, {101, P::One}, {102, P::Few}, {1000, P::Other}, {1001, P::One}, {1002, P::Few}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+        {"lv", {{0, P::Zero}, {1, P::One}, {2, P::Other}, {3, P::Other}, {4, P::Other}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Zero}, {11, P::Zero}, {12, P::Zero}, {13, P::Zero}, {14, P::Zero}, {15, P::Zero}, {16, P::Zero}, {17, P::Zero}, {18, P::Zero}, {19, P::Zero}, {20, P::Zero}, {21, P::One}, {22, P::Other}, {23, P::Other}, {24, P::Other}, {100, P::Zero}, {101, P::One}, {102, P::Other}, {1000, P::Zero}, {1001, P::One}, {1002, P::Other}, {10000, P::Zero}, {100000, P::Zero}, {1000000, P::Zero}}},
+        {"ar", {{0, P::Zero}, {1, P::One}, {2, P::Two}, {3, P::Few}, {4, P::Few}, {5, P::Few}, {6, P::Few}, {7, P::Few}, {8, P::Few}, {9, P::Few}, {10, P::Few}, {11, P::Many}, {12, P::Many}, {13, P::Many}, {14, P::Many}, {15, P::Many}, {16, P::Many}, {17, P::Many}, {18, P::Many}, {19, P::Many}, {20, P::Many}, {21, P::Many}, {22, P::Many}, {23, P::Many}, {24, P::Many}, {100, P::Other}, {101, P::Other}, {102, P::Other}, {103, P::Few}, {104, P::Few}, {105, P::Few}, {106, P::Few}, {107, P::Few}, {108, P::Few}, {109, P::Few}, {110, P::Few}, {111, P::Many}, {200, P::Other}, {201, P::Other}, {202, P::Other}, {300, P::Other}, {301, P::Other}, {302, P::Other}, {400, P::Other}, {401, P::Other}, {402, P::Other}, {500, P::Other}, {501, P::Other}, {502, P::Other}, {600, P::Other}, {1000, P::Other}, {1003, P::Few}, {1011, P::Many}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+        {"he", {{0, P::Other}, {1, P::One}, {2, P::Two}, {3, P::Other}, {4, P::Other}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {16, P::Other}, {17, P::Other}, {100, P::Other}, {1000, P::Other}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+        {"sl", {{0, P::Other}, {1, P::One}, {2, P::Two}, {3, P::Few}, {4, P::Few}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {16, P::Other}, {17, P::Other}, {18, P::Other}, {19, P::Other}, {100, P::Other}, {101, P::One}, {102, P::Two}, {103, P::Few}, {104, P::Few}, {201, P::One}, {202, P::Two}, {203, P::Few}, {204, P::Few}, {301, P::One}, {302, P::Two}, {303, P::Few}, {304, P::Few}, {401, P::One}, {402, P::Two}, {403, P::Few}, {404, P::Few}, {501, P::One}, {502, P::Two}, {503, P::Few}, {504, P::Few}, {601, P::One}, {602, P::Two}, {603, P::Few}, {604, P::Few}, {701, P::One}, {702, P::Two}, {703, P::Few}, {704, P::Few}, {1000, P::Other}, {1001, P::One}, {1002, P::Two}, {1003, P::Few}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+        {"ro", {{0, P::Few}, {1, P::One}, {2, P::Few}, {3, P::Few}, {4, P::Few}, {5, P::Few}, {6, P::Few}, {7, P::Few}, {8, P::Few}, {9, P::Few}, {10, P::Few}, {11, P::Few}, {12, P::Few}, {13, P::Few}, {14, P::Few}, {15, P::Few}, {16, P::Few}, {20, P::Other}, {21, P::Other}, {22, P::Other}, {23, P::Other}, {24, P::Other}, {100, P::Other}, {101, P::Few}, {1000, P::Other}, {1001, P::Few}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+        {"is", {{0, P::Other}, {1, P::One}, {2, P::Other}, {3, P::Other}, {4, P::Other}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {16, P::Other}, {21, P::One}, {100, P::Other}, {101, P::One}, {1000, P::Other}, {1001, P::One}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+        {"en", {{0, P::Other}, {1, P::One}, {2, P::Other}, {3, P::Other}, {4, P::Other}, {5, P::Other}, {6, P::Other}, {7, P::Other}, {8, P::Other}, {9, P::Other}, {10, P::Other}, {11, P::Other}, {12, P::Other}, {13, P::Other}, {14, P::Other}, {15, P::Other}, {16, P::Other}, {100, P::Other}, {1000, P::Other}, {10000, P::Other}, {100000, P::Other}, {1000000, P::Other}}},
+    };
+    for (const auto& c : cases) {
+        Locale* locale = pluralLocale(c.identifier);
+        ASSERT_TRUE(locale != nullptr);
+        for (const auto& [n, expected] : c.samples) {
+            if (locale->pluralCategory((int64_t)n) != expected) {
+                fprintf(stderr, "  %s at %llu\n", c.identifier, (unsigned long long)n);
+                FAIL("plural category differs from CLDR");
+            }
+        }
+    }
+}
+
+TEST(plural_rule_full_identifier_before_language) {
+    using P = PluralCategory;
+    ASSERT_TRUE(pluralLocale("pt")->pluralCategory(0) == P::One);
+    ASSERT_TRUE(pluralLocale("pt_BR")->pluralCategory(0) == P::One);
+    ASSERT_TRUE(pluralLocale("pt_PT")->pluralCategory(0) == P::Other);
+    ASSERT_TRUE(pluralLocale("pt-PT")->pluralCategory(0) == P::Other);
+    ASSERT_TRUE(pluralLocale("kok_Latn")->pluralCategory(0) == P::One);
+}
+
+TEST(plural_rule_language_part_is_not_truncated) {
+    using P = PluralCategory;
+    ASSERT_TRUE(pluralLocale("hsb")->pluralCategory(2) == P::Two);
+    ASSERT_TRUE(pluralLocale("hsb_DE")->pluralCategory(2) == P::Two);
+    ASSERT_TRUE(pluralLocale("ars")->pluralCategory(0) == P::Zero);
+}
+
+TEST(plural_rule_unknown_language_uses_default) {
+    using P = PluralCategory;
+    ASSERT_TRUE(pluralLocale("xx")->pluralCategory(0) == P::Other);
+    ASSERT_TRUE(pluralLocale("xx")->pluralCategory(1) == P::One);
+    ASSERT_TRUE(pluralLocale("xx")->pluralCategory(2) == P::Other);
+    ASSERT_TRUE(pluralLocale("cy")->pluralCategory(2) == P::Other);
+}
+
+TEST(plural_rule_negative_count_uses_absolute_value) {
+    using P = PluralCategory;
+    Locale* ru = pluralLocale("ru");
+    ASSERT_TRUE(ru->pluralCategory(-1) == P::One);
+    ASSERT_TRUE(ru->pluralCategory(-2) == P::Few);
+    ASSERT_TRUE(ru->pluralCategory(-5) == P::Many);
+    ASSERT_TRUE(ru->pluralCategory(std::numeric_limits<int64_t>::min()) == P::Many);
+    ASSERT_TRUE(pluralLocale("xx")->pluralCategory(-1) == P::One);
+}
+
+TEST(registered_plural_rule_applies_until_removed) {
+    using P = PluralCategory;
+    Locale::setPluralRule("xq", [](uint64_t n) { return n == 2 ? P::Two : P::Other; });
+    ASSERT_TRUE(pluralLocale("xq")->pluralCategory(2) == P::Two);
+    ASSERT_TRUE(pluralLocale("xq_ZZ")->pluralCategory(2) == P::Two);
+    ASSERT_TRUE(pluralLocale("xq")->pluralCategory(1) == P::Other);
+    Locale::setPluralRule("xq", nullptr);
+    ASSERT_TRUE(pluralLocale("xq")->pluralCategory(1) == P::One);
+}
+
+TEST(registered_plural_rule_overrides_builtin) {
+    using P = PluralCategory;
+    Locale::setPluralRule("ar", [](uint64_t) { return P::Other; });
+    ASSERT_TRUE(pluralLocale("ar")->pluralCategory(1) == P::Other);
+    Locale::setPluralRule("ar", nullptr);
+    ASSERT_TRUE(pluralLocale("ar")->pluralCategory(1) == P::One);
+
+    Locale::setPluralRule("pt-PT", [](uint64_t) { return P::Many; });
+    ASSERT_TRUE(pluralLocale("pt_PT")->pluralCategory(1) == P::Many);
+    ASSERT_TRUE(pluralLocale("pt")->pluralCategory(1) == P::One);
+    Locale::setPluralRule("pt_PT", nullptr);
+    ASSERT_TRUE(pluralLocale("pt_PT")->pluralCategory(1) == P::One);
 }

@@ -25,6 +25,7 @@
 #include "Locale.hpp"
 #include "NotificationCenter.hpp"
 #include "focus_config.h"
+#include <initializer_list>
 #if FOCUS_HAS_FILESYSTEM
 #include <fstream>
 #include <iterator>
@@ -54,6 +55,38 @@ std::string firstMatch(Find find) {
         if (!result.empty()) return result;
     }
     return {};
+}
+
+std::map<std::string, PluralRule>& registeredPluralRules() {
+    static std::map<std::string, PluralRule> rules;
+    return rules;
+}
+
+std::string normalizedIdentifier(const std::string& identifier) {
+    std::string result = identifier;
+    for (char& c : result) {
+        if (c == '-') c = '_';
+    }
+    return result;
+}
+
+// "pt_PT" -> "pt"
+std::string languagePart(const std::string& normalized) {
+    return normalized.substr(0, normalized.find('_'));
+}
+
+PluralRule resolvePluralRule(const std::string& identifier) {
+    std::string full = normalizedIdentifier(identifier);
+    std::string language = languagePart(full);
+    const auto& registered = registeredPluralRules();
+    for (const std::string* id : {&full, &language}) {
+        auto it = registered.find(*id);
+        if (it != registered.end()) return it->second;
+    }
+    for (const std::string* id : {&full, &language}) {
+        if (PluralRule rule = detail::builtinPluralRule(*id)) return rule;
+    }
+    return detail::defaultPluralRule;
 }
 
 }  // namespace
@@ -162,6 +195,20 @@ const std::string& Locale::getIdentifier() const {
 
 bool Locale::isValid() const {
     return valid;
+}
+
+PluralCategory Locale::pluralCategory(int64_t count) const {
+    uint64_t n = count < 0 ? 0 - static_cast<uint64_t>(count) : static_cast<uint64_t>(count);
+    return resolvePluralRule(identifier)(n);
+}
+
+void Locale::setPluralRule(const std::string& language, PluralRule rule) {
+    std::string key = normalizedIdentifier(language);
+    if (rule) {
+        registeredPluralRules()[key] = rule;
+    } else {
+        registeredPluralRules().erase(key);
+    }
 }
 
 std::map<std::string, std::string> Locale::parseStrings(const uint8_t* data, size_t size) {
