@@ -43,6 +43,9 @@ jobs:
       - name: Shaping-free build + smoke
         run: ./build/focus-test-noshaping
 
+      - name: Plural-rules-free build + smoke
+        run: ./build/focus-test-noplurals
+
   pygamer-build:
     name: PyGamer example (SAMD51 / arm-gcc)
     runs-on: ubuntu-latest

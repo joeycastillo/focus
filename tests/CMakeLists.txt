@@ -131,6 +131,20 @@ target_compile_definitions(focus-test-noshaping PRIVATE
 )
 target_compile_options(focus-test-noshaping PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+# --- Plural-rules-free build: whole framework compiled with
+#     FOCUS_HAS_PLURAL_RULES=0. Proves the built-in rules and their table are
+#     excludable and every language falls back to the English rule. ---
+add_executable(focus-test-noplurals
+    test_no_plurals.cpp
+    ${FOCUS_SOURCES}
+)
+target_include_directories(focus-test-noplurals PRIVATE ${INCLUDE_DIRS})
+target_compile_definitions(focus-test-noplurals PRIVATE
+    FOCUS_HAS_PLURAL_RULES=0
+    FONTS_DIR="${FOCUS_TEST_FONTS_DIR}/"
+)
+target_compile_options(focus-test-noplurals PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
 # --- Header include-order guard (compile-only) -----------------------------
 # Every public header must compile when Arduino.h's round()/abs()/min()/max()
 # function-like macros are already defined — i.e. when a translation unit

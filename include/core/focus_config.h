@@ -24,3 +24,11 @@
 #if !defined(FOCUS_HAS_TEXT_SHAPING)
     #define FOCUS_HAS_TEXT_SHAPING 1
 #endif
+
+// FOCUS_HAS_PLURAL_RULES: 1 where the built-in plural rules are compiled in
+// (the default), 0 to omit them on firmware that ships one language; every
+// language then uses the English rule unless one is registered.
+// An explicit -DFOCUS_HAS_PLURAL_RULES=0/1 from the build always wins.
+#if !defined(FOCUS_HAS_PLURAL_RULES)
+    #define FOCUS_HAS_PLURAL_RULES 1
+#endif

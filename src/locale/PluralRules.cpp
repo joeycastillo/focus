@@ -23,6 +23,7 @@
  */
 
 #include "Locale.hpp"
+#include "focus_config.h"
 
 #include <algorithm>
 #include <cstring>
@@ -33,6 +34,8 @@ namespace focus {
 namespace {
 
 using P = PluralCategory;
+
+#if FOCUS_HAS_PLURAL_RULES
 
 // CLDR 48.2 cardinal plural rules, integer counts only.
 
@@ -162,16 +165,22 @@ constexpr bool isSorted() {
 }
 static_assert(isSorted(), "plural rule table must be sorted by identifier");
 
+#endif  // FOCUS_HAS_PLURAL_RULES
+
 }  // namespace
 
 PluralCategory detail::defaultPluralRule(uint64_t n) { return n == 1 ? P::One : P::Other; }
 
 PluralRule detail::builtinPluralRule(const std::string& identifier) {
+#if FOCUS_HAS_PLURAL_RULES
     auto it = std::lower_bound(std::begin(rules), std::end(rules), identifier,
         [](const RuleEntry& entry, const std::string& id) {
             return std::strcmp(entry.identifier, id.c_str()) < 0;
         });
     if (it != std::end(rules) && identifier == it->identifier) return it->rule;
+#else
+    (void)identifier;
+#endif
     return nullptr;
 }
 
