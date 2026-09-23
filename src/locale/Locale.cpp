@@ -38,6 +38,30 @@ std::vector<std::string> Locale::searchPaths;
 Locale* Locale::activeLocale = nullptr;
 Locale* Locale::fallbackLocale = nullptr;
 
+namespace {
+
+// The first non-empty result of find in the current locale, then the default locale.
+template<typename Find>
+std::string firstMatch(Find find) {
+    Locale* current = Locale::currentLocale();
+    if (current) {
+        std::string result = find(*current);
+        if (!result.empty()) return result;
+    }
+    Locale* fallback = Locale::defaultLocale();
+    if (fallback && fallback != current) {
+        std::string result = find(*fallback);
+        if (!result.empty()) return result;
+    }
+    return {};
+}
+
+}  // namespace
+
+std::string detail::lookupString(const std::string& key) {
+    return firstMatch([&](const Locale& locale) { return locale.getString(key); });
+}
+
 Locale::Locale(const std::string& identifier, std::map<std::string, std::string> strings)
     : identifier(identifier), strings(std::move(strings)), valid(true) {}
 

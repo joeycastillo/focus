@@ -186,6 +186,8 @@ namespace detail {
         }
         return result;
     }
+
+    std::string lookupString(const std::string& key);
 }
 
 /**
@@ -195,17 +197,8 @@ namespace detail {
  * @param comment The English text / fallback (e.g., "WiFi Settings")
  */
 inline std::string _LS(const std::string& key, const std::string& comment) {
-    auto locale = Locale::currentLocale();
-    if (locale) {
-        std::string result = locale->getString(key);
-        if (!result.empty()) return result;
-    }
-    auto fallback = Locale::defaultLocale();
-    if (fallback && fallback != locale) {
-        std::string result = fallback->getString(key);
-        if (!result.empty()) return result;
-    }
-    return comment;
+    std::string result = detail::lookupString(key);
+    return result.empty() ? comment : result;
 }
 
 /**
@@ -219,18 +212,8 @@ template<typename... Args>
 inline std::string _LF(const std::string& key, const std::string& comment, Args&&... args) {
     std::vector<std::string> argVec;
     (argVec.push_back(detail::toString(std::forward<Args>(args))), ...);
-
-    auto locale = Locale::currentLocale();
-    if (locale) {
-        std::string templ = locale->getString(key);
-        if (!templ.empty()) return detail::substitute(templ, argVec);
-    }
-    auto fallback = Locale::defaultLocale();
-    if (fallback && fallback != locale) {
-        std::string templ = fallback->getString(key);
-        if (!templ.empty()) return detail::substitute(templ, argVec);
-    }
-    return detail::substitute(comment, argVec);
+    std::string templ = detail::lookupString(key);
+    return detail::substitute(templ.empty() ? comment : templ, argVec);
 }
 
 /**

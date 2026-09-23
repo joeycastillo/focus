@@ -1,6 +1,7 @@
 #include "test_harness.hpp"
 #include "Locale.hpp"
 
+#include <cstring>
 #include <fstream>
 #include <filesystem>
 
@@ -58,4 +59,41 @@ TEST(locale_from_file_still_works_after_refactor) {
     ASSERT_STREQ(loc->getString("escaped"), "a\nb");
     fs::remove(path);
     Locale::clearSearchPaths();
+}
+
+// Sets the current and default locales for one test, and clears both after.
+struct LocaleScope {
+    LocaleScope(Locale* current, Locale* fallback) {
+        Locale::setCurrentLocale(current);
+        Locale::setDefaultLocale(fallback);
+    }
+    ~LocaleScope() {
+        Locale::setCurrentLocale(nullptr);
+        Locale::setDefaultLocale(nullptr);
+    }
+};
+
+static Locale* memoryLocale(const char* identifier, const char* strings) {
+    return Locale::fromMemory(identifier, (const uint8_t*)strings, strlen(strings));
+}
+
+TEST(ls_checks_current_then_default_then_comment) {
+    LocaleScope scope(memoryLocale("t_ls_cur", "a=Current\n"),
+                      memoryLocale("t_ls_def", "a=Default\nb=DefaultB\n"));
+    ASSERT_STREQ(_LS("a", "Comment"), "Current");
+    ASSERT_STREQ(_LS("b", "Comment"), "DefaultB");
+    ASSERT_STREQ(_LS("c", "Comment"), "Comment");
+}
+
+TEST(ls_without_locales_returns_comment) {
+    LocaleScope scope(nullptr, nullptr);
+    ASSERT_STREQ(_LS("a", "Comment"), "Comment");
+}
+
+TEST(lf_formats_whichever_string_wins) {
+    LocaleScope scope(memoryLocale("t_lf_cur", "page=P {0}/{1}\n"),
+                      memoryLocale("t_lf_def", "count=N {0}\n"));
+    ASSERT_STREQ(_LF("page", "Page {0} of {1}", 1, 2), "P 1/2");
+    ASSERT_STREQ(_LF("count", "Count {0}", 3), "N 3");
+    ASSERT_STREQ(_LF("none", "Page {0}", 4), "Page 4");
 }
