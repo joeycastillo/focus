@@ -54,6 +54,7 @@ using PluralRule = PluralCategory (*)(uint64_t n);
  *   // In views — the comment is both documentation and fallback
  *   label->setText(_LS("wifi_settings", "WiFi Settings"));
  *   std::string page = _LF("page_of", "Page {0} of {1}", current, total);
+ *   std::string items = _LP("items", "{0} item", "{0} items", count);
  *
  * @par Memory management
  * The locale cache grows without bound as new locales are loaded.
@@ -204,6 +205,8 @@ namespace detail {
 
     std::string lookupString(const std::string& key);
 
+    std::string lookupPlural(const std::string& key, int64_t count);
+
     // The built-in plural rule for an identifier like "pt_PT", or nullptr.
     PluralRule builtinPluralRule(const std::string& identifier);
 
@@ -238,32 +241,20 @@ inline std::string _LF(const std::string& key, const std::string& comment, Args&
 }
 
 /**
- * Look up a plural form based on count.
- * Looks for key.zero (count==0), key.one (count==1), or key.other.
- * The comment is the fallback format string (use {0} for the count).
+ * Look up the plural form for count.
+ * Tries key.<category> (zero, one, two, few, many or other), then key.other,
+ * in the current locale, then the default locale. The one and other strings
+ * are the English forms and the fallback. {0} is replaced with the count.
  * @param key The base key (e.g., "items")
- * @param comment The English fallback (e.g., "{0} items")
+ * @param one The English singular (e.g., "{0} item")
+ * @param other The English plural (e.g., "{0} items")
  * @param count The count that determines which plural form to use
  */
-inline std::string _LP(const std::string& key, const std::string& comment, int count) {
-    std::string subkey;
-    if (count == 0) subkey = key + ".zero";
-    else if (count == 1) subkey = key + ".one";
-    else subkey = key + ".other";
-
-    std::vector<std::string> args = { detail::toString(count) };
-
-    auto locale = Locale::currentLocale();
-    if (locale) {
-        std::string templ = locale->getString(subkey);
-        if (!templ.empty()) return detail::substitute(templ, args);
-    }
-    auto fallback = Locale::defaultLocale();
-    if (fallback && fallback != locale) {
-        std::string templ = fallback->getString(subkey);
-        if (!templ.empty()) return detail::substitute(templ, args);
-    }
-    return detail::substitute(comment, args);
+inline std::string _LP(const std::string& key, const std::string& one,
+                       const std::string& other, int64_t count) {
+    std::string templ = detail::lookupPlural(key, count);
+    if (templ.empty()) templ = (count == 1 || count == -1) ? one : other;
+    return detail::substitute(templ, { detail::toString(count) });
 }
 
 }  // namespace focus

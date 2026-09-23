@@ -201,3 +201,49 @@ TEST(registered_plural_rule_overrides_builtin) {
     Locale::setPluralRule("pt_PT", nullptr);
     ASSERT_TRUE(pluralLocale("pt_PT")->pluralCategory(1) == P::One);
 }
+
+TEST(lp_without_catalog_uses_english_forms) {
+    LocaleScope scope(nullptr, nullptr);
+    ASSERT_STREQ(_LP("items", "{0} item", "{0} items", 1), "1 item");
+    ASSERT_STREQ(_LP("items", "{0} item", "{0} items", 2), "2 items");
+    ASSERT_STREQ(_LP("items", "{0} item", "{0} items", 0), "0 items");
+    ASSERT_STREQ(_LP("items", "{0} item", "{0} items", -1), "-1 item");
+}
+
+TEST(lp_uses_the_category_from_the_locale_rule) {
+    LocaleScope scope(memoryLocale("ar_T1",
+        "files.zero=zero\nfiles.one=one\nfiles.two=two\n"
+        "files.few={0} few\nfiles.many={0} many\nfiles.other={0} other\n"), nullptr);
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", 0), "zero");
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", 1), "one");
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", 2), "two");
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", 3), "3 few");
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", 11), "11 many");
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", 100), "100 other");
+}
+
+TEST(lp_missing_category_falls_back_to_other) {
+    LocaleScope scope(memoryLocale("ru_T1", "files.one={0} one\nfiles.other={0} other\n"), nullptr);
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", 5), "5 other");
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", 21), "21 one");
+}
+
+TEST(lp_checks_current_locale_before_default) {
+    LocaleScope scope(memoryLocale("ru_T2", "files.other=RU {0}\n"),
+                      memoryLocale("ar_T2", "files.one=AR one\nbooks.two=AR two\n"));
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", 1), "RU 1");
+    ASSERT_STREQ(_LP("books", "{0} book", "{0} books", 2), "AR two");
+    ASSERT_STREQ(_LP("books", "{0} book", "{0} books", 3), "3 books");
+}
+
+TEST(lp_zero_key_is_only_a_grammatical_category) {
+    LocaleScope scope(memoryLocale("en_T1", "files.zero=none\nfiles.other={0} files\n"), nullptr);
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", 0), "0 files");
+}
+
+TEST(lp_negative_count_keeps_its_sign) {
+    LocaleScope scope(memoryLocale("ru_T3",
+        "files.one={0} one\nfiles.few={0} few\nfiles.many={0} many\n"), nullptr);
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", -21), "-21 one");
+    ASSERT_STREQ(_LP("files", "{0} file", "{0} files", -2), "-2 few");
+}

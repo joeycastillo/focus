@@ -89,10 +89,29 @@ PluralRule resolvePluralRule(const std::string& identifier) {
     return detail::defaultPluralRule;
 }
 
+const char* pluralSuffix(PluralCategory category) {
+    switch (category) {
+        case PluralCategory::Zero: return ".zero";
+        case PluralCategory::One: return ".one";
+        case PluralCategory::Two: return ".two";
+        case PluralCategory::Few: return ".few";
+        case PluralCategory::Many: return ".many";
+        case PluralCategory::Other: break;
+    }
+    return ".other";
+}
+
 }  // namespace
 
 std::string detail::lookupString(const std::string& key) {
     return firstMatch([&](const Locale& locale) { return locale.getString(key); });
+}
+
+std::string detail::lookupPlural(const std::string& key, int64_t count) {
+    return firstMatch([&](const Locale& locale) {
+        std::string result = locale.getString(key + pluralSuffix(locale.pluralCategory(count)));
+        return result.empty() ? locale.getString(key + ".other") : result;
+    });
 }
 
 Locale::Locale(const std::string& identifier, std::map<std::string, std::string> strings)
