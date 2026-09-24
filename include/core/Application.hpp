@@ -136,9 +136,10 @@ public:
     /**
      * @brief Present a view controller modally on top of the current content.
      *
-     * A HatchedView dimmer is inserted behind the modal to visually dim the
-     * content beneath. The previously focused view is saved and restored when
-     * the modal is dismissed. Multiple modals can be stacked.
+     * If the modal's view is opaque, it covers the controller beneath it,
+     * which disappears and releases its view until the modal is dismissed.
+     * Otherwise a HatchedView dimmer is inserted behind the modal and the
+     * controller beneath gets no callbacks. Multiple modals can be stacked.
      *
      * @param viewController The view controller to present modally.
      */
@@ -147,8 +148,10 @@ public:
     /**
      * @brief Dismiss the topmost modal view controller.
      *
-     * Removes the modal's view and dimmer, restores focus to the previously
-     * focused view, and marks the window as needing a full redraw.
+     * Removes the modal's view and dimmer and shows whatever it covered.
+     * Focus returns to the view that was focused before the modal was
+     * presented, or to the first focusable view on top if that view was
+     * rebuilt.
      */
     virtual void dismissViewController();
 
@@ -198,6 +201,7 @@ protected:
         std::shared_ptr<ViewController> viewController; ///< The presented view controller.
         std::shared_ptr<HatchedView> dimmer;            ///< Overlay that dims content behind the modal.
         std::weak_ptr<View> previousFocusedView;        ///< Focus to restore on dismiss.
+        bool hidden = false;                            ///< Covered by an opaque modal; its view is released.
     };
     std::vector<ModalEntry> modalStack; ///< Stack of modally presented view controllers.
 
@@ -234,6 +238,19 @@ protected:
     /// @}
 
     std::atomic<uint32_t> loopCounter_{0}; ///< Completed run-loop iterations (readable from any thread).
+
+private:
+    bool rootHidden = false;        ///< The root is covered by an opaque modal.
+    bool updatingCoverage = false;  ///< Set while updateCoverage() runs.
+
+    /// Hide whatever an opaque modal covers and show whatever nothing covers.
+    void updateCoverage();
+    void hideViewController(std::shared_ptr<ViewController> viewController);
+    /// Show a controller's view directly below `above`, or on top if null; `clipsFocus` keeps focus inside it.
+    void showViewController(std::shared_ptr<ViewController> viewController,
+                            std::shared_ptr<View> above, bool clipsFocus);
+    void removeModal(const ModalEntry& entry);
+    void restoreFocus(std::weak_ptr<View> previousFocusedView, bool wasEngaged);
 };
 
 }  // namespace focus

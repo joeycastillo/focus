@@ -57,6 +57,11 @@ class TabViewController;
  * 4. viewWillDisappear() — called before the view is removed.
  * 5. viewDidDisappear() — called after the view is removed.
  *    The base implementation calls destroyView() to release the view.
+ *
+ * A controller disappears whenever it stops being visible: pushed over,
+ * switched away from, replaced, or covered by an opaque modal. When it is
+ * visible again it appears with a new view from createView(), so keep
+ * anything that must survive in the controller.
  * @ingroup core
  */
 class ViewController : public std::enable_shared_from_this<ViewController> {

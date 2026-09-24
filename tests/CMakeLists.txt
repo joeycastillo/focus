@@ -53,6 +53,7 @@ set(TEST_SOURCES
     test_tab_identifiers.cpp
     test_control_selected.cpp
     test_navigation_focus.cpp
+    test_appearance.cpp
     test_item_reload.cpp
     test_styled_glyph_provider.cpp
     test_fallback_glyph_provider.cpp
