@@ -95,6 +95,11 @@ void CollectionViewController::createView() {
     this->lastLaidOutSize = SizeZero;
 }
 
+void CollectionViewController::destroyView() {
+    this->paginatedView.reset();
+    ViewController::destroyView();
+}
+
 void CollectionViewController::viewDidLayoutSubviews() {
     ViewController::viewDidLayoutSubviews();
 

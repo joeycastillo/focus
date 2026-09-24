@@ -646,3 +646,32 @@ TEST(select_tab_on_a_covered_tab_controller_shows_after_uncover) {
     ASSERT_TRUE(logged(*env.log, "b.didAppear"));
     ASSERT_EQ(a->createCount, 1);
 }
+
+// --- Releasing covered views ---
+
+TEST(covered_collection_releases_its_cells) {
+    auto env = makeEnv();
+    auto collection = std::make_shared<TwoItemCollectionVC>(env.app);
+    env.app->setRootViewController(collection);
+    std::weak_ptr<PaginatedCollectionView> paginated = collection->paginated();
+    ASSERT_FALSE(paginated.expired());
+
+    env.app->presentViewController(env.make("m"));
+    ASSERT_TRUE(paginated.expired());
+
+    env.app->dismissViewController();
+    ASSERT_TRUE(collection->paginated() != nullptr);
+}
+
+TEST(covered_tab_controller_releases_its_tab_items) {
+    auto env = makeEnv();
+    auto tabs = TabViewController::create(env.app);
+    tabs->addTab("A", env.make("a"));
+    tabs->addTab("B", env.make("b"));
+    env.app->setRootViewController(tabs);
+    std::weak_ptr<View> item = findById(tabs->getView(), "tab-item-1");
+    ASSERT_FALSE(item.expired());
+
+    env.app->presentViewController(env.make("m"));
+    ASSERT_TRUE(item.expired());
+}

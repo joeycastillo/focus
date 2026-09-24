@@ -104,8 +104,9 @@ public:
 
 protected:
     void createView() override;
+    void destroyView() override;
 
-    /// @brief Access the underlying PaginatedCollectionView.
+    /// @brief Access the underlying PaginatedCollectionView, or nullptr while the view is released.
     std::shared_ptr<PaginatedCollectionView> getPaginatedView() const;
 
 private:

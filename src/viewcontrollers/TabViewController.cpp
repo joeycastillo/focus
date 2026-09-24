@@ -237,6 +237,9 @@ void TabViewController::viewDidDisappear() {
         selected.viewController->viewDidDisappear();
     }
 
+    for (auto& tab : this->tabs) {
+        tab.tabItem = nullptr;
+    }
     this->tabBar.reset();
     this->contentArea.reset();
     ViewController::viewDidDisappear();
