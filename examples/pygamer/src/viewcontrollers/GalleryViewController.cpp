@@ -31,11 +31,24 @@ void GalleryViewController::createView() {
     }, FOCUS_EVENT_SELECT, this->weak_from_this());
     stack->addSubview(sayHi);
 
-    stack->addSubview(std::make_shared<Checkbox>(
-        MakeRect(0, 0, 0, 20), "Checkbox"));
+    // This view is rebuilt each time the screen reappears, so the controls
+    // start from state kept here in the controller, and report changes back.
+    auto checkbox = std::make_shared<Checkbox>(MakeRect(0, 0, 0, 20), "Checkbox");
+    checkbox->setSelected(this->checked);
+    checkbox->setAction([this](Event, std::weak_ptr<View> sender) {
+        if (auto box = std::dynamic_pointer_cast<Checkbox>(sender.lock())) {
+            this->checked = box->isSelected();
+        }
+    }, FOCUS_EVENT_VALUE_CHANGED, this->weak_from_this());
+    stack->addSubview(checkbox);
 
     auto slider = std::make_shared<Slider>(MakeRect(0, 0, 0, 20), "Value:");
-    slider->setValue(0.5f);
+    slider->setValue(this->sliderValue);
+    slider->setAction([this](Event, std::weak_ptr<View> sender) {
+        if (auto s = std::dynamic_pointer_cast<Slider>(sender.lock())) {
+            this->sliderValue = s->getValue();
+        }
+    }, FOCUS_EVENT_VALUE_CHANGED, this->weak_from_this());
     stack->addSubview(slider);
 
     auto about = std::make_shared<Button>(MakeRect(0, 0, 0, 20), "About");
@@ -48,7 +61,8 @@ void GalleryViewController::createView() {
     }, FOCUS_EVENT_SELECT, this->weak_from_this());
     stack->addSubview(about);
 
-    this->statusLabel = std::make_shared<LabelView>(MakeRect(0, 0, 0, 10), "");
+    this->statusLabel = std::make_shared<LabelView>(MakeRect(0, 0, 0, 10),
+        this->greeted ? "Hi from SAMD51!" : "");
     stack->addSubview(this->statusLabel);
 
     this->view->addSubview(stack);

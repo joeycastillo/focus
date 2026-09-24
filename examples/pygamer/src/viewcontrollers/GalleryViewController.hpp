@@ -22,4 +22,6 @@ private:
     std::shared_ptr<focus::VStack> stack;
     std::shared_ptr<focus::LabelView> statusLabel;
     bool greeted = false;
+    bool checked = false;
+    float sliderValue = 0.5f;
 };
