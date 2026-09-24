@@ -137,17 +137,23 @@ void NavigationViewController::viewDidDisappear() {
 }
 
 void NavigationViewController::pushViewController(std::shared_ptr<ViewController> viewController) {
-    if (!this->contentArea) return;
     if (this->inTransition) return;
     FOCUS_LOGD(TAG, "push %s", typeid(*viewController).name());
+
+    viewController->navigationController = std::dynamic_pointer_cast<NavigationViewController>(
+        this->shared_from_this());
+
+    // While hidden, the new top appears when this controller does.
+    if (!this->contentArea) {
+        this->viewControllerStack.push_back(viewController);
+        return;
+    }
 
     this->inTransition = true;
     auto oldVC = this->viewControllerStack.back();
     auto window = this->view ? this->view->getWindow().lock() : nullptr;
     // Capture engagement before the transition.
     bool wasEngaged = window && window->isFocusEngaged();
-    viewController->navigationController = std::dynamic_pointer_cast<NavigationViewController>(
-        this->shared_from_this());
     this->viewControllerStack.push_back(viewController);
     this->transitionFromViewController(oldVC, viewController);
     this->updateNavigationBar();
@@ -157,8 +163,14 @@ void NavigationViewController::pushViewController(std::shared_ptr<ViewController
 
 void NavigationViewController::popViewController() {
     if (this->viewControllerStack.size() <= 1) return;
-    if (!this->contentArea) return;
     if (this->inTransition) return;
+
+    // While hidden, just drop it from the stack.
+    if (!this->contentArea) {
+        this->viewControllerStack.back()->navigationController.reset();
+        this->viewControllerStack.pop_back();
+        return;
+    }
 
     this->inTransition = true;
     auto oldVC = this->viewControllerStack.back();

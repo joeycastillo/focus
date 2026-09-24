@@ -571,3 +571,78 @@ TEST(entering_tabs_from_the_end_lands_on_content_when_it_has_some) {
 
     ASSERT_TRUE(tabs->getView()->lastFocusableDescendant() == b->button);
 }
+
+// --- Hidden containers ---
+
+TEST(push_onto_a_covered_navigation_controller_shows_after_uncover) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b");
+    auto nav = NavigationViewController::create(env.app, a);
+    env.app->setRootViewController(nav);
+    env.app->presentViewController(env.make("m"));
+    env.log->clear();
+
+    nav->pushViewController(b);
+    ASSERT_EQ((int)nav->stackDepth(), 2);
+    ASSERT_EQ(b->createCount, 0);
+
+    env.app->dismissViewController();
+    ASSERT_TRUE(logged(*env.log, "b.didAppear"));
+    ASSERT_EQ(a->createCount, 1);
+    ASSERT_TRUE(nav->topViewController() == b);
+}
+
+TEST(pop_on_a_covered_navigation_controller_shows_after_uncover) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b");
+    auto nav = NavigationViewController::create(env.app, a);
+    env.app->setRootViewController(nav);
+    nav->pushViewController(b);
+    env.app->presentViewController(env.make("m"));
+    env.log->clear();
+
+    nav->popViewController();
+    ASSERT_EQ((int)nav->stackDepth(), 1);
+    ASSERT_TRUE(b->getNavigationController() == nullptr);
+    ASSERT_TRUE(env.log->empty());
+
+    env.app->dismissViewController();
+    ASSERT_TRUE(logged(*env.log, "a.didAppear"));
+    ASSERT_EQ(a->createCount, 2);
+}
+
+TEST(push_before_first_appearance_shows_the_pushed_controller) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b");
+    auto nav = NavigationViewController::create(env.app, a);
+
+    nav->pushViewController(b);
+    env.app->setRootViewController(nav);
+
+    ASSERT_TRUE(nav->topViewController() == b);
+    ASSERT_EQ(a->createCount, 0);
+    ASSERT_EQ(b->createCount, 1);
+}
+
+TEST(select_tab_on_a_covered_tab_controller_shows_after_uncover) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b");
+    auto tabs = TabViewController::create(env.app);
+    tabs->addTab("A", a);
+    tabs->addTab("B", b);
+    env.app->setRootViewController(tabs);
+    env.app->presentViewController(env.make("m"));
+    env.log->clear();
+
+    tabs->selectTab(1);
+    ASSERT_EQ((int)tabs->getSelectedTab(), 1);
+    ASSERT_EQ(b->createCount, 0);
+
+    env.app->dismissViewController();
+    ASSERT_TRUE(logged(*env.log, "b.didAppear"));
+    ASSERT_EQ(a->createCount, 1);
+}

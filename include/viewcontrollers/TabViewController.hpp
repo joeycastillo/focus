@@ -80,8 +80,9 @@ public:
      * @brief Select a tab by index.
      *
      * Runs the full lifecycle transition: tears down the old tab's view,
-     * creates the new tab's view. Does nothing if index is already selected
-     * or out of bounds.
+     * creates the new tab's view. While the tab controller is hidden, only
+     * the selection changes, and the new tab appears with it. Does nothing
+     * if index is already selected or out of bounds.
      *
      * @param index Zero-based tab index.
      */

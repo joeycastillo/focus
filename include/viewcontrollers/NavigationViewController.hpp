@@ -68,9 +68,10 @@ public:
     /**
      * @brief Push a view controller onto the navigation stack.
      *
-     * The current top VC's view is destroyed. The new VC's view is created
-     * and displayed. The navigation bar updates to show the new title and
-     * a back button.
+     * The current top VC disappears and its view is destroyed. The new VC's
+     * view is created and displayed. The navigation bar updates to show the
+     * new title and a back button. While the navigation controller is hidden,
+     * the stack changes without callbacks and the new top appears with it.
      *
      * @param viewController The view controller to push.
      */
@@ -80,7 +81,8 @@ public:
      * @brief Pop the top view controller from the stack.
      *
      * Does nothing if only the root VC remains. The popped VC's view is
-     * destroyed, and the new top VC's view is recreated.
+     * destroyed, and the new top VC's view is recreated. While the
+     * navigation controller is hidden, the stack changes without callbacks.
      */
     virtual void popViewController();
 

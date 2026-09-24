@@ -245,7 +245,12 @@ void TabViewController::viewDidDisappear() {
 void TabViewController::selectTab(size_t index) {
     if (index >= this->tabs.size()) return;
     if (index == this->selectedIndex) return;
-    if (!this->contentArea) return;
+
+    // While hidden, the new tab appears when this controller does.
+    if (!this->contentArea) {
+        this->selectedIndex = index;
+        return;
+    }
 
     this->transitionToTab(this->selectedIndex, index);
 }
