@@ -62,18 +62,18 @@ Subclass Application and override `setup()` to set your root view controller and
 
 ### ViewController
 
-A **ViewController** manages a view's lifecycle. Views are created lazily (on first appearance) and destroyed when the view controller disappears. This keeps memory usage low since only the visible screen's views are alive.
+A **ViewController** manages a view's lifecycle. Views are created lazily (when the view controller appears) and destroyed when the view controller disappears. This keeps memory usage low since only the visible screen's views are alive.
 
 The lifecycle sequence:
 
-1. `createView()`: build the view hierarchy (called once, lazily)
+1. `createView()`: build the view hierarchy (called lazily)
 2. `viewWillAppear()`: about to become visible
 3. `viewDidLayoutSubviews()`: frame has been finalized; do size-dependent work
 4. `viewDidAppear()`: now on screen
 5. `viewWillDisappear()`: about to be removed
 6. `viewDidDisappear()`: removed; default implementation calls `destroyView()`
 
-State that must survive across appearances should be stored in the **controller**, not the view.
+State that must survive across appearances should be stored in the **controller**, not the view, and `createView()` should build the view from that state.
 
 ### Cooperative Tasks
 
@@ -316,7 +316,7 @@ protected:
 public:
     void viewWillAppear() override {
         ViewController::viewWillAppear();  // triggers createView() if needed
-        // Load data, register notification observers
+        // Refresh anything that may have changed while hidden
     }
 
     void viewDidLayoutSubviews() override {
@@ -324,11 +324,16 @@ public:
     }
 
     void viewDidAppear() override {
-        // We are on screen! Start timers, etc.
+        // We are on screen! Start timers, register observers, etc.
     }
 
     void viewWillDisappear() override {
-        // Save state before removal
+        // Save state to the controller; stop timers, remove observers
+    }
+
+    void viewDidDisappear() override {
+        // View is now offscreen
+        ViewController::viewDidDisappear();  // destroys the view hierarchy
     }
 };
 ```
@@ -383,11 +388,13 @@ app->presentViewController(alert);
 Any view controller can be presented modally:
 
 ```cpp
-app->presentViewController(settingsVC);  // dims content, shows on top
+app->presentViewController(settingsVC);  // shows on top
 app->dismissViewController();            // removes topmost modal
 ```
 
-The content behind the modal is dimmed only when the modal's view is non-opaque; an opaque, full-screen modal covers everything, so no dimmer is added behind it.
+An opaque, full-screen modal covers the view controller beneath it: that controller disappears (releasing its view) until the modal is dismissed; at that point it appears again. A non-opaque modal dims the content behind it instead, and the view controller underneath gets no appearance callbacks, since it's still visible.
+
+`setRootViewController()` removes any presented modals. `dismissAllViewControllers()` removes them all at once, without showing the ones in between.
 
 ## Events and Input
 
