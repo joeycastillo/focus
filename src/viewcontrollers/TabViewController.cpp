@@ -33,6 +33,45 @@
 
 namespace focus {
 
+namespace {
+
+// Focus entering the tab controller lands on the selected tab, not the first.
+class TabContainerView : public View {
+public:
+    TabContainerView(Rect rect, std::shared_ptr<HStack> tabBar)
+        : View(rect), tabBar(std::move(tabBar)) {}
+
+    std::shared_ptr<View> firstFocusableDescendant() override {
+        if (auto selected = this->selectedItem()) return selected;
+        return View::firstFocusableDescendant();
+    }
+
+    // Entering from the end lands on the content, or the selected tab if the content has nothing.
+    std::shared_ptr<View> lastFocusableDescendant() override {
+        auto last = View::lastFocusableDescendant();
+        if (last && last->getSuperview() == this->tabBar.get()) {
+            if (auto selected = this->selectedItem()) return selected;
+        }
+        return last;
+    }
+
+private:
+    std::shared_ptr<View> selectedItem() const {
+        for (const auto& item : this->tabBar->getSubviews()) {
+            auto control = std::dynamic_pointer_cast<Control>(item);
+            if (control && control->isSelected() && !control->isHidden() &&
+                control->canBecomeFocused()) {
+                return control;
+            }
+        }
+        return nullptr;
+    }
+
+    std::shared_ptr<HStack> tabBar;
+};
+
+}  // namespace
+
 std::shared_ptr<TabViewController> TabViewController::create(
     std::shared_ptr<Application> application)
 {
@@ -112,8 +151,6 @@ void TabViewController::createView() {
 
     Size windowSize = app->getWindow()->getContentRect().size;
 
-    this->view = std::make_shared<View>(MakeRect(0, 0, windowSize.width, windowSize.height));
-
     int barHeight = this->getTabBarHeight();
 
     // Tab bar — HStack of TabItems
@@ -121,6 +158,9 @@ void TabViewController::createView() {
         MakeRect(0, 0, windowSize.width, barHeight));
     this->tabBar->setOpaque(false);
     this->tabBar->accessibilityIdentifier = "tab-bar";
+
+    this->view = std::make_shared<TabContainerView>(
+        MakeRect(0, 0, windowSize.width, windowSize.height), this->tabBar);
     this->view->addSubview(this->tabBar);
 
     // Content area below the tab bar

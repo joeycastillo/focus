@@ -192,9 +192,11 @@ public:
     virtual void resignFocus();
 
     /// @brief Find the first focusable descendant (depth-first, front-to-back).
-    std::shared_ptr<View> firstFocusableDescendant();
+    /// Override to choose where focus lands when it enters this view.
+    virtual std::shared_ptr<View> firstFocusableDescendant();
     /// @brief Find the last focusable descendant (depth-first, back-to-front).
-    std::shared_ptr<View> lastFocusableDescendant();
+    /// Override to choose where focus lands when it enters this view from the end.
+    virtual std::shared_ptr<View> lastFocusableDescendant();
 
     /// @brief Called when this view is added to a window's hierarchy.
     virtual void movedToWindow();

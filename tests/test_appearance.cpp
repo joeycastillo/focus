@@ -95,6 +95,15 @@ public:
     std::shared_ptr<PaginatedCollectionView> paginated() const { return this->getPaginatedView(); }
 };
 
+// A view controller with nothing focusable.
+class BareVC : public ViewController {
+public:
+    BareVC(std::shared_ptr<Application> app) : ViewController(app) {}
+
+protected:
+    void createView() override { this->view = std::make_shared<View>(MakeRect(0, 0, 160, 128)); }
+};
+
 struct AppearanceTestEnv {
     std::shared_ptr<AppearanceTestWindow> window;
     std::shared_ptr<AppearanceTestApplication> app;
@@ -516,4 +525,49 @@ TEST(modal_presented_during_dismiss_all_stays_up) {
 
     ASSERT_TRUE(env.app->activeViewController() == d);
     ASSERT_TRUE(a->getView() != nullptr);
+}
+
+// --- Tab focus ---
+
+TEST(popping_back_to_a_tab_controller_keeps_its_selected_tab) {
+    auto env = makeEnv();
+    auto tabs = TabViewController::create(env.app);
+    tabs->addTab("A", env.make("a"));
+    tabs->addTab("B", env.make("b"));
+    auto nav = NavigationViewController::create(env.app, tabs);
+    env.app->setRootViewController(nav);
+    tabs->selectTab(1);
+
+    nav->pushViewController(env.make("c"));
+    nav->popViewController();
+
+    ASSERT_EQ((int)tabs->getSelectedTab(), 1);
+    auto item = findById(tabs->getView(), "tab-item-1");
+    ASSERT_TRUE(env.window->getFocusedView().lock() == item);
+}
+
+TEST(entering_tabs_from_the_end_lands_on_the_selected_tab_when_content_has_nothing) {
+    auto env = makeEnv();
+    auto tabs = TabViewController::create(env.app);
+    tabs->addTab("A", std::make_shared<BareVC>(env.app));
+    tabs->addTab("B", std::make_shared<BareVC>(env.app));
+    tabs->addTab("C", std::make_shared<BareVC>(env.app));
+    env.app->setRootViewController(tabs);
+    tabs->selectTab(1);
+
+    auto last = tabs->getView()->lastFocusableDescendant();
+    ASSERT_TRUE(last == findById(tabs->getView(), "tab-item-1"));
+}
+
+TEST(entering_tabs_from_the_end_lands_on_content_when_it_has_some) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b");
+    auto tabs = TabViewController::create(env.app);
+    tabs->addTab("A", a);
+    tabs->addTab("B", b);
+    env.app->setRootViewController(tabs);
+    tabs->selectTab(1);
+
+    ASSERT_TRUE(tabs->getView()->lastFocusableDescendant() == b->button);
 }
