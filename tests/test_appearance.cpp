@@ -388,3 +388,132 @@ TEST(translucent_modal_presented_while_covering_keeps_focus_on_top) {
     ASSERT_TRUE(logged(*env.log, "m.didAppear"));
     ASSERT_TRUE(env.window->getFocusedView().lock() == x->button);
 }
+
+// --- Replacing the root, dismissing all ---
+
+TEST(set_root_removes_modals_without_revealing_the_old_root) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b");
+    auto c = env.make("c");
+    env.app->setRootViewController(a);
+    env.app->presentViewController(b);
+    env.log->clear();
+
+    env.app->setRootViewController(c);
+
+    ASSERT_STREQ(joined(*env.log),
+        "b.willDisappear b.didDisappear b.destroyView "
+        "c.createView c.willAppear c.didLayout c.didAppear");
+    ASSERT_FALSE(env.app->isModalPresented());
+    ASSERT_EQ((int)env.window->getSubviews().size(), 1);
+}
+
+TEST(set_root_removes_translucent_modals_then_the_old_root) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b", false);
+    auto c = env.make("c");
+    env.app->setRootViewController(a);
+    env.app->presentViewController(b);
+    env.log->clear();
+
+    env.app->setRootViewController(c);
+
+    ASSERT_STREQ(joined(*env.log),
+        "b.willDisappear b.didDisappear b.destroyView "
+        "a.willDisappear a.didDisappear a.destroyView "
+        "c.createView c.willAppear c.didLayout c.didAppear");
+    ASSERT_EQ((int)env.window->getSubviews().size(), 1);
+}
+
+TEST(set_root_skips_alert_completions) {
+    auto env = makeEnv();
+    env.app->setRootViewController(env.make("a"));
+    bool completed = false;
+    env.app->presentViewController(AlertViewController::create(
+        env.app, "Title", "Message", {"OK"}, [&](int) { completed = true; }));
+
+    env.app->setRootViewController(env.make("c"));
+
+    ASSERT_FALSE(completed);
+    ASSERT_FALSE(env.app->isModalPresented());
+}
+
+TEST(modal_presented_during_root_teardown_stays_above_the_new_root) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b");
+    auto c = env.make("c");
+    auto d = env.make("d", false);
+    env.app->setRootViewController(a);
+    env.app->presentViewController(b);
+    b->onWillDisappear = [&]() { env.app->presentViewController(d); };
+
+    env.app->setRootViewController(c);
+
+    ASSERT_TRUE(env.app->activeViewController() == d);
+    ASSERT_EQ(windowIndex(env, c->getView()), 0);
+    ASSERT_TRUE(windowIndex(env, d->getView()) > windowIndex(env, c->getView()));
+}
+
+TEST(dismiss_all_reveals_only_the_root) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b");
+    auto c = env.make("c");
+    env.app->setRootViewController(a);
+    env.app->presentViewController(b);
+    env.app->presentViewController(c);
+    env.log->clear();
+
+    env.app->dismissAllViewControllers();
+
+    ASSERT_STREQ(joined(*env.log),
+        "c.willDisappear c.didDisappear c.destroyView "
+        "a.createView a.willAppear a.didLayout a.didAppear");
+    ASSERT_EQ(b->createCount, 1);
+    ASSERT_FALSE(env.app->isModalPresented());
+}
+
+TEST(set_root_called_during_root_teardown_is_replaced_cleanly) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b");
+    auto c = env.make("c");
+    auto d = env.make("d");
+    env.app->setRootViewController(a);
+    env.app->presentViewController(b);
+    bool fired = false;
+    b->onWillDisappear = [&]() {
+        if (!fired) {
+            fired = true;
+            env.app->setRootViewController(d);
+        }
+    };
+    env.log->clear();
+
+    env.app->setRootViewController(c);
+
+    ASSERT_EQ((int)env.window->getSubviews().size(), 1);
+    ASSERT_EQ(windowIndex(env, c->getView()), 0);
+    ASSERT_TRUE(d->getView() == nullptr);
+    ASSERT_TRUE(logged(*env.log, "d.didDisappear"));
+    ASSERT_FALSE(logged(*env.log, "a.willDisappear"));
+    ASSERT_TRUE(env.app->activeViewController() == c);
+}
+
+TEST(modal_presented_during_dismiss_all_stays_up) {
+    auto env = makeEnv();
+    auto a = env.make("a");
+    auto b = env.make("b");
+    auto d = env.make("d", false);
+    env.app->setRootViewController(a);
+    env.app->presentViewController(b);
+    b->onWillDisappear = [&]() { env.app->presentViewController(d); };
+
+    env.app->dismissAllViewControllers();
+
+    ASSERT_TRUE(env.app->activeViewController() == d);
+    ASSERT_TRUE(a->getView() != nullptr);
+}

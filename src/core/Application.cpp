@@ -425,11 +425,26 @@ std::shared_ptr<Window> Application::getWindow() {
 
 void Application::setRootViewController(std::shared_ptr<ViewController> viewController) {
     FOCUS_LOGD(TAG, "setRoot %s", typeid(*viewController).name());
+
+    // Remove the current modals, top first, revealing nothing.
+    std::vector<ModalEntry> modals;
+    modals.swap(this->modalStack);
+    std::shared_ptr<ViewController> oldRoot = this->rootViewController;
+    bool oldRootHidden = this->rootHidden;
+    this->rootViewController = nullptr;
+    for (auto it = modals.rbegin(); it != modals.rend(); ++it) {
+        this->removeModal(*it);
+    }
+    if (oldRoot && !oldRootHidden) {
+        this->hideViewController(oldRoot);
+    }
+
+    // A root set from a callback during teardown is replaced too.
     if (this->rootViewController && !this->rootHidden) {
         this->hideViewController(this->rootViewController);
     }
 
-    // The new root appears unless a modal covers it.
+    // Show the new root unless a modal presented during teardown covers it.
     this->rootViewController = viewController;
     this->rootHidden = true;
     this->updateCoverage();
@@ -517,9 +532,18 @@ void Application::dismissViewController() {
 }
 
 void Application::dismissAllViewControllers() {
-    while (!this->modalStack.empty()) {
-        this->dismissViewController();
+    if (this->modalStack.empty()) return;
+
+    // Remove the current modals, top first, revealing nothing.
+    std::vector<ModalEntry> modals;
+    modals.swap(this->modalStack);
+    bool wasEngaged = this->window->isFocusEngaged();
+    for (auto it = modals.rbegin(); it != modals.rend(); ++it) {
+        this->removeModal(*it);
     }
+    this->updateCoverage();
+    this->restoreFocus(modals.front().previousFocusedView, wasEngaged);
+    this->window->setNeedsDisplayInRect(this->window->getFrame());
 }
 
 void Application::updateCoverage() {

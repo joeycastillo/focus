@@ -113,9 +113,10 @@ public:
     /**
      * @brief Set the root view controller, replacing any existing one.
      *
-     * The old root VC receives viewWillDisappear/viewDidDisappear callbacks
-     * and its view is removed. The new root VC receives viewWillAppear/
-     * viewDidAppear callbacks and its view is added to the window.
+     * Removes the modals presented at the time of the call, topmost first,
+     * without showing anything beneath them. Then the old root disappears
+     * and the new one appears. A modal presented while they are removed
+     * stays up, above the new root.
      *
      * @param viewController The new root view controller.
      */
@@ -158,9 +159,11 @@ public:
     /**
      * @brief Dismiss all modal view controllers.
      *
-     * Tears down every modal in the stack (topmost first), removing views
-     * and dimmers. Focus is restored to the view that was focused before
-     * the first modal was presented.
+     * Removes the modals presented at the time of the call, topmost first,
+     * without showing any of them, then shows what is beneath. A modal
+     * presented while they are removed stays up. Focus returns to the view
+     * that was focused before the first modal was presented, or to the
+     * first focusable view on top if that view was rebuilt.
      */
     void dismissAllViewControllers();
 
