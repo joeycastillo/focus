@@ -20,8 +20,10 @@ NowPlayingViewController::NowPlayingViewController(std::shared_ptr<PlayerApp> ap
     this->setTitle(_LS("nowplaying.title", "Now Playing"));
 }
 
-// Build the view hierarchy here. Focus calls createView() once, lazily, the
-// first time this screen is about to appear, and assigns the tree to this->view.
+// Build the view hierarchy here and assign it to this->view. Focus calls
+// createView() each time this screen is about to appear without a view: the
+// first time, and again after it was hidden. Build from state the app keeps,
+// as updateNowPlaying() does at the end.
 void NowPlayingViewController::createView() {
     this->accessibilityIdentifier = "now-playing";
     // Views are opaque by default. Keeping the root opaque lets Focus see
