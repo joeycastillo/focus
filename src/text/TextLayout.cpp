@@ -460,4 +460,13 @@ int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidt
     return totalHeight;
 }
 
+int TextLayout::paragraphDirection(const UNICODE_CODEPOINT* codepoints, size_t len) {
+    for (size_t i = 0; i < len && codepoints[i] != '\n'; i++) {
+        uint8_t bidiClass = getTraitsForCodepoint(codepoints[i]).is.bidi_class;
+        if (bidiIsRTL(bidiClass)) return -1;
+        if (bidiIsLTR(bidiClass)) return 1;
+    }
+    return 1;
+}
+
 }  // namespace focus

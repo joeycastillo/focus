@@ -208,6 +208,15 @@ public:
      */
     static int16_t measureTextHeight(const char* utf8String, int16_t layoutWidth, uint8_t textSize, const GlyphProvider* glyphProvider);
 
+    /**
+     * Direction of the paragraph starting at @p codepoints, per UAX #9 P2/P3:
+     * the first strong character before '\n' or @p len decides.
+     * @param codepoints Shaped codepoints at the start of a paragraph
+     * @param len Number of codepoints available
+     * @return -1 for right-to-left, 1 for left-to-right or no strong character
+     */
+    static int paragraphDirection(const UNICODE_CODEPOINT* codepoints, size_t len);
+
 };
 
 }  // namespace focus
