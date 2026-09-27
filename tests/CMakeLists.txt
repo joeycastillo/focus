@@ -67,6 +67,7 @@ set(TEST_SOURCES
     test_shaping_invariant.cpp
     test_default_ignorable.cpp
     test_paragraph_direction.cpp
+    test_bidi_runs.cpp
     test_locale.cpp
     test_packed_font_memory.cpp
     test_task_busyness.cpp

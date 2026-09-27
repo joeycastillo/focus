@@ -761,6 +761,13 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
         size_t runLen = i - runStart;
         int16_t runWidth = measureCodepointsWidth(
             codepoints + lineStart + runStart, runLen, glyphProvider);
+        // Add the justification extras this run's spaces will receive.
+        int16_t gapIndex = justifyGapsEmitted;
+        for (size_t j = runStart; j < runStart + runLen && gapIndex < justifyMaxGaps; j++) {
+            if (codepoints[lineStart + j] != 0x20) continue;
+            runWidth += justifyExtraPerGap + (gapIndex < justifyRemainder ? 1 : 0);
+            gapIndex++;
+        }
 
         if (paragraphDir == -1) {
             this->cursor.x -= runWidth;
