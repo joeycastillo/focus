@@ -815,9 +815,7 @@ static bool runHasVisibleCodepoint(const UNICODE_CODEPOINT *codepoints, size_t l
     for (size_t i = 0; i < len; i++) {
         UNICODE_CODEPOINT cp = codepoints[i];
         if (cp <= 0x20) continue;
-        if (cp == TextControlCode::SoftHyphen) continue;
-        if ((cp >= 0xFE00 && cp <= 0xFE0F) ||
-            (cp >= 0xE0100 && cp <= 0xE01FF)) continue;
+        if (isDefaultIgnorable(cp)) continue;
         unicode_info_t traits = getTraitsForCodepoint(cp);
         if (traits.is.nsm || traits.is.controlchar) continue;
         return true;
@@ -844,7 +842,7 @@ int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_
         if (cp < 0x20) continue;
         // Soft hyphens are zero-width within a line; only the synthesized
         // trailing hyphen (drawn separately) has width.
-        if (cp == TextControlCode::SoftHyphen) continue;
+        if (isDefaultIgnorable(cp)) continue;
         unicode_info_t traits;
         GlyphMetrics metrics;
         if (cp < 0x80 && (!emphasisAware || emphasis == 0)) {
@@ -920,7 +918,7 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
                 for (int32_t i = 0; i < numGlyphsToDraw; i++) {
                     UNICODE_CODEPOINT cp = codepoints[pos + i];
                     if (applyEmphasisShift(cp, depth)) continue;
-                    if (cp >= 0x20 && cp != TextControlCode::SoftHyphen) hasDrawable = true;
+                    if (cp >= 0x20 && !isDefaultIgnorable(cp)) hasDrawable = true;
                 }
                 thisAdvance = (this->lastWasNewline && !hasDrawable)
                     ? (int16_t)this->paragraphSpacing : lineHeight;
@@ -997,7 +995,7 @@ void CanvasView::renderTruncatedLine(UNICODE_CODEPOINT *codepoints, size_t len,
         UNICODE_CODEPOINT cp = codepoints[i];
         if (cp == '\n') break;
         if (!applyEmphasisShift(cp, depth) && cp >= 0x20 &&
-            cp != TextControlCode::SoftHyphen) {
+            !isDefaultIgnorable(cp)) {
             width += glyphProvider->metricsForCodepoint(
                 cp, static_cast<FontStyle>(depth)).advance * this->textSize;
         }
@@ -1065,22 +1063,13 @@ size_t CanvasView::writeCodepoint(UNICODE_CODEPOINT codepoint, GlyphProvider *gl
 
     if (codepoint < 0x20) return 1;
 
-    // U+00AD soft hyphen: invisible and zero-width. When a line breaks at one,
-    // the line renderer draws a synthesized hyphen; the codepoint itself never
-    // paints. (Not caught below: it's category Cf, not Cc, so its controlchar
-    // trait is clear.)
-    if (codepoint == TextControlCode::SoftHyphen) return 1;
+    // Default-ignorables (soft hyphen, ZWSP, joiners, direction marks, BOM,
+    // variation selectors) paint nothing and take no width. A line that breaks
+    // at a soft hyphen gets a synthesized hyphen from the line renderer.
+    if (isDefaultIgnorable(codepoint)) return 1;
 
     unicode_info_t traits = getTraitsForCodepoint(codepoint);
     if (traits.is.controlchar) return 1;
-
-    // Variation selectors modify the preceding character's glyph variant, but
-    // we don't support variant selection. Skip entirely — don't look up a glyph
-    // (Unifont strips them) or draw a replacement character over the base glyph.
-    if ((codepoint >= 0xFE00 && codepoint <= 0xFE0F) ||    // VS1–VS16
-        (codepoint >= 0xE0100 && codepoint <= 0xE01FF)) {  // VS17–VS256 (IVS)
-        return 1;
-    }
 
     this->lastWasNewline = false; // Visible character breaks consecutive newline tracking
 

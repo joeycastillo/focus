@@ -186,7 +186,7 @@ WordWrapResult TextLayout::measureLineWrap(
         }
 
         // Advance cursor for non-combining characters
-        if (!(traits.is.nsm || traits.is.controlchar)) {
+        if (!(traits.is.nsm || traits.is.controlchar || isDefaultIgnorable(cp))) {
             int16_t advance = metrics.advance * textSize;
             cursorX += advance;
             lastAdvance = advance;
@@ -303,7 +303,7 @@ WordWrapResult TextLayout::measureLineWrap(
                         } else {
                             traits = getTraitsForCodepoint(cp);
                         }
-                        if (!(traits.is.nsm || traits.is.controlchar)) {
+                        if (!(traits.is.nsm || traits.is.controlchar || isDefaultIgnorable(cp))) {
                             GlyphMetrics metrics = glyphProvider->metricsForCodepoint(cp, static_cast<FontStyle>(emph));
                             prefixWidth += metrics.advance * textSize;
                         }
@@ -376,8 +376,9 @@ int16_t TextLayout::measureTextWidth(const char* utf8String, uint8_t textSize, c
         if (cp < 0x20) continue;
 
         // Soft hyphens are zero-width unless a line breaks at one; a
-        // single-line width measurement never breaks, so skip them.
-        if (cp == TextControlCode::SoftHyphen) continue;
+        // single-line width measurement never breaks, so skip them along
+        // with the other default-ignorables.
+        if (isDefaultIgnorable(cp)) continue;
 
         unicode_info_t traits = getTraitsForCodepoint(cp);
 
@@ -438,7 +439,7 @@ int16_t TextLayout::measureTextHeight(const char* utf8String, int16_t layoutWidt
         for (int32_t i = 0; i < result.codepointsConsumed; i++) {
             UNICODE_CODEPOINT cp = codepoints[offset + i];
             if (applyEmphasisShift(cp, emphasis)) continue;
-            if (cp >= 0x20 && cp != TextControlCode::SoftHyphen) hasDrawable = true;
+            if (cp >= 0x20 && !isDefaultIgnorable(cp)) hasDrawable = true;
         }
 
         if (result.isParagraphBreak) {

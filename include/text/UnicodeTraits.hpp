@@ -145,6 +145,29 @@ static inline bool bidiIsStrong(uint8_t bidi_class) {
 }
 
 /**
+ * @brief Test if a codepoint is Default_Ignorable_Code_Point: zero-width and
+ * invisible in layout and drawing (ZWSP, joiners, direction marks, BOM,
+ * soft hyphen, variation selectors, tags).
+ */
+static inline bool isDefaultIgnorable(UNICODE_CODEPOINT cp) {
+    if (cp < 0x00AD) return false;
+    return cp == 0x00AD || cp == 0x034F || cp == 0x061C ||
+           (cp >= 0x115F && cp <= 0x1160) ||
+           (cp >= 0x17B4 && cp <= 0x17B5) ||
+           (cp >= 0x180B && cp <= 0x180F) ||
+           (cp >= 0x200B && cp <= 0x200F) ||
+           (cp >= 0x202A && cp <= 0x202E) ||
+           (cp >= 0x2060 && cp <= 0x206F) ||
+           cp == 0x3164 ||
+           (cp >= 0xFE00 && cp <= 0xFE0F) ||
+           cp == 0xFEFF || cp == 0xFFA0 ||
+           (cp >= 0xFFF0 && cp <= 0xFFF8) ||
+           (cp >= 0x1BCA0 && cp <= 0x1BCA3) ||
+           (cp >= 0x1D173 && cp <= 0x1D17A) ||
+           (cp >= 0xE0000 && cp <= 0xE0FFF);
+}
+
+/**
  * @brief Look up Unicode properties for a codepoint.
  * @param codepoint The Unicode codepoint to query.
  * @return A unicode_info_t with the relevant property fields set.

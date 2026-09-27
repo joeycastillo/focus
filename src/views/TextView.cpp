@@ -189,7 +189,7 @@ void TextView::rebuildIndex() {
             UNICODE_CODEPOINT cp = codepoints[offset + i];
             byteOffset += byteLengths[offset + i];
             if (applyEmphasisShift(cp, emphasis)) continue;
-            if (cp >= 0x20 && cp != TextControlCode::SoftHyphen) hasDrawable = true;
+            if (cp >= 0x20 && !isDefaultIgnorable(cp)) hasDrawable = true;
         }
         record.endByte = byteOffset;
         this->lines.push_back(record);
