@@ -1,6 +1,7 @@
 /*
  * Directional runs within a line: justification extras travel with the run
- * whose spaces receive them.
+ * whose spaces receive them, and a synthesized trailing hyphen follows the
+ * line's last character in that character's direction.
  */
 
 #include "test_harness.hpp"
@@ -37,6 +38,7 @@ private:
 
 // "שש" (two strong R glyphs).
 #define HE "\xD7\xA9\xD7\xA9"
+#define SHY "\xC2\xAD"
 
 static std::shared_ptr<RecordingDisplay> draw(bool textView, const char* text, int width,
                                               TextAlignment alignment) {
@@ -97,4 +99,50 @@ TEST(justified_run_width_includes_remainder_pixels) {
     // first two gaps, both in the leading Hebrew run, take an extra pixel.
     assertTwins(true, "\xD7\xA9 \xD7\xA9 a \xD7\xA9 \xD7\xA9 \xD7\xA9",
                 "\xD7\xA9 \xD7\xA9 \xD7\xA9 \xD7\xA9 \xD7\xA9 \xD7\xA9", 78);
+}
+
+// --- Trailing hyphen ---
+// "שש abcd|efghijk": the Latin word breaks at its soft hyphen. In the RTL
+// paragraph, "abcd-" sits at the left end with the hyphen between the
+// fragment and the Hebrew: abcd 0..31, hyphen 32..39, space, Hebrew 48..63.
+
+static void assertRtlHyphenAfterLatinFragment(bool textView) {
+    auto d = draw(textView, HE " abcd" SHY "efghijk", 80, TextAlignment::Left);
+    ASSERT_EQ(d->pixel(0, 2), 1);       // 'a' is a full-height letter
+    ASSERT_EQ(d->pixel(31, 2), 1);
+    ASSERT_EQ(d->pixel(35, 2), 0xFF);   // hyphen: stroke only
+    ASSERT_EQ(d->pixel(35, 6), 1);
+    ASSERT_EQ(d->pixel(44, 2), 0xFF);   // space
+    ASSERT_EQ(d->pixel(48, 2), 1);      // Hebrew
+    ASSERT_EQ(d->pixel(63, 2), 1);
+    ASSERT_EQ(d->pixel(64, 2), 0xFF);
+}
+
+TEST(rtl_trailing_hyphen_follows_latin_fragment_label) {
+    assertRtlHyphenAfterLatinFragment(false);
+}
+
+TEST(rtl_trailing_hyphen_follows_latin_fragment_text_view) {
+    assertRtlHyphenAfterLatinFragment(true);
+}
+
+TEST(rtl_trailing_hyphen_reserved_at_left_when_right_aligned) {
+    // Right alignment: the Hebrew sits flush right at 72..79, and the
+    // hyphen's room is taken at the left end, not the right.
+    auto d = draw(true, HE " abcd" SHY "efghijk", 80, TextAlignment::Right);
+    ASSERT_EQ(d->pixel(79, 2), 1);
+    ASSERT_EQ(d->pixel(64, 2), 1);
+    ASSERT_EQ(d->pixel(51, 6), 1);      // hyphen at 48..55
+    ASSERT_EQ(d->pixel(51, 2), 0xFF);
+    ASSERT_EQ(d->pixel(16, 2), 1);      // "abcd" at 16..47
+    ASSERT_EQ(d->pixel(12, 2), 0xFF);
+}
+
+TEST(ltr_trailing_hyphen_unchanged_when_justified) {
+    // "ab cd ef|gh": the hyphen still ends the line at the right edge.
+    auto d = draw(true, "ab cd ef" SHY "ghijklmnop", 80, TextAlignment::Justified);
+    ASSERT_EQ(d->pixel(0, 2), 1);
+    ASSERT_EQ(d->pixel(75, 6), 1);      // hyphen at 72..79
+    ASSERT_EQ(d->pixel(75, 2), 0xFF);
+    ASSERT_EQ(d->pixel(71, 2), 1);      // 'f' ends at 71
 }

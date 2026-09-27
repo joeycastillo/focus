@@ -531,8 +531,19 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
 
 void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart, size_t lineLen,
                                 int paragraphDir, int16_t effectiveWidth, int16_t indentedOriginX,
-                                GlyphProvider *glyphProvider) {
+                                GlyphProvider *glyphProvider, bool trailingHyphen) {
     if (lineLen == 0) return;
+
+    // Width of the synthesized hyphen, at the emphasis in effect where it's drawn.
+    int16_t hyphenAdvance = 0;
+    if (trailingHyphen) {
+        uint8_t endEmphasis = this->emphasisDepth;
+        for (size_t k = 0; k < lineLen; k++) {
+            applyEmphasisShift(codepoints[lineStart + k], endEmphasis);
+        }
+        hyphenAdvance = glyphProvider->metricsForCodepoint(
+            '-', static_cast<FontStyle>(endEmphasis)).advance * this->textSize;
+    }
 
     // Set initial cursor.x based on paragraph direction
     if (paragraphDir == 1) {
@@ -556,7 +567,8 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
         if (getTraitsForCodepoint(codepoints[lineStart + lineLen - 1]).is.whitespace) {
             visibleLen--;
         }
-        int16_t lineWidth = measureCodepointsWidth(codepoints + lineStart, visibleLen, glyphProvider);
+        int16_t lineWidth = measureCodepointsWidth(codepoints + lineStart, visibleLen, glyphProvider)
+                            + hyphenAdvance;
         int16_t slack = effectiveWidth - lineWidth;
         if (this->textAlignment == TextAlignment::Left) {
             // RTL paragraph: anchor the line at the left edge.
@@ -603,7 +615,7 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
     // Step 2: Resolve weak types (simplified W rules)
     for (size_t i = 0; i < lineLen; i++) {
         uint8_t bc = resolved[i];
-        if (bc == BIDI_NSM) {
+        if (bc == BIDI_NSM || bc == BIDI_BN) {
             resolved[i] = (i > 0) ? resolved[i - 1] : (uint8_t)(paragraphDir == -1 ? BIDI_R : BIDI_L);
         }
     }
@@ -750,6 +762,13 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
         }
     };
 
+    auto emitRun = [&](size_t runStart, size_t runLen, bool hyphen) {
+        for (size_t j = runStart; j < runStart + runLen; j++) {
+            emitCodepoint(j);
+        }
+        if (hyphen) this->writeCodepoint('-', glyphProvider);
+    };
+
     // Step 4: Build and render directional runs
     size_t i = 0;
     while (i < lineLen) {
@@ -768,6 +787,9 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
             runWidth += justifyExtraPerGap + (gapIndex < justifyRemainder ? 1 : 0);
             gapIndex++;
         }
+        // The synthesized hyphen follows the line's last run, in its direction.
+        bool hyphenRun = trailingHyphen && i == lineLen;
+        if (hyphenRun) runWidth += hyphenAdvance;
 
         if (paragraphDir == -1) {
             this->cursor.x -= runWidth;
@@ -778,16 +800,12 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
                 this->hasLastGlyph = false;
                 int16_t rtlCursor = runLeftEdge + runWidth;
                 this->cursor.x = rtlCursor;
-                for (size_t j = runStart; j < runStart + runLen; j++) {
-                    emitCodepoint(j);
-                }
+                emitRun(runStart, runLen, hyphenRun);
             } else {
                 this->direction = 1;
                 this->hasLastGlyph = false;
                 this->cursor.x = runLeftEdge;
-                for (size_t j = runStart; j < runStart + runLen; j++) {
-                    emitCodepoint(j);
-                }
+                emitRun(runStart, runLen, hyphenRun);
             }
             this->cursor.x = runLeftEdge;
             this->hasLastGlyph = false;
@@ -797,16 +815,12 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
                 this->hasLastGlyph = false;
                 int16_t runRightEdge = this->cursor.x + runWidth;
                 this->cursor.x = runRightEdge;
-                for (size_t j = runStart; j < runStart + runLen; j++) {
-                    emitCodepoint(j);
-                }
+                emitRun(runStart, runLen, hyphenRun);
                 this->cursor.x = runRightEdge;
             } else {
                 this->direction = 1;
                 this->hasLastGlyph = false;
-                for (size_t j = runStart; j < runStart + runLen; j++) {
-                    emitCodepoint(j);
-                }
+                emitRun(runStart, runLen, hyphenRun);
             }
         }
     }
@@ -943,22 +957,10 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
         }
 
         // A line that breaks at a soft hyphen renders a synthesized hyphen at
-        // its end — the U+00AD itself paints nothing. Reserve the hyphen's
-        // width before alignment so justification's slack distribution can't
-        // push the hyphen past the layout edge.
-        int16_t hyphenReserve = 0;
-        if (result.needsHyphen) {
-            hyphenReserve = glyphProvider->metricsForCodepoint(
-                '-', static_cast<FontStyle>(this->emphasisDepth)).advance * this->textSize;
-        }
-
+        // its end — the U+00AD itself paints nothing.
         renderBidiLine(codepoints, pos, numGlyphsToDraw, paragraphDir,
-                       effectiveWidth - hyphenReserve, indentedOriginX, glyphProvider);
+                       effectiveWidth, indentedOriginX, glyphProvider, result.needsHyphen);
         pos += numGlyphsToDraw;
-
-        if (result.needsHyphen) {
-            this->writeCodepoint('-', glyphProvider);
-        }
 
         if (result.wrapped) {
             this->cursor.y += TextLayout::getLineHeight(glyphProvider, this->textSize, this->lineSpacing);

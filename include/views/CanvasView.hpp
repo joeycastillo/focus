@@ -194,9 +194,12 @@ protected:
     /// Render one visual line with bidi reordering, alignment, and glyph drawing.
     /// Set cursor.y and emphasisDepth before calling. The method handles LTR/RTL
     /// reordering, text alignment, word position tracking, and glyph rendering.
+    /// When trailingHyphen is true, a hyphen is drawn after the line's last
+    /// character, in that character's direction, and its width counts toward
+    /// the line for alignment.
     void renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart, size_t lineLen,
                         int paragraphDir, int16_t effectiveWidth, int16_t indentedOriginX,
-                        GlyphProvider *glyphProvider);
+                        GlyphProvider *glyphProvider, bool trailingHyphen = false);
 
     /// @}
 

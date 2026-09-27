@@ -58,18 +58,9 @@ public:
         this->paragraphSpacing = focus::TextLayout::calculateParagraphSpacing(provider);
         this->glyphRowCount = provider->getGlyphRowCount();
 
-        // Reserve the synthesized hyphen's width so alignment can't push it out.
-        int16_t hyphenReserve = 0;
-        if (trailingHyphen) {
-            hyphenReserve = provider->metricsForCodepoint(
-                '-', static_cast<focus::FontStyle>(this->emphasisDepth)).advance * scale;
-        }
         this->renderBidiLine(codepoints, 0, len, paragraphDir,
-                             (int16_t)(this->textLayoutRect.size.width - hyphenReserve),
-                             0, provider);
-        if (trailingHyphen) {
-            this->writeCodepoint('-', provider);
-        }
+                             (int16_t)this->textLayoutRect.size.width,
+                             0, provider, trailingHyphen);
     }
 };
 
