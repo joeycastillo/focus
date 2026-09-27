@@ -518,7 +518,11 @@ int CanvasView::drawText(Rect layoutRect, uint16_t color, int text_size, const c
 
     shapeArabicIfNeeded(codepoints, len);
 
+    // Inline objects apply only to direct renderBidiLine calls.
+    InlineObjectProvider *objects = this->inlineObjects;
+    this->inlineObjects = nullptr;
     size_t retVal = this->writeCodepoints(codepoints, len, glyphProvider);
+    this->inlineObjects = objects;
 
     if (this->codepointByteOffsets) {
         free(this->codepointByteOffsets);
@@ -693,7 +697,18 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
     auto emitCodepoint = [&](size_t j) {
         UNICODE_CODEPOINT cp = codepoints[lineStart + j];
         int16_t beforeX = this->cursor.x;
-        this->writeCodepoint(cp, glyphProvider);
+        if (this->inlineObjects && cp == TextControlCode::ObjectReplacement) {
+            // Leave a gap the object's width and report its left edge.
+            const UNICODE_CODEPOINT *object = codepoints + lineStart + j;
+            int16_t objectWidth = this->inlineObjects->widthOfObject(object);
+            if (this->direction == -1) this->cursor.x -= objectWidth;
+            this->inlineObjects->objectPlaced(object, this->cursor.x);
+            if (this->direction == 1) this->cursor.x += objectWidth;
+            this->hasLastGlyph = false;
+            this->lastWasNewline = false;
+        } else {
+            this->writeCodepoint(cp, glyphProvider);
+        }
         // Justified alignment: distribute extra space after each inter-word gap
         if (justifyMaxGaps > 0 && cp == 0x20 && justifyGapsEmitted < justifyMaxGaps) {
             int16_t extra = justifyExtraPerGap + (justifyGapsEmitted < justifyRemainder ? 1 : 0);
@@ -863,6 +878,11 @@ int16_t CanvasView::measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_
             continue;
         }
         if (applyEmphasisShift(cp, emphasis)) continue;
+        if (this->inlineObjects && cp == TextControlCode::ObjectReplacement) {
+            width += this->inlineObjects->widthOfObject(codepoints + i);
+            lastAdvance = 0;
+            continue;
+        }
         if (cp < 0x20) continue;
         // Soft hyphens are zero-width within a line; only the synthesized
         // trailing hyphen (drawn separately) has width.

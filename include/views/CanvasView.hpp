@@ -47,6 +47,7 @@
 #include "Font.hpp"
 #include "GlyphProvider.hpp"
 #include "UnicodeTraits.hpp"
+#include "InlineObjectProvider.hpp"
 #include <vector>
 #include <memory>
 
@@ -187,6 +188,11 @@ protected:
     // Word position tracking (set by setWordMapOutput, used during text rendering)
     std::vector<WordPosition> *wordMapOutput = nullptr;
     uint32_t *codepointByteOffsets = nullptr;
+
+    // Inline objects — when set, renderBidiLine gives each U+FFFC the
+    // provider's width, draws nothing there, and reports where it lands.
+    // drawText ignores it.
+    InlineObjectProvider *inlineObjects = nullptr;
 
     /// Measure the pixel width of a codepoint array (for text alignment).
     int16_t measureCodepointsWidth(UNICODE_CODEPOINT codepoints[], size_t len, GlyphProvider *glyphProvider);
