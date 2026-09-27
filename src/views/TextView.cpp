@@ -42,7 +42,7 @@ public:
     LineScratch(focus::Rect rect) : focus::CanvasView(rect) {}
 
     void renderLine(UNICODE_CODEPOINT* codepoints, size_t len,
-                    uint8_t emphasisAtStart, bool trailingHyphen,
+                    uint8_t emphasisAtStart, bool trailingHyphen, int paragraphDir,
                     int scale, focus::TextAlignment alignment,
                     focus::GlyphProvider* provider) {
         this->clear(0);
@@ -64,7 +64,7 @@ public:
             hyphenReserve = provider->metricsForCodepoint(
                 '-', static_cast<focus::FontStyle>(this->emphasisDepth)).advance * scale;
         }
-        this->renderBidiLine(codepoints, 0, len, 1,
+        this->renderBidiLine(codepoints, 0, len, paragraphDir,
                              (int16_t)(this->textLayoutRect.size.width - hyphenReserve),
                              0, provider);
         if (trailingHyphen) {
@@ -166,8 +166,16 @@ void TextView::rebuildIndex() {
     uint32_t byteOffset = 0;
     uint8_t emphasis = 0;
     bool lastWasNewline = false;
+    bool atParagraphStart = true;
+    bool paragraphRTL = false;
 
     while (offset < len) {
+        // Each paragraph takes its direction from its first strong character.
+        if (atParagraphStart) {
+            paragraphRTL = TextLayout::paragraphDirection(codepoints + offset, len - offset) == -1;
+            atParagraphStart = false;
+        }
+
         WordWrapResult result = TextLayout::measureLineWrap(
             codepoints + offset, len - offset,
             (int16_t)this->frame.size.width, this->textScale, provider,
@@ -182,6 +190,7 @@ void TextView::rebuildIndex() {
         record.y = y;
         record.emphasisAtStart = emphasis;
         record.hasTrailingHyphen = result.needsHyphen;
+        record.rtl = paragraphRTL;
 
         // Track emphasis and whether this line drew anything visible.
         bool hasDrawable = false;
@@ -197,6 +206,7 @@ void TextView::rebuildIndex() {
 
         if (result.codepointsConsumed < 0) break;  // last line: no trailing spacing
         if (result.isParagraphBreak) {
+            atParagraphStart = true;
             // Mirror writeCodepoint: a blank line after a newline adds
             // paragraph spacing alone; any other newline is a line break.
             y += (lastWasNewline && !hasDrawable) ? paragraphSpacing : lineHeight;
@@ -261,6 +271,7 @@ void TextView::drawContent(int x, int y, Rect clipRect) {
 
         scratch->renderLine(lineCodepoints.data(), count,
                             record.emphasisAtStart, record.hasTrailingHyphen,
+                            record.rtl ? -1 : 1,
                             this->textScale, this->textAlignment, provider);
         display->blitMasked(contentLeft, contentTop + record.y,
                             this->frame.size.width, rowHeight,

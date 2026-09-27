@@ -108,7 +108,8 @@ private:
         uint32_t endByte;         ///< Byte offset past the line's last byte.
         int16_t y;                ///< Top of the line in content coordinates.
         uint8_t emphasisAtStart;  ///< SO/SI emphasis depth at the line start.
-        bool hasTrailingHyphen;   ///< Render a synthesized hyphen after the line.
+        bool hasTrailingHyphen : 1;  ///< Render a synthesized hyphen after the line.
+        bool rtl : 1;             ///< The line's paragraph is right-to-left.
     };
 
     std::string text;

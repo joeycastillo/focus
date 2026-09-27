@@ -11,6 +11,7 @@
 #include "TextView.hpp"
 #include "Font.hpp"
 #include "TextLayout.hpp"
+#include <algorithm>
 #include <cstring>
 #include <vector>
 
@@ -171,4 +172,52 @@ TEST(rtl_tail_truncation_puts_ellipsis_at_left_end) {
     ASSERT_EQ(d->pixel(3, 5), 0xFF);
     ASSERT_EQ(d->pixel(8, 5), 1);
     ASSERT_EQ(d->pixel(39, 5), 1);
+}
+
+// --- TextView ---
+
+static std::shared_ptr<RecordingDisplay> drawTextView(const char* text, int width,
+                                                      TextAlignment alignment) {
+    auto display = std::make_shared<RecordingDisplay>(80, 40);
+    auto window = std::make_shared<Window>(display, MakeSize(80, 40));
+    auto tv = std::make_shared<TextView>(MakeRect(0, 0, width, 40), text);
+    tv->setFont(makeBlankPunctuationFont());
+    tv->setTextAlignment(alignment);
+    window->addSubview(tv);
+    display->reset();
+    window->draw(0, 0, MakeRect(0, 0, 80, 40));
+    return display;
+}
+
+// LabelView and TextView must draw RTL paragraphs pixel-identically.
+static void assertRtlParity(const char* text, int width, TextAlignment alignment) {
+    auto label = drawLabel(text, width, 40, alignment);
+    auto tv = drawTextView(text, width, alignment);
+    ASSERT_TRUE(std::count(tv->framebuffer.begin(), tv->framebuffer.end(), (uint8_t)1) > 0);
+    ASSERT_TRUE(label->framebuffer == tv->framebuffer);
+}
+
+TEST(text_view_rtl_parity_left) {
+    assertRtlParity(HEB ".", 80, TextAlignment::Left);
+}
+
+TEST(text_view_rtl_parity_right) {
+    assertRtlParity(HEB ".", 80, TextAlignment::Right);
+}
+
+TEST(text_view_rtl_parity_center) {
+    assertRtlParity(HEB ".", 80, TextAlignment::Center);
+}
+
+TEST(text_view_rtl_parity_wrapped_latin_start) {
+    assertRtlParity(HEB " abc.", 48, TextAlignment::Left);
+}
+
+TEST(text_view_paragraphs_choose_direction_independently) {
+    auto d = drawTextView(HEB ".\nHello.", 80, TextAlignment::Left);
+    ASSERT_EQ(d->pixel(3, 5), 0xFF);    // RTL: period at the left end
+    ASSERT_EQ(d->pixel(8, 5), 1);
+    ASSERT_EQ(d->pixel(0, 19), 1);      // LTR: period at the right end
+    ASSERT_EQ(d->pixel(39, 19), 1);
+    ASSERT_EQ(d->pixel(44, 19), 0xFF);
 }
