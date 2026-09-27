@@ -551,14 +551,17 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
     // Apply text alignment offset for this line. A wrapped line ends with
     // the whitespace it broke at; it paints nothing and measureLineWrap
     // never charged it, so measure the line without it.
-    if (this->textAlignment != TextAlignment::Left) {
+    if (this->textAlignment != TextAlignment::Left || paragraphDir == -1) {
         size_t visibleLen = lineLen;
         if (getTraitsForCodepoint(codepoints[lineStart + lineLen - 1]).is.whitespace) {
             visibleLen--;
         }
         int16_t lineWidth = measureCodepointsWidth(codepoints + lineStart, visibleLen, glyphProvider);
         int16_t slack = effectiveWidth - lineWidth;
-        if (slack > 0) {
+        if (this->textAlignment == TextAlignment::Left) {
+            // RTL paragraph: anchor the line at the left edge.
+            this->cursor.x = indentedOriginX + lineWidth;
+        } else if (slack > 0) {
             if (this->textAlignment == TextAlignment::Center) {
                 if (paragraphDir == 1) {
                     this->cursor.x = indentedOriginX + slack / 2;
@@ -584,7 +587,7 @@ void CanvasView::renderBidiLine(UNICODE_CODEPOINT *codepoints, size_t lineStart,
                     justifyExtraPerGap = slack / interWordGaps;
                     justifyRemainder = slack % interWordGaps;
                 }
-                // Cursor stays at left edge — justified starts flush left
+                // Cursor stays at the paragraph's leading edge
             }
         }
     }
@@ -870,15 +873,16 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
     size_t pos = 0;
     this->cursor = this->textLayoutRect.origin;
 
-    // Paragraph direction: default LTR. The bidi algorithm still handles
-    // individual RTL runs correctly within an LTR paragraph — Arabic text
-    // renders right-to-left within its runs. This only affects how neutrals
-    // (punctuation, spaces) between R and L runs resolve, and where the
-    // line starts. Callers needing RTL paragraph direction should set it
-    // explicitly via document metadata (not yet implemented).
     int paragraphDir = 1;
+    bool atParagraphStart = true;
 
     while (pos < len) {
+        // Each paragraph takes its direction from its first strong character.
+        if (atParagraphStart) {
+            paragraphDir = TextLayout::paragraphDirection(codepoints + pos, len - pos);
+            atParagraphStart = false;
+        }
+
         int16_t effectiveWidth = this->textLayoutRect.size.width;
         int16_t indentedOriginX = this->textLayoutRect.origin.x;
 
@@ -926,7 +930,7 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
             int16_t rowHeight = (int16_t)(this->glyphRowCount * this->textSize);
             int16_t layoutBottom = this->textLayoutRect.origin.y + this->textLayoutRect.size.height;
             if (this->cursor.y + thisAdvance + rowHeight > layoutBottom) {
-                this->renderTruncatedLine(codepoints + pos, len - pos, glyphProvider);
+                this->renderTruncatedLine(codepoints + pos, len - pos, glyphProvider, paragraphDir);
                 return retVal;
             }
         }
@@ -960,6 +964,7 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
 
         // Also handle paragraph breaks (newlines)
         if (result.isParagraphBreak) {
+            atParagraphStart = true;
             if (this->direction == 1) {
                 this->cursor.x = this->textLayoutRect.origin.x;
             } else {
@@ -974,7 +979,7 @@ size_t CanvasView::writeCodepoints(UNICODE_CODEPOINT codepoints[], size_t len, G
 }
 
 void CanvasView::renderTruncatedLine(UNICODE_CODEPOINT *codepoints, size_t len,
-                                     GlyphProvider *glyphProvider) {
+                                     GlyphProvider *glyphProvider, int paragraphDir) {
     int16_t effectiveWidth = this->textLayoutRect.size.width;
 
     // Ellipsis is U+2026 when the face has it, else three periods.
@@ -1019,7 +1024,7 @@ void CanvasView::renderTruncatedLine(UNICODE_CODEPOINT *codepoints, size_t len,
     // The scratch run's indices don't map to source bytes; keep the word map out.
     std::vector<WordPosition> *savedWordMap = this->wordMapOutput;
     this->wordMapOutput = nullptr;
-    renderBidiLine(run.data(), 0, run.size(), 1, effectiveWidth,
+    renderBidiLine(run.data(), 0, run.size(), paragraphDir, effectiveWidth,
                    this->textLayoutRect.origin.x, glyphProvider);
     this->wordMapOutput = savedWordMap;
 }

@@ -206,7 +206,8 @@ protected:
     /// Render the remaining text as the longest prefix that fits with an
     /// ellipsis appended, as one line through renderBidiLine. Called from
     /// writeCodepoints in TruncationMode::Tail for the last fitting line.
-    void renderTruncatedLine(UNICODE_CODEPOINT *codepoints, size_t len, GlyphProvider *glyphProvider);
+    void renderTruncatedLine(UNICODE_CODEPOINT *codepoints, size_t len, GlyphProvider *glyphProvider,
+                             int paragraphDir = 1);
 
 private:
     int rowBytes;                 // Monochrome: (width+7)/8; Grayscale: width; RGB565: width*2
