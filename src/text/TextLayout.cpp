@@ -54,6 +54,16 @@ bool applyEmphasisShift(UNICODE_CODEPOINT cp, uint8_t& depth) {
     return false;
 }
 
+// Characters an inline object never breaks from: GL other than U+00A0, WJ and ZWJ.
+static bool gluesToObject(UNICODE_CODEPOINT cp) {
+    switch (cp) {
+        case 0x034F: case 0x0F08: case 0x0F0C: case 0x0F12: case 0x180E:
+        case 0x2007: case 0x2011: case 0x202F: case 0x2060: case 0xFEFF: case 0x200D:
+            return true;
+    }
+    return (cp >= 0x035C && cp <= 0x0362) || (cp >= 0x0FD9 && cp <= 0x0FDA);
+}
+
 WordWrapResult TextLayout::measureLineWrap(
     UNICODE_CODEPOINT* codepoints,
     size_t len,
@@ -62,7 +72,8 @@ WordWrapResult TextLayout::measureLineWrap(
     const GlyphProvider* glyphProvider,
     int16_t initialCursorX,
     FontStyle initialEmphasis,
-    const Hyphenator* hyphenator
+    const Hyphenator* hyphenator,
+    const InlineObjectProvider* objects
 ) {
     WordWrapResult result = {
         .codepointsConsumed = -1,
@@ -77,6 +88,7 @@ WordWrapResult TextLayout::measureLineWrap(
     }
 
     size_t wrapCandidate = 0;
+    bool hasWrapCandidate = false;
     size_t position = 0;
     int16_t cursorX = initialCursorX;
     int16_t lastAdvance = 0;
@@ -168,6 +180,23 @@ WordWrapResult TextLayout::measureLineWrap(
             continue;
         }
 
+        // Inline object: break before and after it unless glued, never within.
+        if (objects && cp == TextControlCode::ObjectReplacement) {
+            if (position > 0 && !gluesToObject(codepoints[position - 1])) {
+                wrapCandidate = position - 1;
+                hasWrapCandidate = true;
+            }
+            cursorX += objects->widthOfObject(codepoints + position);
+            lastAdvance = 0;
+            bool gluedAfter = position + 1 < len && gluesToObject(codepoints[position + 1]);
+            if (cursorX <= layoutWidth && !gluedAfter) {
+                wrapCandidate = position;
+                hasWrapCandidate = true;
+            }
+            position++;
+            continue;
+        }
+
         unicode_info_t traits;
         GlyphMetrics metrics;
 
@@ -198,6 +227,7 @@ WordWrapResult TextLayout::measureLineWrap(
         // pulled onto the line and clipped at the right edge.
         if (traits.is.linebreak && (traits.is.whitespace || cursorX <= layoutWidth)) {
             wrapCandidate = position;
+            if (position > 0) hasWrapCandidate = true;
         }
 
         position++;
@@ -227,7 +257,7 @@ WordWrapResult TextLayout::measureLineWrap(
     // anchored on the whole word. We extract it, find legal break positions,
     // and check if any prefix + hyphen fits within the layout width.
     else if (hyphenator != nullptr) {
-        size_t wordStart = (wrapCandidate > 0) ? wrapCandidate + 1 : 0;
+        size_t wordStart = hasWrapCandidate ? wrapCandidate + 1 : 0;
         // Skip any leading control characters (SO/SI/BS) that aren't part of the word
         while (wordStart < len && codepoints[wordStart] < 0x20) {
             wordStart++;
@@ -284,6 +314,10 @@ WordWrapResult TextLayout::measureLineWrap(
                     for (size_t k = 0; k < splitCodepoint; k++) {
                         UNICODE_CODEPOINT cp = codepoints[k];
                         if (applyEmphasisShift(cp, emph)) continue;
+                        if (objects && cp == TextControlCode::ObjectReplacement) {
+                            prefixWidth += objects->widthOfObject(codepoints + k);
+                            continue;
+                        }
                         // Zero-width: an earlier word on this line may carry
                         // soft hyphens even though the overflowing word doesn't.
                         if (cp == TextControlCode::SoftHyphen) continue;
@@ -322,7 +356,7 @@ WordWrapResult TextLayout::measureLineWrap(
         }
     }
 
-    if (wrapCandidate > 0) {
+    if (hasWrapCandidate) {
         // Wrap at the last good break point (after the space)
         result.codepointsConsumed = wrapCandidate + 1;
     } else {

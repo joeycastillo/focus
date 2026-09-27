@@ -42,6 +42,7 @@
 #include "Utf8.hpp"
 #include "GlyphProvider.hpp"
 #include "Hyphenator.hpp"
+#include "InlineObjectProvider.hpp"
 #include "UnicodeTraits.hpp"
 #include <cstdint>
 #include <cstddef>
@@ -98,6 +99,13 @@ namespace TextControlCode {
      * the author's break points win.
      */
     constexpr UNICODE_CODEPOINT SoftHyphen       = 0x00AD;
+
+    /**
+     * @brief U+FFFC OBJECT REPLACEMENT CHARACTER — an inline object whose
+     * width an InlineObjectProvider supplies. Without a provider it is an
+     * ordinary glyph.
+     */
+    constexpr UNICODE_CODEPOINT ObjectReplacement = 0xFFFC;
 }
 
 /**
@@ -148,6 +156,11 @@ public:
      *        overflows the line and contains no soft hyphens; it is offered
      *        the whole word, not just the part that fit. Pass nullptr to
      *        wrap at word boundaries only
+     * @param objects Optional provider for inline objects. Each U+FFFC is
+     *        measured at its width and is never split. A line may break
+     *        before and after it, except next to U+2060, U+FEFF, U+200D or
+     *        a no-break character other than U+00A0. Pass nullptr to treat
+     *        U+FFFC as an ordinary glyph
      * @return WordWrapResult containing wrap position and metadata
      *
      * A wrapped line ends with the whitespace it broke at. That whitespace
@@ -163,7 +176,8 @@ public:
         const GlyphProvider* glyphProvider,
         int16_t initialCursorX = 0,
         FontStyle initialEmphasis = FontStyle::Regular,
-        const Hyphenator* hyphenator = nullptr
+        const Hyphenator* hyphenator = nullptr,
+        const InlineObjectProvider* objects = nullptr
     );
 
     /**
