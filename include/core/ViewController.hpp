@@ -31,8 +31,10 @@
  * disappears. Subclass ViewController and override createView() to build your
  * view hierarchy.
  *
- * The Application manages ViewController presentation via setRootViewController(),
- * presentViewController(), and dismissViewController().
+ * Each Window manages ViewController presentation via setRootViewController(),
+ * presentViewController(), and dismissViewController(); Application and
+ * ViewController offer the same calls, targeting the key window and the
+ * controller's own window respectively.
  */
 
 #pragma once
@@ -89,7 +91,10 @@ public:
     /**
      * @brief Inject an event into the application's event dispatch system.
      *
-     * Convenience method that forwards to Application::generateEvent().
+     * Convenience method that forwards to Application::generateEvent(), naming
+     * this controller's own window: the event goes to that window's focused view
+     * and bubbles up to the window. For a single-window app that is the key window.
+     * Does nothing if the view is not loaded or not in a window.
      *
      * @param eventType One of the FOCUS_EVENT_* constants.
      * @param userInfo Event-specific payload (default 0).
@@ -111,7 +116,32 @@ public:
     /// @brief Get the root view managed by this controller, or nullptr if not yet created.
     std::shared_ptr<View> getView() const;
 
+    /// @brief Get the window hosting this controller.
+    ///
+    /// Resolves to the window containing the controller's view if attached, else the
+    /// window set via setWindow(), else the application's key window, else nullptr.
+    std::shared_ptr<Window> getWindow() const;
+
+    /**
+     * @brief Present a view controller modally in this controller's window.
+     *
+     * Forwards to Window::presentViewController() on getWindow(). Does
+     * nothing if this controller has no window.
+     *
+     * @param viewController The view controller to present modally.
+     */
+    void presentViewController(std::shared_ptr<ViewController> viewController);
+
+    /// @brief Dismiss the topmost modal view controller in this controller's window.
+    ///
+    /// Forwards to Window::dismissViewController() on getWindow(). Does
+    /// nothing if this controller has no window.
+    void dismissViewController();
+
 protected:
+    /// @brief Record the window that hosts this controller.
+    void setWindow(const std::shared_ptr<Window>& window);
+
     /**
      * @brief Create this controller's view hierarchy.
      *
@@ -125,6 +155,7 @@ protected:
 
     std::shared_ptr<View> view;            ///< The root view managed by this controller.
     std::weak_ptr<Application> application; ///< Weak reference to the owning application.
+    std::weak_ptr<Window> hostWindow;      ///< Window hosting this controller, if set explicitly.
     std::string title;                     ///< Title displayed in navigation bars.
     std::weak_ptr<NavigationViewController> navigationController; ///< Set by NavigationViewController when pushed.
     std::weak_ptr<TabViewController> tabViewController; ///< Set by TabViewController when added as a tab.
@@ -141,6 +172,7 @@ protected:
     friend class Application;
     friend class NavigationViewController;
     friend class TabViewController;
+    friend class Window;
 };
 
 }  // namespace focus

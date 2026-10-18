@@ -42,13 +42,33 @@ Views have a foreground color and background color (`uint16_t` values — see Co
 
 ### Window
 
-A **Window** is a special View that sits at the root of the hierarchy. It bridges the view tree to a **Display** backend. The Window tracks a **dirty rectangle**: the union of all regions that need redrawing. When the display is ready, the application draws only the dirty region, not the entire screen.
+A **Window** is a special View that sits at the root of the hierarchy. It bridges the view tree to a **Display** backend. A Window is per display, and an Application may own several, each on its own Display. The Window tracks a **dirty rectangle**: the union of all regions that need redrawing. When the display is ready, the application draws only the dirty region, not the entire screen.
 
 In non-touch-oriented applications, Window also manages focus: which view currently receives keyboard/d-pad events.
 
+To drive a second display, construct a second Window on it and register it with `addWindow()`:
+
+```cpp
+auto window1 = std::make_shared<Window>(display1, MakeSize(160, 128));
+auto window2 = std::make_shared<Window>(display2, MakeSize(320, 240));
+auto app = std::make_shared<MyApp>(window1, window2);   // MyApp(w1, w2) : Application(w1), window2(w2); w1 is the key window
+
+void MyApp::setup() {
+    this->addWindow(this->window2);
+    this->setRootViewController(std::make_shared<MainViewController>(this->shared_from_this()));
+    this->window2->setRootViewController(std::make_shared<StatusViewController>(this->shared_from_this()));
+
+    // one refresh task per window, each drawing its own window's dirty region
+    this->addTask(std::make_shared<MyRefreshTask>(this->getWindows()[0]));
+    this->addTask(std::make_shared<MyRefreshTask>(this->window2));
+}
+```
+
+Positional events such as touches name their window with the three-argument `generateEvent(type, userInfo, window)`; non-positional events such as d-pad presses use the two-argument form and go to the key window, which `makeKeyWindow()` changes.
+
 ### Application
 
-**Application** is the central coordinator. It owns the Window, manages a root view controller plus a stack of modally presented view controllers, and runs the cooperative event loop.
+**Application** is the central coordinator. It owns the window list (the constructor's window first) and the key window, and runs the cooperative event loop. Each Window manages its own root view controller and its own stack of modally presented view controllers; Application's `setRootViewController`, `presentViewController` and `dismissViewController` forward to the key window.
 
 ```
 while running and tasks.count > 0:
@@ -392,6 +412,15 @@ app->presentViewController(settingsVC);  // shows on top
 app->dismissViewController();            // removes topmost modal
 ```
 
+Each window owns its own root view controller and modal stack, and a modal belongs to the window it was presented in. `app->presentViewController()` and the other `Application` presentation calls still work and target the key window. To target a specific window, call the same methods on that window or on a view controller it hosts:
+
+```cpp
+window2->setRootViewController(dashboardVC);
+window2->presentViewController(alertVC);   // a modal in window2 only
+dashboardVC->presentViewController(detailVC);  // presents in dashboardVC's window
+detailVC->dismissViewController();             // dismisses from that same window
+```
+
 An opaque, full-screen modal covers the view controller beneath it: that controller disappears (releasing its view) until the modal is dismissed; at that point it appears again. A non-opaque modal dims the content behind it instead, and the view controller underneath gets no appearance callbacks, since it's still visible.
 
 `setRootViewController()` removes any presented modals. `dismissAllViewControllers()` removes them all at once, without showing the ones in between.
@@ -408,6 +437,8 @@ On TOUCH_UP, the framework checks:
 - **Tap**: otherwise, TOUCH_UP_INSIDE or TOUCH_UP_OUTSIDE depending on whether the finger is still within the captured view's bounds.
 
 Touch coordinates are packed into `Event.userInfo` as `(x << 16) | y`.
+
+With more than one window, positional (touch) events go to the window you name in `generateEvent(type, userInfo, window)`, or to the key window for the two-argument `generateEvent(type, userInfo)`. Each window tracks its own touch sequence and gesture recognition, so touches on two displays do not interfere. Buttons and keys go to the key window, which is the constructor's window until you call `app->makeKeyWindow(window)`; `getKeyWindow()` returns it.
 
 ### Directional Navigation
 

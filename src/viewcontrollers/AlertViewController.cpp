@@ -61,10 +61,10 @@ AlertViewController::AlertViewController(
 }
 
 void AlertViewController::createView() {
-    auto app = this->application.lock();
-    if (!app) return;
+    auto w = this->getWindow();
+    if (!w) return;
 
-    Size windowSize = app->getWindow()->getFrame().size;
+    Size windowSize = w->getFrame().size;
 
     // Derive layout constants from screen size
     int padding = std::max(8, std::min(20, windowSize.width / 24));
@@ -152,12 +152,12 @@ void AlertViewController::createView() {
                     RectZero, this->buttonLabels[i]);
                 button->accessibilityIdentifier = "alert-button-" + std::to_string(i);
                 int buttonIndex = i;
-                auto weakApp = this->application;
+                std::weak_ptr<ViewController> weakSelf = this->weak_from_this();
                 auto completion = this->completion;
                 button->setAction(
-                    [weakApp, completion, buttonIndex](Event, std::weak_ptr<View>) {
-                        if (auto app = weakApp.lock()) {
-                            app->dismissViewController();
+                    [weakSelf, completion, buttonIndex](Event, std::weak_ptr<View>) {
+                        if (auto self = weakSelf.lock()) {
+                            self->dismissViewController();
                         }
                         if (completion) {
                             completion(buttonIndex);
@@ -178,12 +178,12 @@ void AlertViewController::createView() {
                     MakeRect(0, 0, 0, buttonHeight), this->buttonLabels[i]);
                 button->accessibilityIdentifier = "alert-button-" + std::to_string(i);
                 int buttonIndex = i;
-                auto weakApp = this->application;
+                std::weak_ptr<ViewController> weakSelf = this->weak_from_this();
                 auto completion = this->completion;
                 button->setAction(
-                    [weakApp, completion, buttonIndex](Event, std::weak_ptr<View>) {
-                        if (auto app = weakApp.lock()) {
-                            app->dismissViewController();
+                    [weakSelf, completion, buttonIndex](Event, std::weak_ptr<View>) {
+                        if (auto self = weakSelf.lock()) {
+                            self->dismissViewController();
                         }
                         if (completion) {
                             completion(buttonIndex);

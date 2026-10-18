@@ -71,6 +71,7 @@ set(TEST_SOURCES
     test_inline_objects.cpp
     test_locale.cpp
     test_packed_font_memory.cpp
+    test_multi_window.cpp
     test_task_busyness.cpp
 )
 

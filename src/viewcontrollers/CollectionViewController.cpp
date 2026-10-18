@@ -73,8 +73,8 @@ void CollectionViewController::reloadItemAtIndex(size_t index) {
 }
 
 void CollectionViewController::createView() {
-    auto app = this->application.lock();
-    Size size = app ? app->getWindow()->getContentRect().size : MakeSize(480, 768);
+    auto w = this->getWindow();
+    Size size = w ? w->getContentRect().size : MakeSize(480, 768);
 
     this->paginatedView = std::make_shared<PaginatedCollectionView>(
         MakeRect(0, 0, size.width, size.height));

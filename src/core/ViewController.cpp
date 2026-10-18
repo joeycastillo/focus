@@ -34,6 +34,27 @@ ViewController::ViewController(std::shared_ptr<Application> application) {
     this->application = application;
 }
 
+std::shared_ptr<Window> ViewController::getWindow() const {
+    if (this->view) {
+        if (auto w = this->view->getWindow().lock()) return w;
+    }
+    if (auto w = this->hostWindow.lock()) return w;
+    if (auto app = this->application.lock()) return app->getWindow();
+    return nullptr;
+}
+
+void ViewController::setWindow(const std::shared_ptr<Window>& window) {
+    this->hostWindow = window;
+}
+
+void ViewController::presentViewController(std::shared_ptr<ViewController> viewController) {
+    if (auto w = this->getWindow()) w->presentViewController(viewController);
+}
+
+void ViewController::dismissViewController() {
+    if (auto w = this->getWindow()) w->dismissViewController();
+}
+
 void ViewController::viewWillAppear() {
     if (!this->view) {
         this->createView();
@@ -52,7 +73,7 @@ void ViewController::generateEvent(int32_t eventType, int32_t userInfo) {
     // from a view controller to the application.
     if (std::shared_ptr<Window> window = this->view->getWindow().lock()) {
         if (std::shared_ptr<Application> application = window->application.lock()) {
-            application->generateEvent(eventType, userInfo);
+            application->generateEvent(eventType, userInfo, window);
         }
     }
 }

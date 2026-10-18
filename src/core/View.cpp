@@ -117,15 +117,19 @@ void View::draw(int x, int y, Rect clipRect) {
 
         if (occluderIndex < 0) {
             // No occluder — draw parent content normally.
+#if FOCUS_LOGV_ENABLED
             auto fillStart = std::chrono::steady_clock::now();
+#endif
             if (this->opaque) {
                 fillCount++;
                 display->fillRect(x + this->frame.origin.x, y + this->frame.origin.y, this->frame.size.width, this->frame.size.height, this->backgroundColor, clipRect);
             }
+#if FOCUS_LOGV_ENABLED
             auto fillEnd = std::chrono::steady_clock::now();
-
             auto contentStart = std::chrono::steady_clock::now();
+#endif
             this->drawContent(x, y, clipRect);
+#if FOCUS_LOGV_ENABLED
             auto contentEnd = std::chrono::steady_clock::now();
 
             auto fillUs = std::chrono::duration_cast<std::chrono::microseconds>(fillEnd - fillStart).count();
@@ -139,7 +143,9 @@ void View::draw(int x, int y, Rect clipRect) {
                 x + this->frame.origin.x, y + this->frame.origin.y,
                 this->frame.size.width, this->frame.size.height);
             if (demangled) free(demangled);
+#endif
         } else {
+#if FOCUS_LOGV_ENABLED
             int status;
             char *demangled = abi::__cxa_demangle(typeid(*this).name(), nullptr, nullptr, &status);
             FOCUS_LOGV(VIEW_TAG,"  [draw] %-28s OCCLUDED (by child %d)  frame=(%d,%d %dx%d)",
@@ -148,6 +154,7 @@ void View::draw(int x, int y, Rect clipRect) {
                 x + this->frame.origin.x, y + this->frame.origin.y,
                 this->frame.size.width, this->frame.size.height);
             if (demangled) free(demangled);
+#endif
         }
 
         // Draw subviews — start from the occluder if one was found.

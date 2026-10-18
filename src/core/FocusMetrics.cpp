@@ -22,6 +22,7 @@ const FocusMetrics FocusMetrics::Compact = {
     .footerThickness = 11,
     .footerGap = 2,
     .footerButtonWidth = 35,
+    .keyboardHeight = 260,
 };
 
 // Standard: 320x240 TFT, 5x8 font (gh=8)
@@ -34,6 +35,7 @@ const FocusMetrics FocusMetrics::Standard = {
     .footerThickness = 16,
     .footerGap = 4,
     .footerButtonWidth = 50,
+    .keyboardHeight = 260,
 };
 
 // Large: 480x800+ display, 24-32px system font
@@ -46,6 +48,7 @@ const FocusMetrics FocusMetrics::Large = {
     .footerThickness = 48,
     .footerGap = 8,
     .footerButtonWidth = 100,
+    .keyboardHeight = 260,
 };
 
 void FocusMetrics::set(const FocusMetrics& metrics) {

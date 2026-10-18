@@ -24,36 +24,27 @@
 
 #include "Application.hpp"
 #include "ViewController.hpp"
-#include "NavigationViewController.hpp"
-#include "HatchedView.hpp"
 #include "Task.hpp"
 #include "Display.hpp"
 #include <algorithm>
 #include <cassert>
-#include <typeinfo>
 #include <cstdlib>
-#include "FocusLog.hpp"
 
 #include "focus_platform.h"
 
 namespace focus {
 
-namespace {
-
-// True if the view is the ancestor or lies inside it.
-bool isWithin(const View* view, const View* ancestor) {
-    for (const View* v = view; v; v = v->getSuperview()) {
-        if (v == ancestor) return true;
-    }
-    return false;
-}
-
-}  // namespace
-
-static const char *TAG = "Focus";
-
 Application::Application(const std::shared_ptr<Window>& window) {
     this->window = window;
+    this->windows.push_back(window);
+}
+
+void Application::addWindow(std::shared_ptr<Window> window) {
+    if (!window) return;
+    this->windows.push_back(window);
+    if (!this->weak_from_this().expired()) {
+        window->application = this->shared_from_this();
+    }
 }
 
 void Application::addTask(std::shared_ptr<Task> task) {
@@ -62,14 +53,16 @@ void Application::addTask(std::shared_ptr<Task> task) {
 
 void Application::run() {
     assert(!this->weak_from_this().expired() && "Application must be managed by std::shared_ptr (use std::make_shared)");
-    this->setup();
     std::shared_ptr<Application> application = this->shared_from_this();
-    this->window->application = application;
+    for (auto& w : this->windows) w->application = application;
+    this->setup();
+    // A window added during setup() is already bound; this is a safety net.
+    for (auto& w : this->windows) w->application = application;
     // Only focus the window if nothing was focused during setup().
     if (!this->window->focusedView.lock()) {
         this->window->becomeFocused();
     }
-    this->window->setNeedsDisplayInRect(this->window->getFrame());
+    for (auto& w : this->windows) w->setNeedsDisplayInRect(w->getFrame());
     // With no tasks left, nothing can ever call quit(), so an empty list ends the loop.
     while(this->running && !this->tasks.empty()) {
         for (int i = 0; i < (int)this->tasks.size(); i++) {
@@ -107,24 +100,24 @@ int32_t Application::detectSwipe(int dx, int dy, int64_t durationUs) {
     return 0;
 }
 
-void Application::dispatchTouchEvent(Event event) {
+void Application::dispatchTouchEvent(Event event, const std::shared_ptr<Window>& window) {
     switch (event.type) {
         case FOCUS_EVENT_TOUCH_DOWN:
         {
-            this->longPressFired = false;
-            this->touchDownTimestamp = event.timestamp;
+            window->longPressFired = false;
+            window->touchDownTimestamp = event.timestamp;
             Point touch = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
-            if (std::shared_ptr<View> touchedView = this->window->getViewForTouch(touch).lock()) {
+            if (std::shared_ptr<View> touchedView = window->getViewForTouch(touch).lock()) {
                 // A touch outside both the focused view and the keyboard
                 // returns focus to the window (and dismisses any keyboard).
-                if (std::shared_ptr<View> focused = this->window->getFocusedView().lock()) {
-                    if (focused.get() != this->window.get() &&
+                if (std::shared_ptr<View> focused = window->getFocusedView().lock()) {
+                    if (focused.get() != window.get() &&
                         !focused->containsPointInWindowCoordinates(touch) &&
-                        !this->window->isKeyboardView(touchedView)) {
-                        this->window->becomeFocused();
+                        !window->isKeyboardView(touchedView)) {
+                        window->becomeFocused();
                     }
                 }
-                this->window->setCapturedTouchView(touchedView, touch);
+                window->setCapturedTouchView(touchedView, touch);
                 touchedView->handleEvent(event);
             }
         }
@@ -132,7 +125,7 @@ void Application::dispatchTouchEvent(Event event) {
 
         case FOCUS_EVENT_TOUCH_MOVED:
         {
-            if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
+            if (std::shared_ptr<View> capturedView = window->getCapturedTouchView().lock()) {
                 capturedView->handleEvent(event);
             }
         }
@@ -140,18 +133,18 @@ void Application::dispatchTouchEvent(Event event) {
 
         case FOCUS_EVENT_TOUCH_UP:
         {
-            if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
+            if (std::shared_ptr<View> capturedView = window->getCapturedTouchView().lock()) {
                 Event upEvent;
                 upEvent.userInfo = event.userInfo;
                 upEvent.timestamp = event.timestamp;
 
-                if (this->longPressFired) {
+                if (window->longPressFired) {
                     // Long press already handled; suppress normal tap
                     upEvent.type = FOCUS_EVENT_TOUCH_UP_OUTSIDE;
                 } else {
-                    Point touchDown = this->window->getTouchDownPoint();
+                    Point touchDown = window->getTouchDownPoint();
                     Point touchUp = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
-                    int64_t duration = event.timestamp - this->touchDownTimestamp;
+                    int64_t duration = event.timestamp - window->touchDownTimestamp;
                     int32_t swipe = this->detectSwipe(touchUp.x - touchDown.x, touchUp.y - touchDown.y, duration);
                     if (swipe) {
                         upEvent.type = swipe;
@@ -162,16 +155,16 @@ void Application::dispatchTouchEvent(Event event) {
                 }
                 capturedView->handleEvent(upEvent);
 
-                this->window->clearCapturedTouchView();
-                this->longPressFired = false;
+                window->clearCapturedTouchView();
+                window->longPressFired = false;
             }
         }
         break;
 
         case FOCUS_EVENT_LONG_PRESS:
         {
-            this->longPressFired = true;
-            if (std::shared_ptr<View> capturedView = this->window->getCapturedTouchView().lock()) {
+            window->longPressFired = true;
+            if (std::shared_ptr<View> capturedView = window->getCapturedTouchView().lock()) {
                 capturedView->handleEvent(event);
             }
         }
@@ -182,20 +175,20 @@ void Application::dispatchTouchEvent(Event event) {
     }
 }
 
-bool Application::handleSystemGestures(Event event) {
+bool Application::handleSystemGestures(Event event, const std::shared_ptr<Window>& window) {
     // If a gesture was already recognized, forward events to it
-    if (this->recognizedGesture) {
+    if (window->recognizedGesture) {
         switch (event.type) {
             case FOCUS_EVENT_TOUCH_MOVED:
-                this->recognizedGesture->touchMoved(event);
+                window->recognizedGesture->touchMoved(event);
                 return true;
             case FOCUS_EVENT_TOUCH_UP:
-                this->recognizedGesture->touchUp(event);
-                this->recognizedGesture->reset();
-                this->recognizedGesture = nullptr;
+                window->recognizedGesture->touchUp(event);
+                window->recognizedGesture->reset();
+                window->recognizedGesture = nullptr;
                 return true;
             case FOCUS_EVENT_LONG_PRESS:
-                this->recognizedGesture->longPress(event);
+                window->recognizedGesture->longPress(event);
                 return true;
             default:
                 return false;
@@ -205,31 +198,31 @@ bool Application::handleSystemGestures(Event event) {
     // On TOUCH_DOWN: check which recognizers want this touch
     if (event.type == FOCUS_EVENT_TOUCH_DOWN) {
         Point touch = MakePoint(event.userInfo >> 16, event.userInfo & 0xFFFF);
-        const auto& recognizers = this->window->getSystemGestureRecognizers();
-        this->activeRecognizers.clear();
+        const auto& recognizers = window->getSystemGestureRecognizers();
+        window->activeRecognizers.clear();
         for (const auto& recognizer : recognizers) {
             if (recognizer->wantsTouch(touch)) {
-                this->activeRecognizers.push_back(recognizer);
+                window->activeRecognizers.push_back(recognizer);
             }
         }
-        if (this->activeRecognizers.empty()) return false;
+        if (window->activeRecognizers.empty()) return false;
 
         // Start buffering
-        this->gestureRecognitionPending = true;
-        this->gestureEventBuffer.clear();
-        this->gestureEventBuffer.push_back(event);
+        window->gestureRecognitionPending = true;
+        window->gestureEventBuffer.clear();
+        window->gestureEventBuffer.push_back(event);
 
-        for (auto& recognizer : this->activeRecognizers) {
+        for (auto& recognizer : window->activeRecognizers) {
             recognizer->touchDown(event);
         }
         return true;
     }
 
     // Not in buffering mode — nothing to do
-    if (!this->gestureRecognitionPending) return false;
+    if (!window->gestureRecognitionPending) return false;
 
     // Feed event to active recognizers
-    for (auto& recognizer : this->activeRecognizers) {
+    for (auto& recognizer : window->activeRecognizers) {
         switch (event.type) {
             case FOCUS_EVENT_TOUCH_MOVED: recognizer->touchMoved(event); break;
             case FOCUS_EVENT_TOUCH_UP:    recognizer->touchUp(event); break;
@@ -241,10 +234,10 @@ bool Application::handleSystemGestures(Event event) {
     // Check recognizer states
     bool anyRecognized = false;
     bool anyPossible = false;
-    for (auto& recognizer : this->activeRecognizers) {
+    for (auto& recognizer : window->activeRecognizers) {
         if (recognizer->getState() == GestureRecognizer::State::Recognized) {
             anyRecognized = true;
-            this->recognizedGesture = recognizer;
+            window->recognizedGesture = recognizer;
             break;
         }
         if (recognizer->getState() == GestureRecognizer::State::Possible) {
@@ -254,32 +247,32 @@ bool Application::handleSystemGestures(Event event) {
 
     if (anyRecognized) {
         // Gesture won — discard buffer, reset other recognizers
-        this->gestureEventBuffer.clear();
-        this->gestureRecognitionPending = false;
-        for (auto& recognizer : this->activeRecognizers) {
-            if (recognizer != this->recognizedGesture) {
+        window->gestureEventBuffer.clear();
+        window->gestureRecognitionPending = false;
+        for (auto& recognizer : window->activeRecognizers) {
+            if (recognizer != window->recognizedGesture) {
                 recognizer->reset();
             }
         }
-        this->activeRecognizers.clear();
+        window->activeRecognizers.clear();
         return true;
     }
 
     if (anyPossible) {
         // Still undecided — buffer the event
-        this->gestureEventBuffer.push_back(event);
+        window->gestureEventBuffer.push_back(event);
         return true;
     }
 
     // All failed — replay buffered events through normal dispatch
-    this->gestureRecognitionPending = false;
-    std::vector<Event> buffer = std::move(this->gestureEventBuffer);
-    this->activeRecognizers.clear();
+    window->gestureRecognitionPending = false;
+    std::vector<Event> buffer = std::move(window->gestureEventBuffer);
+    window->activeRecognizers.clear();
     for (const auto& buffered : buffer) {
-        this->dispatchTouchEvent(buffered);
+        this->dispatchTouchEvent(buffered, window);
     }
     // Also dispatch the current event (it wasn't buffered yet since we check states first)
-    this->dispatchTouchEvent(event);
+    this->dispatchTouchEvent(event, window);
     return true;  // We handled replay
 }
 
@@ -300,45 +293,24 @@ bool Application::isFocusNavigationEvent(int32_t type) {
     }
 }
 
-void Application::summonFocus(bool fromEnd) {
-    // Summon domain: the top modal's view when presented, else the window.
-    std::shared_ptr<View> domain = this->modalStack.empty()
-        ? std::static_pointer_cast<View>(this->window)
-        : this->modalStack.back().viewController->view;
-    if (!domain) return;
-
-    // Prefer the active view controller's content within the domain.
-    std::shared_ptr<View> target;
-    std::shared_ptr<ViewController> vc = this->activeViewController();
-    if (vc && vc->view) {
-        target = fromEnd ? vc->view->lastFocusableDescendant()
-                         : vc->view->firstFocusableDescendant();
-    }
-    if (!target) {
-        target = fromEnd ? domain->lastFocusableDescendant()
-                         : domain->firstFocusableDescendant();
-    }
-    if (target) target->becomeFocused();
-}
-
-void Application::handleLatentNavigationEvent(Event event) {
+void Application::handleLatentNavigationEvent(Event event, const std::shared_ptr<Window>& window) {
     switch (event.type) {
         case FOCUS_EVENT_DIRECTION_LEFT:
         case FOCUS_EVENT_DIRECTION_DOWN:
         case FOCUS_EVENT_DIRECTION_UP:
         case FOCUS_EVENT_DIRECTION_RIGHT:
-            this->summonFocus(false);
+            window->summonFocus(false);
             break;
         case FOCUS_EVENT_ACCESSIBILITY_NEXT:
-            this->summonFocus(false);
+            window->summonFocus(false);
             break;
         case FOCUS_EVENT_ACCESSIBILITY_PREVIOUS:
-            this->summonFocus(true);
+            window->summonFocus(true);
             break;
         case FOCUS_EVENT_BACK:
         case FOCUS_EVENT_FORWARD:
         {
-            std::shared_ptr<ViewController> vc = this->activeViewController();
+            std::shared_ptr<ViewController> vc = window->activeViewController();
             if (vc && vc->view) {
                 vc->view->handleEvent(event);
             }
@@ -351,6 +323,17 @@ void Application::handleLatentNavigationEvent(Event event) {
 }
 
 void Application::generateEvent(int32_t eventType, int32_t userInfo) {
+    this->generateEvent(eventType, userInfo, this->window);
+}
+
+void Application::generateEvent(int32_t eventType, int32_t userInfo, const std::shared_ptr<Window>& target) {
+    // Copy, so a handler that calls makeKeyWindow() cannot retarget this dispatch
+    // midway when the caller passed the key-window member itself.
+    std::shared_ptr<Window> window = target;
+    if (!window) return;
+    // Only windows registered with this application receive events.
+    if (std::find(this->windows.begin(), this->windows.end(), window) == this->windows.end()) return;
+
     Event event;
     event.type = eventType;
     event.userInfo = userInfo;
@@ -361,7 +344,7 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
     if (eventType == FOCUS_EVENT_TOUCH_DOWN ||
         eventType == FOCUS_EVENT_TOUCH_MOVED ||
         eventType == FOCUS_EVENT_TOUCH_UP) {
-        if (auto display = this->window->getDisplay().lock()) {
+        if (auto display = window->getDisplay().lock()) {
             int nx = userInfo >> 16;
             int ny = userInfo & 0xFFFF;
             int lx, ly;
@@ -378,16 +361,16 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
         }
 
         // Update cursor position tracker before gesture recognition / view dispatch.
-        Size ws = this->window->getContentRect().size;
-        this->window->getCursorManager().handleTouchEvent(event, ws.width - 1, ws.height - 1);
+        Size ws = window->getContentRect().size;
+        window->getCursorManager().handleTouchEvent(event, ws.width - 1, ws.height - 1);
     }
 
-    if (this->window->touchEnabled) {
+    if (window->touchEnabled) {
         bool navEvent = isFocusNavigationEvent(event.type);
 
         // Focus-navigation events go to the focused view while engaged.
-        if (navEvent && this->window->isFocusEngaged()) {
-            if (std::shared_ptr<View> focusedView = this->window->focusedView.lock()) {
+        if (navEvent && window->isFocusEngaged()) {
+            if (std::shared_ptr<View> focusedView = window->focusedView.lock()) {
                 focusedView->handleEvent(event);
             }
             return;
@@ -396,11 +379,11 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
         // Give the window first chance to handle (or swallow) any event.
         // For touch events this allows the window to intercept before
         // gesture recognizers and hit-test dispatch run.
-        if (this->window->handleEvent(event)) return;
+        if (window->handleEvent(event)) return;
 
         // Unconsumed focus-navigation events fall through to focus navigation.
         if (navEvent) {
-            this->handleLatentNavigationEvent(event);
+            this->handleLatentNavigationEvent(event, window);
             return;
         }
 
@@ -412,11 +395,26 @@ void Application::generateEvent(int32_t eventType, int32_t userInfo) {
             return;
         }
 
-        if (this->handleSystemGestures(event)) return;
-        this->dispatchTouchEvent(event);
-    } else if (std::shared_ptr<View> focusedView = this->window->focusedView.lock()) {
+        if (this->handleSystemGestures(event, window)) return;
+        this->dispatchTouchEvent(event, window);
+    } else if (std::shared_ptr<View> focusedView = window->focusedView.lock()) {
         focusedView->handleEvent(event);
     }
+}
+
+void Application::makeKeyWindow(const std::shared_ptr<Window>& window) {
+    if (std::find(this->windows.begin(), this->windows.end(), window) != this->windows.end()) {
+        this->window = window;
+        // A d-pad window with nothing focused would silently drop non-positional
+        // events, so focus it, as run() does for the constructor window.
+        if (!window->touchEnabled && !window->focusedView.lock()) {
+            window->becomeFocused();
+        }
+    }
+}
+
+std::shared_ptr<Window> Application::getKeyWindow() const {
+    return this->window;
 }
 
 std::shared_ptr<Window> Application::getWindow() {
@@ -424,224 +422,27 @@ std::shared_ptr<Window> Application::getWindow() {
 }
 
 void Application::setRootViewController(std::shared_ptr<ViewController> viewController) {
-    FOCUS_LOGD(TAG, "setRoot %s", typeid(*viewController).name());
-
-    // Remove the current modals, top first, revealing nothing.
-    std::vector<ModalEntry> modals;
-    modals.swap(this->modalStack);
-    std::shared_ptr<ViewController> oldRoot = this->rootViewController;
-    bool oldRootHidden = this->rootHidden;
-    this->rootViewController = nullptr;
-    for (auto it = modals.rbegin(); it != modals.rend(); ++it) {
-        this->removeModal(*it);
-    }
-    if (oldRoot && !oldRootHidden) {
-        this->hideViewController(oldRoot);
-    }
-
-    // A root set from a callback during teardown is replaced too.
-    if (this->rootViewController && !this->rootHidden) {
-        this->hideViewController(this->rootViewController);
-    }
-
-    // Show the new root unless a modal presented during teardown covers it.
-    this->rootViewController = viewController;
-    this->rootHidden = true;
-    this->updateCoverage();
+    this->window->setRootViewController(viewController);
 }
 
 bool Application::isModalPresented() const {
-    return !this->modalStack.empty();
+    return this->window->isModalPresented();
 }
 
 std::shared_ptr<ViewController> Application::activeViewController() const {
-    if (!this->modalStack.empty()) {
-        return this->modalStack.back().viewController;
-    }
-    if (auto navVC = std::dynamic_pointer_cast<NavigationViewController>(this->rootViewController)) {
-        return navVC->topViewController();
-    }
-    return this->rootViewController;
+    return this->window->activeViewController();
 }
 
 void Application::presentViewController(std::shared_ptr<ViewController> viewController) {
-    FOCUS_LOGD(TAG, "present %s", typeid(*viewController).name());
-    bool wasEngaged = this->window->isFocusEngaged();
-    ModalEntry entry;
-    entry.viewController = viewController;
-    entry.previousFocusedView = this->window->focusedView;
-
-    // Create the view so we can inspect it before adding to the window.
-    viewController->viewWillAppear();
-    viewController->viewDidLayoutSubviews();
-
-    // Add a dimmer overlay unless the modal's view is opaque (full-screen).
-    if (!viewController->view->isOpaque()) {
-        Size windowSize = this->window->getFrame().size;
-        int blackColor = this->window->getForegroundColor();
-        entry.dimmer = std::make_shared<HatchedView>(
-            MakeRect(0, 0, windowSize.width, windowSize.height), blackColor);
-        this->window->addSubview(entry.dimmer);
-    }
-
-    // Present the modal VC's view on top. Clip focus so d-pad
-    // navigation cannot escape the modal into the views behind it.
-    viewController->view->setClipsFocus(true);
-    this->window->addSubview(viewController->view);
-    this->modalStack.push_back(entry);
-
-    // An opaque modal hides what it covers.
-    this->updateCoverage();
-
-    // Stop if a callback covered or dismissed this modal.
-    auto it = std::find_if(this->modalStack.begin(), this->modalStack.end(),
-        [&](const ModalEntry& e) { return e.viewController == viewController; });
-    if (it == this->modalStack.end() || it->hidden) return;
-    viewController->viewDidAppear();
-
-    // A modal presented above this one already moved focus.
-    if (this->modalStack.back().viewController != viewController) return;
-
-    // Move focus into the modal when focus is driving; never leave it behind the dimmer.
-    if (!this->window->isTouchEnabled() || wasEngaged) {
-        auto descendant = viewController->view->firstFocusableDescendant();
-        if (descendant) {
-            descendant->becomeFocused();
-        } else if (this->window->isTouchEnabled()) {
-            this->window->becomeFocused();
-        }
-    }
+    this->window->presentViewController(viewController);
 }
 
 void Application::dismissViewController() {
-    if (this->modalStack.empty()) return;
-
-    ModalEntry entry = this->modalStack.back();
-    FOCUS_LOGD(TAG, "dismiss %s", typeid(*entry.viewController).name());
-    this->modalStack.pop_back();
-
-    // Removing the modal's view resets focus to the window; capture first.
-    bool wasEngaged = this->window->isFocusEngaged();
-
-    this->removeModal(entry);
-    this->updateCoverage();
-    this->restoreFocus(entry.previousFocusedView, wasEngaged);
-
-    // Mark full window as needing display
-    this->window->setNeedsDisplayInRect(this->window->getFrame());
+    this->window->dismissViewController();
 }
 
 void Application::dismissAllViewControllers() {
-    if (this->modalStack.empty()) return;
-
-    // Remove the current modals, top first, revealing nothing.
-    std::vector<ModalEntry> modals;
-    modals.swap(this->modalStack);
-    bool wasEngaged = this->window->isFocusEngaged();
-    for (auto it = modals.rbegin(); it != modals.rend(); ++it) {
-        this->removeModal(*it);
-    }
-    this->updateCoverage();
-    this->restoreFocus(modals.front().previousFocusedView, wasEngaged);
-    this->window->setNeedsDisplayInRect(this->window->getFrame());
-}
-
-void Application::updateCoverage() {
-    // A nested call returns early; the outer loop picks up its changes.
-    if (this->updatingCoverage) return;
-    this->updatingCoverage = true;
-
-    // Change one controller per pass, then rescan.
-    bool changed = true;
-    while (changed) {
-        changed = false;
-        bool covered = false;
-        std::shared_ptr<View> above;
-        for (size_t i = this->modalStack.size(); i-- > 0;) {
-            ModalEntry& entry = this->modalStack[i];
-            if (entry.hidden != covered) {
-                entry.hidden = covered;
-                if (entry.dimmer) entry.dimmer->setHidden(covered);
-                if (covered) {
-                    this->hideViewController(entry.viewController);
-                } else {
-                    this->showViewController(entry.viewController, above, true);
-                }
-                changed = true;
-                break;
-            }
-            if (entry.dimmer) {
-                above = entry.dimmer;
-            } else {
-                above = entry.viewController->view;
-                covered = true;
-            }
-        }
-        if (!changed && this->rootViewController && this->rootHidden != covered) {
-            this->rootHidden = covered;
-            if (covered) {
-                this->hideViewController(this->rootViewController);
-            } else {
-                this->showViewController(this->rootViewController, above, false);
-            }
-            changed = true;
-        }
-    }
-
-    this->updatingCoverage = false;
-}
-
-void Application::hideViewController(std::shared_ptr<ViewController> viewController) {
-    viewController->viewWillDisappear();
-    if (viewController->view) {
-        this->window->removeSubview(viewController->view);
-    }
-    viewController->viewDidDisappear();
-}
-
-void Application::showViewController(std::shared_ptr<ViewController> viewController,
-                                     std::shared_ptr<View> above, bool clipsFocus) {
-    viewController->viewWillAppear();
-    viewController->viewDidLayoutSubviews();
-    if (viewController->view) {
-        if (clipsFocus) viewController->view->setClipsFocus(true);
-        const auto& subviews = this->window->getSubviews();
-        auto it = std::find(subviews.begin(), subviews.end(), above);
-        if (!above || it == subviews.end()) {
-            this->window->addSubview(viewController->view);
-        } else {
-            this->window->insertSubview(viewController->view, it - subviews.begin());
-        }
-    }
-    viewController->viewDidAppear();
-}
-
-void Application::removeModal(const ModalEntry& entry) {
-    if (!entry.hidden) {
-        this->hideViewController(entry.viewController);
-    }
-    if (entry.dimmer) {
-        this->window->removeSubview(entry.dimmer);
-    }
-}
-
-void Application::restoreFocus(std::weak_ptr<View> previousFocusedView, bool wasEngaged) {
-    // Leave focus latent if the user went latent inside the modal.
-    if (this->window->isTouchEnabled() && !wasEngaged) return;
-
-    // The view focused before the modal, if it is inside whatever is on top now.
-    auto top = this->modalStack.empty() ? this->rootViewController
-                                        : this->modalStack.back().viewController;
-    std::shared_ptr<View> target = previousFocusedView.lock();
-    if (target && !(top && top->view && isWithin(target.get(), top->view.get()))) target = nullptr;
-
-    // Otherwise the first focusable view on top: the active content, then its container.
-    if (!target) {
-        auto active = this->activeViewController();
-        if (active && active->view) target = active->view->firstFocusableDescendant();
-    }
-    if (!target && top && top->view) target = top->view->firstFocusableDescendant();
-    if (target) target->becomeFocused();
+    this->window->dismissAllViewControllers();
 }
 
 void Application::quit() {

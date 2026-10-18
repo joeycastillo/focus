@@ -146,10 +146,10 @@ void TabViewController::rebuildTabBar() {
 }
 
 void TabViewController::createView() {
-    auto app = this->application.lock();
-    if (!app) return;
+    auto w = this->getWindow();
+    if (!w) return;
 
-    Size windowSize = app->getWindow()->getContentRect().size;
+    Size windowSize = w->getContentRect().size;
 
     int barHeight = this->getTabBarHeight();
 
@@ -182,6 +182,7 @@ void TabViewController::viewWillAppear() {
             this->selectedIndex = 0;
         }
         auto& selected = this->tabs[this->selectedIndex];
+        selected.viewController->setWindow(this->getWindow());
         selected.viewController->viewWillAppear();
         if (selected.viewController->view) {
             selected.viewController->view->setFrame(MakeRect(0, 0,
@@ -279,6 +280,7 @@ void TabViewController::transitionToTab(size_t oldIndex, size_t newIndex) {
 
     // Set up the new child's view
     auto& newTab = this->tabs[newIndex];
+    newTab.viewController->setWindow(this->getWindow());
     newTab.viewController->viewWillAppear();
     if (newTab.viewController->view) {
         newTab.viewController->view->setFrame(MakeRect(0, 0,

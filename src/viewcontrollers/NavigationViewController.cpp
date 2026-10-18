@@ -51,10 +51,10 @@ NavigationViewController::NavigationViewController(
 }
 
 void NavigationViewController::createView() {
-    auto app = this->application.lock();
-    if (!app) return;
+    auto w = this->getWindow();
+    if (!w) return;
 
-    Size windowSize = app->getWindow()->getContentRect().size;
+    Size windowSize = w->getContentRect().size;
 
     // Full-screen container
     this->view = std::make_shared<View>(MakeRect(0, 0, windowSize.width, windowSize.height));
@@ -93,6 +93,7 @@ void NavigationViewController::viewWillAppear() {
         auto topVC = this->viewControllerStack.back();
         topVC->navigationController = std::dynamic_pointer_cast<NavigationViewController>(
             this->shared_from_this());
+        topVC->setWindow(this->getWindow());
         topVC->viewWillAppear();
         if (topVC->view) {
             topVC->view->setFrame(MakeRect(0, 0,
@@ -221,6 +222,7 @@ void NavigationViewController::transitionFromViewController(
     }
 
     // Set up the new VC's view
+    newVC->setWindow(this->getWindow());
     newVC->viewWillAppear(); // creates the view via createView()
     if (newVC->view) {
         newVC->view->setFrame(MakeRect(0, 0,

@@ -35,6 +35,13 @@
 #define FOCUS_LOGI(tag, format, ...) ESP_LOGI(tag, format, ##__VA_ARGS__)
 #define FOCUS_LOGD(tag, format, ...) ESP_LOGD(tag, format, ##__VA_ARGS__)
 #define FOCUS_LOGV(tag, format, ...) ESP_LOGV(tag, format, ##__VA_ARGS__)
+// True when verbose logging is compiled in; use to guard work only needed for FOCUS_LOGV output.
+// ESP_LOG_VERBOSE is an enum, which the preprocessor reads as 0, so compare
+// against its value: 5 is ESP_LOG_VERBOSE.
+#ifndef FOCUS_LOGV_ENABLED
+#define FOCUS_LOGV_ENABLED (LOG_LOCAL_LEVEL >= 5)
+#endif
+static_assert(ESP_LOG_VERBOSE == 5, "FOCUS_LOGV_ENABLED assumes ESP_LOG_VERBOSE == 5");
 #else
 #include <cstdio>
 #define FOCUS_LOGE(tag, format, ...) fprintf(stderr, "E (%s) " format "\n", tag, ##__VA_ARGS__)
@@ -42,4 +49,8 @@
 #define FOCUS_LOGI(tag, format, ...) fprintf(stderr, "I (%s) " format "\n", tag, ##__VA_ARGS__)
 #define FOCUS_LOGD(tag, format, ...) do { if (0) fprintf(stderr, "D (%s) " format "\n", tag, ##__VA_ARGS__); } while(0)
 #define FOCUS_LOGV(tag, format, ...) do { if (0) fprintf(stderr, "V (%s) " format "\n", tag, ##__VA_ARGS__); } while(0)
+// True when verbose logging is compiled in; use to guard work only needed for FOCUS_LOGV output.
+#ifndef FOCUS_LOGV_ENABLED
+#define FOCUS_LOGV_ENABLED 0
+#endif
 #endif

@@ -29,6 +29,9 @@ struct FocusMetrics {
     int footerGap = 4;
     int footerButtonWidth = 50;
 
+    /// Height of the window-managed on-screen keyboard in pixels
+    int keyboardHeight = 260;
+
     /// Named presets validated on real hardware.
     static const FocusMetrics Compact;   ///< 128x64 LCD, tiny font (Blit16)
     static const FocusMetrics Standard;  ///< 320x240 TFT, 5x8 font

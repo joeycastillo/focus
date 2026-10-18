@@ -31,9 +31,10 @@
  * screen needs to be redrawn (dirty rect). It also manages the currently
  * focused view and supports touch or directional input modes.
  *
- * An application typically has one Window, created by passing a Display and
- * a size. ViewControllers add their views as children of the window via the
- * Application's setRootViewController() and presentViewController() methods.
+ * An application has one Window per Display, created by passing a Display and
+ * a size. Each Window owns a root view controller and a stack of modally
+ * presented view controllers, set via setRootViewController() and
+ * presentViewController().
  */
 
 #pragma once
@@ -46,6 +47,8 @@
 namespace focus {
 
 class KeyboardView;
+class ViewController;
+class HatchedView;
 
 /**
  * @brief Root view that connects the view hierarchy to a Display.
@@ -177,15 +180,75 @@ public:
     /// @brief No-op (the window does not belong to another window).
     void setWindow(std::shared_ptr<Window> window) override;
 
-    /// @brief Returns the owning Application (set during Application::run()).
+    /// @brief Returns the owning Application (set by Application::addWindow() or Application::run()).
     std::weak_ptr<Application> getApplication() const { return application; }
 
     /// @brief Returns the cursor position tracker for trackpad-style input.
     CursorManager &getCursorManager() { return cursorManager; }
 
+    /**
+     * @brief Set the root view controller, replacing any existing one.
+     *
+     * Removes the modals presented at the time of the call, topmost first,
+     * without showing anything beneath them. Then the old root disappears
+     * and the new one appears. A modal presented while they are removed
+     * stays up, above the new root.
+     *
+     * @param viewController The new root view controller.
+     */
+    void setRootViewController(std::shared_ptr<ViewController> viewController);
+
+    /// @brief Get the root view controller, or nullptr if none is set.
+    std::shared_ptr<ViewController> getRootViewController() const;
+
+    /// @brief Check whether any modal view controller is currently presented in this window.
+    bool isModalPresented() const;
+
+    /**
+     * @brief Get the topmost active view controller in this window.
+     *
+     * Returns the modal VC on top if any modals are presented, otherwise
+     * returns the top of the navigation stack if the root VC is a
+     * NavigationViewController, otherwise returns the root VC itself.
+     */
+    std::shared_ptr<ViewController> activeViewController() const;
+
+    /**
+     * @brief Present a view controller modally on top of this window's content.
+     *
+     * If the modal's view is opaque, it covers the controller beneath it,
+     * which disappears and releases its view until the modal is dismissed.
+     * Otherwise a HatchedView dimmer is inserted behind the modal and the
+     * controller beneath gets no callbacks. Multiple modals can be stacked.
+     *
+     * @param viewController The view controller to present modally.
+     */
+    void presentViewController(std::shared_ptr<ViewController> viewController);
+
+    /**
+     * @brief Dismiss the topmost modal view controller in this window.
+     *
+     * Removes the modal's view and dimmer and shows whatever it covered.
+     * Focus returns to the view that was focused before the modal was
+     * presented, or to the first focusable view on top if that view was
+     * rebuilt.
+     */
+    void dismissViewController();
+
+    /**
+     * @brief Dismiss all modal view controllers in this window.
+     *
+     * Removes the modals presented at the time of the call, topmost first,
+     * without showing any of them, then shows what is beneath. A modal
+     * presented while they are removed stays up. Focus returns to the view
+     * that was focused before the first modal was presented, or to the
+     * first focusable view on top if that view was rebuilt.
+     */
+    void dismissAllViewControllers();
+
 protected:
     std::shared_ptr<Display> display;          ///< The display backend.
-    std::weak_ptr<Application> application;    ///< Owning application (set by Application::run()).
+    std::weak_ptr<Application> application;    ///< Owning application (set by Application::addWindow() or Application::run()).
     std::weak_ptr<View> focusedView;           ///< The currently focused view.
     bool dirty = false;                        ///< Whether any region needs redrawing.
     Rect dirtyRect = {{0,0},{0,0}};            ///< Accumulated region that needs redrawing.
@@ -196,6 +259,42 @@ protected:
     KeyboardType currentKeyboardType = KeyboardType::Default; ///< Type of currently presented keyboard.
     std::vector<std::shared_ptr<GestureRecognizer>> systemGestureRecognizers; ///< Registered system gesture recognizers.
     CursorManager cursorManager;               ///< Trackpad-style cursor position tracker.
+
+    bool longPressFired = false; ///< Set when LONG_PRESS is delivered during a touch; forces UP_OUTSIDE on release.
+    int64_t touchDownTimestamp = 0; ///< Timestamp of the current touch sequence's TOUCH_DOWN event.
+
+    /// @name System gesture recognition state
+    /// @{
+    std::vector<std::shared_ptr<GestureRecognizer>> activeRecognizers;  ///< Recognizers interested in current touch.
+    std::vector<Event> gestureEventBuffer;                              ///< Buffered events during Possible state.
+    bool gestureRecognitionPending = false;                             ///< Whether we're in the buffering phase.
+    std::shared_ptr<GestureRecognizer> recognizedGesture;              ///< The recognizer that won, or nullptr.
+    /// @}
+
+    std::shared_ptr<ViewController> rootViewController; ///< The primary view controller.
+
+    /// @brief Entry in the modal presentation stack.
+    struct ModalEntry {
+        std::shared_ptr<ViewController> viewController; ///< The presented view controller.
+        std::shared_ptr<HatchedView> dimmer;            ///< Overlay that dims content behind the modal.
+        std::weak_ptr<View> previousFocusedView;        ///< Focus to restore on dismiss.
+        bool hidden = false;                            ///< Covered by an opaque modal; its view is released.
+    };
+    std::vector<ModalEntry> modalStack; ///< Stack of modally presented view controllers.
+
+    bool rootHidden = false;        ///< The root is covered by an opaque modal.
+    bool updatingCoverage = false;  ///< Set while updateCoverage() runs.
+
+    /// Hide whatever an opaque modal covers and show whatever nothing covers.
+    void updateCoverage();
+    void hideViewController(std::shared_ptr<ViewController> viewController);
+    /// Show a controller's view directly below `above`, or on top if null; `clipsFocus` keeps focus inside it.
+    void showViewController(std::shared_ptr<ViewController> viewController,
+                            std::shared_ptr<View> above, bool clipsFocus);
+    void removeModal(const ModalEntry& entry);
+    void restoreFocus(std::weak_ptr<View> previousFocusedView, bool wasEngaged);
+    /// @brief Focus the first (or last) focusable view in the active context.
+    void summonFocus(bool fromEnd);
 
     /// @brief Present the on-screen keyboard for the currently focused view.
     virtual void presentKeyboard();

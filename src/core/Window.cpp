@@ -23,12 +23,32 @@
  */
 
 #include "Window.hpp"
+#include "FocusMetrics.hpp"
 #include "View.hpp"
 #include "Display.hpp"
 #include "KeyboardView.hpp"
+#include "ViewController.hpp"
+#include "HatchedView.hpp"
+#include "NavigationViewController.hpp"
 #include <algorithm>
+#include <typeinfo>
+#include "FocusLog.hpp"
 
 namespace focus {
+
+namespace {
+
+// True if the view is the ancestor or lies inside it.
+bool isWithin(const View* view, const View* ancestor) {
+    for (const View* v = view; v; v = v->getSuperview()) {
+        if (v == ancestor) return true;
+    }
+    return false;
+}
+
+}  // namespace
+
+static const char *TAG = "Focus";
 
 Window::Window(std::shared_ptr<Display> display, Size size) : View(MakeRect(0, 0, size.width, size.height)) {
     this->display = display;
@@ -188,7 +208,7 @@ void Window::presentKeyboard() {
 
     if (this->keyboard) return;
 
-    int keyboardHeight = 260;
+    int keyboardHeight = FocusMetrics::get().keyboardHeight;
     this->keyboard = std::make_shared<KeyboardView>(
         MakeRect(0, this->frame.size.height - keyboardHeight,
                  this->frame.size.width, keyboardHeight),
@@ -232,6 +252,254 @@ bool Window::isKeyboardView(std::shared_ptr<View> view) {
         v = v->superview;
     }
     return false;
+}
+
+void Window::setRootViewController(std::shared_ptr<ViewController> viewController) {
+    FOCUS_LOGD(TAG, "setRoot %s", typeid(*viewController).name());
+
+    // Remove the current modals, top first, revealing nothing.
+    std::vector<ModalEntry> modals;
+    modals.swap(this->modalStack);
+    std::shared_ptr<ViewController> oldRoot = this->rootViewController;
+    bool oldRootHidden = this->rootHidden;
+    this->rootViewController = nullptr;
+    for (auto it = modals.rbegin(); it != modals.rend(); ++it) {
+        this->removeModal(*it);
+    }
+    if (oldRoot && !oldRootHidden) {
+        this->hideViewController(oldRoot);
+    }
+
+    // A root set from a callback during teardown is replaced too.
+    if (this->rootViewController && !this->rootHidden) {
+        this->hideViewController(this->rootViewController);
+    }
+
+    // Show the new root unless a modal presented during teardown covers it.
+    this->rootViewController = viewController;
+    this->rootHidden = true;
+    this->updateCoverage();
+}
+
+std::shared_ptr<ViewController> Window::getRootViewController() const {
+    return this->rootViewController;
+}
+
+bool Window::isModalPresented() const {
+    return !this->modalStack.empty();
+}
+
+std::shared_ptr<ViewController> Window::activeViewController() const {
+    if (!this->modalStack.empty()) {
+        return this->modalStack.back().viewController;
+    }
+    if (auto navVC = std::dynamic_pointer_cast<NavigationViewController>(this->rootViewController)) {
+        return navVC->topViewController();
+    }
+    return this->rootViewController;
+}
+
+void Window::presentViewController(std::shared_ptr<ViewController> viewController) {
+    FOCUS_LOGD(TAG, "present %s", typeid(*viewController).name());
+    bool wasEngaged = this->isFocusEngaged();
+    ModalEntry entry;
+    entry.viewController = viewController;
+    entry.previousFocusedView = this->focusedView;
+
+    // Create the view so we can inspect it before adding to the window.
+    viewController->setWindow(std::static_pointer_cast<Window>(this->shared_from_this()));
+    viewController->viewWillAppear();
+    viewController->viewDidLayoutSubviews();
+
+    // Add a dimmer overlay unless the modal's view is opaque (full-screen).
+    if (!viewController->view->isOpaque()) {
+        Size windowSize = this->getFrame().size;
+        int blackColor = this->getForegroundColor();
+        entry.dimmer = std::make_shared<HatchedView>(
+            MakeRect(0, 0, windowSize.width, windowSize.height), blackColor);
+        this->addSubview(entry.dimmer);
+    }
+
+    // Present the modal VC's view on top. Clip focus so d-pad
+    // navigation cannot escape the modal into the views behind it.
+    viewController->view->setClipsFocus(true);
+    this->addSubview(viewController->view);
+    this->modalStack.push_back(entry);
+
+    // An opaque modal hides what it covers.
+    this->updateCoverage();
+
+    // Stop if a callback covered or dismissed this modal.
+    auto it = std::find_if(this->modalStack.begin(), this->modalStack.end(),
+        [&](const ModalEntry& e) { return e.viewController == viewController; });
+    if (it == this->modalStack.end() || it->hidden) return;
+    viewController->viewDidAppear();
+
+    // A modal presented above this one already moved focus.
+    if (this->modalStack.back().viewController != viewController) return;
+
+    // Move focus into the modal when focus is driving; never leave it behind the dimmer.
+    if (!this->isTouchEnabled() || wasEngaged) {
+        auto descendant = viewController->view->firstFocusableDescendant();
+        if (descendant) {
+            descendant->becomeFocused();
+        } else if (this->isTouchEnabled()) {
+            this->becomeFocused();
+        }
+    }
+}
+
+void Window::dismissViewController() {
+    if (this->modalStack.empty()) return;
+
+    ModalEntry entry = this->modalStack.back();
+    FOCUS_LOGD(TAG, "dismiss %s", typeid(*entry.viewController).name());
+    this->modalStack.pop_back();
+
+    // Removing the modal's view resets focus to the window; capture first.
+    bool wasEngaged = this->isFocusEngaged();
+
+    this->removeModal(entry);
+    this->updateCoverage();
+    this->restoreFocus(entry.previousFocusedView, wasEngaged);
+
+    // Mark full window as needing display
+    this->setNeedsDisplayInRect(this->getFrame());
+}
+
+void Window::dismissAllViewControllers() {
+    if (this->modalStack.empty()) return;
+
+    // Remove the current modals, top first, revealing nothing.
+    std::vector<ModalEntry> modals;
+    modals.swap(this->modalStack);
+    bool wasEngaged = this->isFocusEngaged();
+    for (auto it = modals.rbegin(); it != modals.rend(); ++it) {
+        this->removeModal(*it);
+    }
+    this->updateCoverage();
+    this->restoreFocus(modals.front().previousFocusedView, wasEngaged);
+    this->setNeedsDisplayInRect(this->getFrame());
+}
+
+void Window::updateCoverage() {
+    // A nested call returns early; the outer loop picks up its changes.
+    if (this->updatingCoverage) return;
+    this->updatingCoverage = true;
+
+    // Change one controller per pass, then rescan.
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        bool covered = false;
+        std::shared_ptr<View> above;
+        for (size_t i = this->modalStack.size(); i-- > 0;) {
+            ModalEntry& entry = this->modalStack[i];
+            if (entry.hidden != covered) {
+                entry.hidden = covered;
+                if (entry.dimmer) entry.dimmer->setHidden(covered);
+                if (covered) {
+                    this->hideViewController(entry.viewController);
+                } else {
+                    this->showViewController(entry.viewController, above, true);
+                }
+                changed = true;
+                break;
+            }
+            if (entry.dimmer) {
+                above = entry.dimmer;
+            } else {
+                above = entry.viewController->view;
+                covered = true;
+            }
+        }
+        if (!changed && this->rootViewController && this->rootHidden != covered) {
+            this->rootHidden = covered;
+            if (covered) {
+                this->hideViewController(this->rootViewController);
+            } else {
+                this->showViewController(this->rootViewController, above, false);
+            }
+            changed = true;
+        }
+    }
+
+    this->updatingCoverage = false;
+}
+
+void Window::hideViewController(std::shared_ptr<ViewController> viewController) {
+    viewController->viewWillDisappear();
+    if (viewController->view) {
+        this->removeSubview(viewController->view);
+    }
+    viewController->viewDidDisappear();
+}
+
+void Window::showViewController(std::shared_ptr<ViewController> viewController,
+                                std::shared_ptr<View> above, bool clipsFocus) {
+    viewController->setWindow(std::static_pointer_cast<Window>(this->shared_from_this()));
+    viewController->viewWillAppear();
+    viewController->viewDidLayoutSubviews();
+    if (viewController->view) {
+        if (clipsFocus) viewController->view->setClipsFocus(true);
+        const auto& subviews = this->getSubviews();
+        auto it = std::find(subviews.begin(), subviews.end(), above);
+        if (!above || it == subviews.end()) {
+            this->addSubview(viewController->view);
+        } else {
+            this->insertSubview(viewController->view, it - subviews.begin());
+        }
+    }
+    viewController->viewDidAppear();
+}
+
+void Window::removeModal(const ModalEntry& entry) {
+    if (!entry.hidden) {
+        this->hideViewController(entry.viewController);
+    }
+    if (entry.dimmer) {
+        this->removeSubview(entry.dimmer);
+    }
+}
+
+void Window::restoreFocus(std::weak_ptr<View> previousFocusedView, bool wasEngaged) {
+    // Leave focus latent if the user went latent inside the modal.
+    if (this->isTouchEnabled() && !wasEngaged) return;
+
+    // The view focused before the modal, if it is inside whatever is on top now.
+    auto top = this->modalStack.empty() ? this->rootViewController
+                                        : this->modalStack.back().viewController;
+    std::shared_ptr<View> target = previousFocusedView.lock();
+    if (target && !(top && top->view && isWithin(target.get(), top->view.get()))) target = nullptr;
+
+    // Otherwise the first focusable view on top: the active content, then its container.
+    if (!target) {
+        auto active = this->activeViewController();
+        if (active && active->view) target = active->view->firstFocusableDescendant();
+    }
+    if (!target && top && top->view) target = top->view->firstFocusableDescendant();
+    if (target) target->becomeFocused();
+}
+
+void Window::summonFocus(bool fromEnd) {
+    // Summon domain: the top modal's view when presented, else the window.
+    std::shared_ptr<View> domain = this->modalStack.empty()
+        ? this->shared_from_this()
+        : this->modalStack.back().viewController->view;
+    if (!domain) return;
+
+    // Prefer the active view controller's content within the domain.
+    std::shared_ptr<View> target;
+    std::shared_ptr<ViewController> vc = this->activeViewController();
+    if (vc && vc->view) {
+        target = fromEnd ? vc->view->lastFocusableDescendant()
+                         : vc->view->firstFocusableDescendant();
+    }
+    if (!target) {
+        target = fromEnd ? domain->lastFocusableDescendant()
+                         : domain->firstFocusableDescendant();
+    }
+    if (target) target->becomeFocused();
 }
 
 }  // namespace focus
